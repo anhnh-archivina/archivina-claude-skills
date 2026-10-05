@@ -369,10 +369,13 @@ def ban_sao_tu_ban_ve_dang_mo(ten_ban_ve: str, duong_dan_ra: str) -> dict:
 
 
 @mcp.tool()
-def ve_bo_tri_vao_ban_sao_mo(duong_dan_dwg_ban_sao: str, file_json: str, file_goc: str = "") -> dict:
-    """Mở BẢN SAO trong AutoCAD đang chạy (COM) và chèn thiết bị theo bo_tri_tran.json (block thư viện 1:1, đúng layer),
-    gom một nhóm UNDO, lưu bản sao, để mở cho người dùng xem. Từ chối nếu trùng file_goc. Chỉ gọi khi người dùng đồng ý."""
-    args = ["ve", "--dwg", duong_dan_dwg_ban_sao, "--json", file_json] + (["--goc", file_goc] if file_goc else [])
+def ve_bo_tri_vao_ban_sao_mo(duong_dan_dwg_ban_sao: str, file_json: str, file_goc: str = "", json_cu: str = "") -> dict:
+    """Mở BẢN SAO trong AutoCAD đang chạy (COM) và chèn thiết bị + trục (Defpoints) theo bo_tri_tran.json (block thư viện
+    1:1, đúng layer), gom một nhóm UNDO, lưu bản sao, để mở cho người dùng xem. json_cu: bo_tri_tran.json của phương án đã
+    vẽ trước trong chính file này -> xóa đúng các đối tượng đó trước khi vẽ (chỉnh lại bản sao). Từ chối nếu trùng file_goc.
+    Chỉ gọi khi người dùng đồng ý."""
+    args = ["ve", "--dwg", duong_dan_dwg_ban_sao, "--json", file_json] + (["--goc", file_goc] if file_goc else []) + \
+        (["--xoa-cu", json_cu] if json_cu else [])
     return _tran_py("ve_com.py", args, timeout=600)
 
 

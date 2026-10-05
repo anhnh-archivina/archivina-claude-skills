@@ -40,22 +40,23 @@ Có MCP `autocad-archivina` thì dùng `xuat_dxf`, `chay_script_tren_ban_sao`; k
 ```powershell
 $env:PYTHONUTF8=1; & "<python>" "<skill>\scripts\bo_tri_tran.py" "<file.dxf>" --out-dir "<thư mục>" --du-an "<tên>" [--layer-ten A-Dimension]
 ```
-**Nguyên tắc TRỤC (người dùng chốt 05/10/2026)** – mọi đèn và thiết bị có tâm nằm trên trục; trục vẽ trên layer `Defpoints` (không in):
-1. **Dựng trục** (vùng trần dùng được = phòng trừ khối tủ bếp, tủ áo / tủ nội thất; làm trơn hốc cửa < 600):
-   - **P. khách / P. ăn** (kể cả bếp chung phòng khách – **nối vào hệ trục phòng khách**): vòng trục cách mép trong tường và mặt khối tủ **500–600** (ưu tiên 600).
-   - **Bếp riêng**: 1 trục **song song chiều dài khối tủ bếp chính, nằm giữa không gian bếp** (giữa mặt tủ và biên đối diện). Khối tủ bếp suy từ bếp nấu + chậu rửa trên cùng tường, sâu 600.
-   - Phần phòng hẹp nằm ngoài tầm vòng trục (vd dải bếp 1,1 m giữa mặt tủ bếp và tường) có trục giữa riêng, song song cạnh dài.
-   - **PN** (cả đa năng, hành lang, phòng chưa rõ): vòng trục cách mép trong tường / mặt tủ áo **500–600 mọi hướng**.
-   - **WC dài** (dài/ngắn ≥ 1,3): 1 trục **theo cạnh dài, giữa phòng**; **WC vuông**: vòng trục cách đều 4 cạnh **300–600** (lấy lớn nhất mà cạnh vòng ≥ 1200).
-   - **Lô gia**: trục giữa theo chiều dài. Phòng quá hẹp cho vòng trục: trục giữa.
-2. **Đặt trên trục**: miệng gió cấp/hồi 1200×150 trên **cặp trục song song đối diện** (gió hồi trục phía trong căn, gió cấp trục đối diện, tránh sofa; ~1 cặp/20 m²) và miệng gió hút bếp (ngang bếp nấu) đặt trước → đèn **xen kẽ hai bên** (cách tâm miệng gió ≥ max(s/2, 600 + 150 + 55)) → **đèn cách nhau ≥ 1200, ≥ 1500 khi phòng có miệng gió**, bước mục tiêu 1800, tối đa 2400, **đối xứng qua tâm giường / sofa / bàn ăn** chiếu lên trục (không có thì giữa đoạn trục); PN bỏ đèn trong vùng gối. **Đầu báo khói / nhiệt đặt ở khoảng giữa hai đèn** (khói gần tâm phòng, ngoài vùng gối, cách gió cấp ≥ 1000; nhiệt gần bếp, không ngay trên bếp). **WC**: đèn tại hình chiếu bồn cầu và vùng tắm (hoặc chậu) lên trục, quạt hút xen giữa hai đèn. Lỗ thăm 600 trên trục ở khoảng trống đủ rộng (gần máy điều hòa / xa vùng tắm).
-3. **Ngoài trục** (thiết bị chức năng): đèn thả tại **tâm mặt bàn ăn**; đèn rọi gương trên trục gương/chậu, cách tường gương 330.
-4. **Sprinkler**: không theo trục nhưng **thẳng hàng (cùng X hoặc Y) với một thiết bị đã có**; chọn tham lam để **vòng phủ R2000 phủ ≥ 99% phòng**, cách tường ≤ 2000, giữa hai đầu ≥ 1500, ngoài tủ; đầu gần bếp đổi 93°C. Không phủ hết → ghi chú cho bộ môn PCCC.
+**Nguyên tắc TRỤC (người dùng chốt 05/10/2026, bản 2)** – đèn và thiết bị có tâm nằm trên trục; trục vẽ trên layer `Defpoints` (không in):
+1. **Trục phòng thường** (P. khách / ăn / bếp, PN, đa năng, hành lang, phòng chưa rõ): **1 hình chữ nhật khép kín cách mép trong tường và mặt tủ (tủ bếp, tủ áo) 500–600 mọi hướng** (ưu tiên 600).
+   - Hình chữ nhật **theo tường chính = cạnh dài nhất của phòng** (tường không song song nhau).
+   - Là **hình chữ nhật lớn nhất nằm trong phòng đã trừ tủ** → tự **bỏ các hốc** (hốc vào PN, hốc bếp, sảnh căn). Bếp chung phòng khách: dải bếp hẹp là hốc, nằm ngoài hình chữ nhật.
+   - Khối tủ bếp suy từ bếp nấu + chậu rửa trên cùng tường, sâu 600. Phòng quá hẹp: trục giữa.
+   - **WC dài** (dài/ngắn ≥ 1,3): 1 trục theo cạnh dài, giữa phòng; **WC vuông**: vòng trục cách đều 4 cạnh 300–600. **Lô gia**: trục giữa.
+2. **Đèn**: **ưu tiên 4 góc hình chữ nhật**; cạnh dài hơn **2400** thì thêm đèn ở giữa (chia đều, **cách nhau ≥ 1200**). PN: đèn góc phía đầu giường trượt dọc cạnh trục ra khỏi vùng gối 100 mm.
+3. **Cửa gió điều hòa** (P. khách / ăn, ~1 cặp/20 m²): đặt **ở giữa hai đèn liền kề cách nhau > 1400**; gió hồi trên cạnh phía trong căn, gió cấp trên cạnh đối diện (ưu tiên cặp cạnh dài); **được phép nằm trên sofa / bàn ăn**.
+4. **Đầu báo khói**: trên trục; **PN: cạnh trục phía chân giường**, tại hình chiếu tâm giường; phòng khác: khoảng giữa hai đèn gần tâm phòng, cách gió cấp ≥ 1000. **Vướng đèn thì cách đèn đó 300**. Đầu báo nhiệt (bếp): trên trục ngang bếp nấu, cùng quy tắc.
+5. **WC**: đèn tại hình chiếu bồn cầu và vùng tắm (hoặc chậu) lên trục, quạt hút xen giữa hai đèn. Lỗ thăm 600 trên trục ở khoảng trống đủ rộng (gần máy điều hòa / xa vùng tắm).
+6. **Ngoài trục** (thiết bị chức năng): đèn thả tại **tâm mặt bàn ăn**; đèn rọi gương trên trục gương/chậu, cách tường gương 330; miệng gió hút bếp trên bếp nấu (theo chụp hút).
+7. **Sprinkler**: không theo trục nhưng **thẳng hàng (cùng X hoặc Y) với một thiết bị đã có**; chọn tham lam để **vòng phủ R2000 phủ ≥ 99% phòng**, cách tường ≤ 2000, giữa hai đầu ≥ 1500, ngoài tủ; đầu gần bếp đổi 93°C. Không phủ hết → ghi chú cho bộ môn PCCC.
 Thông số ở `cau_hinh_tran.json` → `bo_tri_moi`; **PCCC và điều hòa là phương án sơ bộ, không phải tính toán theo tiêu chuẩn** – báo rõ cho người dùng. Script tự soát lại phương án bằng bộ luật của skill (Excel `BaoCaoBoTriTran.xlsx`, ảnh `xem_bo_tri_*.png` có vẽ trục), xuất `bo_tri_tran.json` (thiết bị + trục, cho vẽ COM) và `ve_bo_tri_tran.scr` (bản sao chạy ngầm: trục `Defpoints` + block đúng layer thiết bị, không hậu tố -DX).
 
 ## Nối AutoCAD đang mở (COM) – `ve_com.py` / MCP
 - `ve_com.py ban-sao --ten-ban-ve "<tab>.dwg" --ra <file mới, không dấu cách>`: `-WBLOCK *` ghi bản vẽ đang mở (kể cả thay đổi chưa lưu) ra file mới; tab gốc không đổi đường dẫn, không bị lưu.
-- `ve_com.py ve --dwg <bản sao> --json bo_tri_tran.json --goc <file gốc>`: mở bản sao trong AutoCAD đang chạy, chèn block thư viện (tỷ lệ 1, đúng layer), một nhóm UNDO, lưu bản sao, để mở cho người dùng xem. Từ chối nếu trùng file gốc.
+- `ve_com.py ve --dwg <bản sao> --json bo_tri_tran.json --goc <file gốc>`: mở bản sao trong AutoCAD đang chạy, chèn block thư viện (tỷ lệ 1, đúng layer) và trục (`Defpoints`), một nhóm UNDO, lưu bản sao, để mở cho người dùng xem. Từ chối nếu trùng file gốc. **Chỉnh lại bản sao đã vẽ**: thêm `--xoa-cu <bo_tri_tran.json cũ>` → xóa đúng các block / trục của phương án cũ (khớp mã + vị trí < 2 mm) rồi vẽ phương án mới; trước đó đối chiếu tab với JSON cũ để không xóa nhầm chỉnh sửa tay của người dùng.
 - MCP `autocad-archivina`: `acad_dang_mo`, `ban_sao_tu_ban_ve_dang_mo`, `bo_tri_tran`, `ve_bo_tri_vao_ban_sao_mo`.
 - **Không vẽ thẳng vào bản vẽ gốc đang mở** nếu người dùng không yêu cầu rõ; mặc định: bản sao → mở bản sao. Hỏi trước khi vẽ.
 - Nhận diện bổ sung: tên **block động** (`*Uxx` → tên gốc qua `AcDbBlockRepBTag`), **bỏ phần tử ẩn** (trạng thái hiển thị của block động) khi tính hộp bao/ký hiệu/nét tường.

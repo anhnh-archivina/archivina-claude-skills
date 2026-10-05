@@ -9,6 +9,7 @@
 
     python ve_com.py ban-sao --ten-ban-ve "<ten tab .dwg>" --ra <duong dan .dwg moi, khong dau cach>
     python ve_com.py ve --dwg <ban sao .dwg> --json <bo_tri_tran.json> [--goc <duong dan file goc de tu choi>]
+                        [--xoa-cu <bo_tri_tran.json phuong an cu>]   (chinh lai ban sao: xoa dung doi tuong cu roi ve moi)
 """
 import argparse
 import json
@@ -80,7 +81,31 @@ def diem(x, y):
     return win32com.client.VARIANT(pythoncom.VT_ARRAY | pythoncom.VT_R8, (float(x), float(y), 0.0))
 
 
-def ve(dwg, js, goc=None):
+def xoa_cu(doc, js_cu):
+    """Xoa DUNG cac doi tuong cua phuong an cu (theo bo_tri_tran.json cu): block cung ma tai cung vi tri (< 2 mm) va
+    line truc tren layer truc cung hai dau mut. Khong dung doi tuong khac."""
+    cu = json.load(open(js_cu, encoding="utf-8"))
+    tb = [(d["ma"].upper(), d["x"], d["y"]) for d in cu.get("thiet_bi", [])]
+    tr = [(t["x1"], t["y1"], t["x2"], t["y2"]) for t in cu.get("truc", [])]
+    lt = cu.get("layer_truc", "Defpoints")
+    xoa = []
+    for e in doc.ModelSpace:
+        o = e.ObjectName
+        if o == "AcDbBlockReference":
+            p = e.InsertionPoint
+            if any(e.Name.upper() == m and math.hypot(p[0] - x, p[1] - y) < 2 for m, x, y in tb):
+                xoa.append(e)
+        elif o == "AcDbLine" and e.Layer == lt:
+            s, t = e.StartPoint, e.EndPoint
+            if any((math.hypot(s[0] - a, s[1] - b) < 2 and math.hypot(t[0] - c, t[1] - d) < 2) or
+                   (math.hypot(s[0] - c, s[1] - d) < 2 and math.hypot(t[0] - a, t[1] - b) < 2) for a, b, c, d in tr):
+                xoa.append(e)
+    for e in xoa:
+        goi(e.Delete)
+    return len(xoa), len(tb) + len(tr)
+
+
+def ve(dwg, js, goc=None, js_cu=None):
     dwg = os.path.abspath(dwg)
     if goc and os.path.normcase(os.path.abspath(goc)) == os.path.normcase(dwg):
         raise SystemExit("Từ chối: đường dẫn vẽ trùng file gốc.")
@@ -94,8 +119,10 @@ def ve(dwg, js, goc=None):
     goi(doc.Activate)
     cho_ranh(app)
     goi(doc.StartUndoMark)
-    n = 0
+    n, da_xoa = 0, None
     try:
+        if js_cu:
+            da_xoa = xoa_cu(doc, js_cu)
         lays = {L.Name for L in doc.Layers}
         for lay in sorted({d["layer"] for d in data["thiet_bi"]}):
             if lay not in lays:
@@ -119,7 +146,10 @@ def ve(dwg, js, goc=None):
         goi(doc.EndUndoMark)
     goi(doc.Regen, 1)
     goi(doc.Save)
-    return dict(dwg=doc.FullName, da_chen=n, so_truc=len(data.get("truc", [])), da_luu=bool(doc.Saved))
+    kq = dict(dwg=doc.FullName, da_chen=n, so_truc=len(data.get("truc", [])), da_luu=bool(doc.Saved))
+    if da_xoa:
+        kq["da_xoa_phuong_an_cu"] = f"{da_xoa[0]}/{da_xoa[1]}"
+    return kq
 
 
 def main():
@@ -132,8 +162,9 @@ def main():
     a2.add_argument("--dwg", required=True)
     a2.add_argument("--json", required=True)
     a2.add_argument("--goc", default=None)
+    a2.add_argument("--xoa-cu", default=None, help="bo_tri_tran.json cua phuong an cu da ve trong file nay: xoa dung cac doi tuong do truoc khi ve")
     a = ap.parse_args()
-    kq = ban_sao(a.ten_ban_ve, a.ra) if a.lenh == "ban-sao" else ve(a.dwg, a.json, a.goc)
+    kq = ban_sao(a.ten_ban_ve, a.ra) if a.lenh == "ban-sao" else ve(a.dwg, a.json, a.goc, a.xoa_cu)
     sys.stdout.reconfigure(encoding="utf-8")
     print(json.dumps(kq, ensure_ascii=False, indent=1))
 
