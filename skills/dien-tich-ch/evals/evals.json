@@ -1,0 +1,35 @@
+{
+  "skill_name": "dien-tich-ch",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Mặt bằng căn hộ CT2-CH01 ở H:\\@Archivina 2026\\@bản vẽ mẫu căn hộ\\Test đo dt can ho.dwg. Hãy bo polyline thông thủy cho các phòng chưa có polyline và cho tôi bảng diện tích từng phòng.",
+      "expected_output": "Phát hiện phòng đã có polyline (master, phòng ngủ 2, 2 WC) và chỉ đối chiếu, dựng mới Đa năng (4,7 m²); báo Phòng khách, Lô-gia 1, Lô-gia 2 và Phòng ngủ 1 chưa đóng được, kèm tọa độ khe hở; báo polyline trùng chồng 14F9E/14F9F; không sửa file gốc.",
+      "files": []
+    },
+    {
+      "id": 2,
+      "prompt": "Phòng ngủ 1 của file Test đo dt can ho.dwg bị hở phía cửa sổ tây. Đóng ranh bằng đoạn từ (-1200,11735) xuống (-1200,9150) rồi sang (-615,9150) và dựng polyline phòng đó.",
+      "expected_output": "Dùng --them-ranh= (có dấu =) với hai đoạn đóng ranh; Phòng ngủ 1 dựng ra 15,9837 m² (làm tròn 16,0), khớp polyline 9A90 người dùng đã bo (script chỉ đối chiếu, chỉ vẽ lại khi có --ve-lai); không ghi đè bản gốc.",
+      "files": []
+    },
+    {
+      "id": 4,
+      "prompt": "Bo đường thông thủy cả căn hộ cho file Căn hộ mẫu Cần Thơ.dwg và ghi nhãn diện tích căn hộ ở giữa phòng khách.",
+      "expected_output": "Dùng dwg_to_dxf_aec.ps1 (tường/cửa là đối tượng ACA), dựng phòng theo mặt tường (không lùi lớp trát vì A-Vua trat trùng A-Wall; ghi Gợi ý lớp trát): Phòng khách + Bếp 31,0, master 11,0, wc 1 3,5, Logia 2 4,3, Logia 1 3,0, Phòng ngủ 11,0, wc 2 3,8 m²; đường bo 18 đỉnh 71,39 m² + loại trừ 0,52 m² trên layer Dien tich thong thuy, DT căn hộ 70,87 → 70,9 m², báo chênh +0,85% so với polyline CB4 người dùng (lùi 15 mm, layer A-Do dientich sai chuẩn); nhãn 'DTCH: 70.9 m2' cao 1,5 lần chữ tên phòng, cùng layer/style/màu, không đè tường/nội thất; kiem_tra_nhan.py trên bản sao đạt 8/8; không sửa file gốc.",
+      "files": []
+    },
+    {
+      "id": 3,
+      "prompt": "soát giúp tôi mấy cái polyline phòng nhân viên bo trong file Test đo dt can ho.dwg xem có đúng nét hoàn thiện không, có cái nào hở hay trùng không",
+      "expected_output": "Đối chiếu diện tích polyline có sẵn với diện tích dựng từ nét hoàn thiện (chênh gần 0), báo 4FC9/14F9E chưa bật Closed hoặc trùng chồng, 8EF2/14F9F trùng chồng, WC 4,4 m² chưa có polyline ở layer phòng.",
+      "files": []
+    },
+    {
+      "id": 5,
+      "prompt": "Đo diện tích các căn hộ trong H:\\@Archivina 2026\\@bản vẽ mẫu căn hộ\\Test AI.dwg bằng skill, vẽ đường bo thông thủy và nhãn DTCH.",
+      "expected_output": "Dùng dwg_to_dxf_aec.ps1, tách 3 căn (không có tên phòng), mỗi căn một đường bo layer Dien tich thong thuy + 1 polyline loại trừ hộp kỹ thuật; DT căn 93,66 / 69,17 / 69,18 m² (làm tròn 93,7 / 69,2 / 69,2) sai lệch dưới 0,01% so với polyline người dùng; báo layer polyline có sẵn sai (A- Dien tich phong); nhãn DTCH không đè vật nào; báo cần xác nhận chữ mặc định vì bản vẽ không có tên phòng; không sửa file gốc.",
+      "files": []
+    }
+  ]
+}
