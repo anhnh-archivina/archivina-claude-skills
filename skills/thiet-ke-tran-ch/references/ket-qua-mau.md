@@ -30,7 +30,7 @@ Mặt bằng cả tầng, nền + xref trần `CT1-T(3-21)-Xref Tran` đã bind,
 - 19 căn (`Căn n (xref CHxx…)`), 163 phòng suy theo nội thất (46 WC, 45 PN, 21 lô gia, 21 P. khách/ăn, 30 chưa đặt tên), 5 khu chung, 20 ranh gần đúng, 4 ô nghi gộp PN + P. khách.
 - 1.444 thiết bị trong các căn; 0 block chưa nhận diện.
 - 276 cảnh báo: CRITICAL 5, HARD-RULE 109 (chủ yếu đèn cách tường < 500, đèn < 1200), COORDINATION 42 (24 cặp thiết bị chèn trùng, 7 đầu báo gần gió cấp…), DESIGN 120; 117 đèn đề xuất, vẽ thử trên bản sao đạt (`CT1-T5A-10_de-xuat-tran.dwg`).
-- **Chưa soát:** ~810 thiết bị ở các cụm khác trong Model (y −97 … −264 m) – không dựng được phòng ở đó.
+- **Không soát:** ~810 thiết bị ở các cụm khác trong Model (y −97 … −264 m) là **mặt bằng căn hộ phóng to** – người dùng xác nhận không cần soát (05/10/2026). Skill cũng không dựng được phòng ở đó nên không lẫn vào báo cáo.
 
 ## Lỗi đã sửa khi chạy mẫu (để không lặp lại)
 - Mặt bằng tầng: `pair_rays` / `snap_bridges` (skill `dien-tich-ch`) duyệt mọi cặp (24.500 tia → hàng trăm triệu phép thử) → dùng STRtree, kết quả không đổi (hồi quy Cần Thơ 70,9 m² và 7 phòng giữ nguyên); mạng ô dựng theo từng cụm.
