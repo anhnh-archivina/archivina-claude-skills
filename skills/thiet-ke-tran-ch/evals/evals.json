@@ -16,7 +16,7 @@
     {
       "id": 4,
       "prompt": "Kết nối MCP với AutoCAD Architecture tôi đang mở, áp dụng skill thiết kế trần để bố trí các thiết bị trên trần căn hộ mẫu Cần Thơ đang mở",
-      "expected_output": "Liệt kê bản vẽ đang mở (COM, chỉ đọc), thấy file gốc có thay đổi chưa lưu → hỏi vẽ vào đâu và phạm vi thiết bị; lấy bản sao bằng -WBLOCK * (tab gốc không đổi); xuất DXF nổ ACA; bo_tri_tran.py --layer-ten A-Dimension: 7 phòng, đèn thả ở tâm mặt bàn, PN 4 đèn theo trục giường tránh vùng gối/tủ áo, P. khách 2 cặp gió + lưới đèn, WC đèn gương/quạt hút/đèn theo trục, sprinkler/đầu báo sơ bộ; ve_com.py ve mở bản sao trong AutoCAD, chèn ~46 block 1:1 đúng layer, lưu bản sao; nói rõ PCCC/HVAC là sơ bộ; không lưu/không sửa file gốc.",
+      "expected_output": "Liệt kê bản vẽ đang mở (COM, chỉ đọc), thấy file gốc có thay đổi chưa lưu → hỏi vẽ vào đâu và phạm vi thiết bị; lấy bản sao bằng -WBLOCK * (tab gốc không đổi); xuất DXF nổ ACA; bo_tri_tran.py --layer-ten A-Dimension: 7 phòng, đèn thả ở tâm mặt bàn, PN 4 đèn theo trục giường tránh vùng gối/tủ áo, P. khách 2 cặp gió + lưới đèn, WC đèn gương/quạt hút/đèn theo trục, sprinkler/đầu báo sơ bộ; bố trí THEO TRỤC: vòng trục 500–600 (P. khách gồm bếp, PN), trục giữa dải bếp, trục giữa WC dài / vòng trục WC vuông, trục giữa lô gia – vẽ trên Defpoints; đèn ≥ 1200 (≥ 1500 khi có gió), xen kẽ hai bên miệng gió, đối xứng giường / sofa / bàn ăn; đầu báo ở khoảng giữa đèn; sprinkler thẳng hàng thiết bị, phủ R2000; ve_com.py ve mở bản sao mới trong AutoCAD, vẽ trục + ~48 block 1:1 đúng layer, lưu bản sao; nói rõ PCCC/HVAC là sơ bộ; không lưu/không sửa file gốc.",
       "files": []
     },
     {

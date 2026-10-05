@@ -40,13 +40,18 @@ Có MCP `autocad-archivina` thì dùng `xuat_dxf`, `chay_script_tren_ban_sao`; k
 ```powershell
 $env:PYTHONUTF8=1; & "<python>" "<skill>\scripts\bo_tri_tran.py" "<file.dxf>" --out-dir "<thư mục>" --du-an "<tên>" [--layer-ten A-Dimension]
 ```
-Thứ tự (thiết bị cố định theo nội thất trước, thiết bị linh hoạt chèn vào khoảng trống sau):
-1. Đèn thả tại **tâm mặt bàn ăn** (tìm hình chữ nhật mặt bàn trong block cụm bàn + ghế + tủ). WC: đèn rọi gương trên trục gương/chậu, cách tường 330; quạt hút trên bồn cầu, cách tường sau 400; đèn WC trên trục bồn cầu (cách tường sau 950) và tâm vùng tắm.
-2. Điều hòa (P. khách/ăn): cặp miệng gió hồi/cấp 1200×150 trong ô chữ nhật lớn nhất của phòng, gió hồi cách tường 600 (ưu tiên phía trong căn), gió cấp song song cách 2200 (hoặc cách tường đối diện ≥ 600), tránh sofa; số cặp ≈ diện tích / 20 m². PN không có miệng gió trần (theo mẫu: điều hòa treo tường).
-3. Đèn: lô gia trên trục giữa (~1 đèn/3,7 m); lưới đèn chung ~1 đèn/3 m², cách tường/mặt tủ 600, khoảng cách mục tiêu 1500 (tối thiểu 1200), đối xứng trục giường, đầu giường coi như tường (cột đèn đầu tiên ngay sau vùng gối), phòng chữ L chia ô chữ nhật; bổ sung đèn dọc đường lùi 600 / trục giữa xen giữa miệng gió.
-4. PCCC (P1): sprinkler theo ô phủ (≤ 13,5 m²/đầu, ≤ 3600 mm giữa đầu, ≤ 1800 mm tới tường – số liệu bản vẽ mẫu), đặt vào chỗ trống trong ô; đầu gần bếp đổi 93°C. Đầu báo khói gần tâm phòng (PN, P. khách, đa năng), cách gió cấp ≥ 1000; đầu báo nhiệt cách bếp 800 (không ngay trên bếp); miệng gió hút bếp trên bếp nấu.
-5. Lỗ thăm 600: máy điều hòa âm trần (góc phòng cách tường 450, gần cụm gió hồi, ngoài sofa/bàn ăn); WC (góc xa vùng tắm).
-Thông số ở `cau_hinh_tran.json` → `bo_tri_moi`; **PCCC và điều hòa là phương án sơ bộ theo mẫu, không phải tính toán theo tiêu chuẩn** – báo rõ cho người dùng. Script tự soát lại phương án bằng bộ luật của skill (Excel `BaoCaoBoTriTran.xlsx`, ảnh `xem_bo_tri_*.png`), xuất `bo_tri_tran.json` (cho vẽ COM) và `ve_bo_tri_tran.scr` (vẽ bản sao chạy ngầm, đúng layer thiết bị, không hậu tố -DX).
+**Nguyên tắc TRỤC (người dùng chốt 05/10/2026)** – mọi đèn và thiết bị có tâm nằm trên trục; trục vẽ trên layer `Defpoints` (không in):
+1. **Dựng trục** (vùng trần dùng được = phòng trừ khối tủ bếp, tủ áo / tủ nội thất; làm trơn hốc cửa < 600):
+   - **P. khách / P. ăn** (kể cả bếp chung phòng khách – **nối vào hệ trục phòng khách**): vòng trục cách mép trong tường và mặt khối tủ **500–600** (ưu tiên 600).
+   - **Bếp riêng**: 1 trục **song song chiều dài khối tủ bếp chính, nằm giữa không gian bếp** (giữa mặt tủ và biên đối diện). Khối tủ bếp suy từ bếp nấu + chậu rửa trên cùng tường, sâu 600.
+   - Phần phòng hẹp nằm ngoài tầm vòng trục (vd dải bếp 1,1 m giữa mặt tủ bếp và tường) có trục giữa riêng, song song cạnh dài.
+   - **PN** (cả đa năng, hành lang, phòng chưa rõ): vòng trục cách mép trong tường / mặt tủ áo **500–600 mọi hướng**.
+   - **WC dài** (dài/ngắn ≥ 1,3): 1 trục **theo cạnh dài, giữa phòng**; **WC vuông**: vòng trục cách đều 4 cạnh **300–600** (lấy lớn nhất mà cạnh vòng ≥ 1200).
+   - **Lô gia**: trục giữa theo chiều dài. Phòng quá hẹp cho vòng trục: trục giữa.
+2. **Đặt trên trục**: miệng gió cấp/hồi 1200×150 trên **cặp trục song song đối diện** (gió hồi trục phía trong căn, gió cấp trục đối diện, tránh sofa; ~1 cặp/20 m²) và miệng gió hút bếp (ngang bếp nấu) đặt trước → đèn **xen kẽ hai bên** (cách tâm miệng gió ≥ max(s/2, 600 + 150 + 55)) → **đèn cách nhau ≥ 1200, ≥ 1500 khi phòng có miệng gió**, bước mục tiêu 1800, tối đa 2400, **đối xứng qua tâm giường / sofa / bàn ăn** chiếu lên trục (không có thì giữa đoạn trục); PN bỏ đèn trong vùng gối. **Đầu báo khói / nhiệt đặt ở khoảng giữa hai đèn** (khói gần tâm phòng, ngoài vùng gối, cách gió cấp ≥ 1000; nhiệt gần bếp, không ngay trên bếp). **WC**: đèn tại hình chiếu bồn cầu và vùng tắm (hoặc chậu) lên trục, quạt hút xen giữa hai đèn. Lỗ thăm 600 trên trục ở khoảng trống đủ rộng (gần máy điều hòa / xa vùng tắm).
+3. **Ngoài trục** (thiết bị chức năng): đèn thả tại **tâm mặt bàn ăn**; đèn rọi gương trên trục gương/chậu, cách tường gương 330.
+4. **Sprinkler**: không theo trục nhưng **thẳng hàng (cùng X hoặc Y) với một thiết bị đã có**; chọn tham lam để **vòng phủ R2000 phủ ≥ 99% phòng**, cách tường ≤ 2000, giữa hai đầu ≥ 1500, ngoài tủ; đầu gần bếp đổi 93°C. Không phủ hết → ghi chú cho bộ môn PCCC.
+Thông số ở `cau_hinh_tran.json` → `bo_tri_moi`; **PCCC và điều hòa là phương án sơ bộ, không phải tính toán theo tiêu chuẩn** – báo rõ cho người dùng. Script tự soát lại phương án bằng bộ luật của skill (Excel `BaoCaoBoTriTran.xlsx`, ảnh `xem_bo_tri_*.png` có vẽ trục), xuất `bo_tri_tran.json` (thiết bị + trục, cho vẽ COM) và `ve_bo_tri_tran.scr` (bản sao chạy ngầm: trục `Defpoints` + block đúng layer thiết bị, không hậu tố -DX).
 
 ## Nối AutoCAD đang mở (COM) – `ve_com.py` / MCP
 - `ve_com.py ban-sao --ten-ban-ve "<tab>.dwg" --ra <file mới, không dấu cách>`: `-WBLOCK *` ghi bản vẽ đang mở (kể cả thay đổi chưa lưu) ra file mới; tab gốc không đổi đường dẫn, không bị lưu.

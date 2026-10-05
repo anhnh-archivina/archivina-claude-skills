@@ -103,6 +103,12 @@ def ve(dwg, js, goc=None):
                 L.Color = MAU.get(lay, 7)
         blk = {b.Name.upper() for b in doc.Blocks}
         ms = doc.ModelSpace
+        lt = data.get("layer_truc", "Defpoints")
+        if lt not in lays:
+            goi(doc.Layers.Add, lt)
+        for t in data.get("truc", []):          # truc dat den / thiet bi: layer Defpoints (khong in)
+            ln = goi(ms.AddLine, diem(t["x1"], t["y1"]), diem(t["x2"], t["y2"]))
+            ln.Layer = lt
         for d in data["thiet_bi"]:
             src = d["ma"] if d["ma"].upper() in blk else os.path.join(data["thu_vien"], d["ma"] + ".dwg")
             ref = goi(ms.InsertBlock, diem(d["x"], d["y"]), src, 1.0, 1.0, 1.0, math.radians(d["rot"]))
@@ -113,7 +119,7 @@ def ve(dwg, js, goc=None):
         goi(doc.EndUndoMark)
     goi(doc.Regen, 1)
     goi(doc.Save)
-    return dict(dwg=doc.FullName, da_chen=n, da_luu=bool(doc.Saved))
+    return dict(dwg=doc.FullName, da_chen=n, so_truc=len(data.get("truc", [])), da_luu=bool(doc.Saved))
 
 
 def main():

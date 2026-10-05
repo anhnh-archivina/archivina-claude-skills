@@ -39,6 +39,7 @@ Bản sao lấy từ tab đang mở bằng `-WBLOCK *` (tab gốc giữ nguyên,
 - WC 1 / WC 2: đèn rọi gương, 2 đèn WC (trục bồn cầu, vùng tắm), quạt hút; lỗ thăm ở WC 1 (WC 2 không còn góc trống).
 - Lô gia 1, 2: mỗi lô gia 1 đèn ngoài nhà.
 - Tự soát lại: 0 CRITICAL / 0 HARD-RULE; 5 DESIGN (đèn WC lệch 1200/500 theo luật WC theo trục, ghi chú lỗ thăm WC 2).
+- **Người dùng đánh giá chưa đạt** → chuyển sang bố trí THEO TRỤC (bản v2, `Can-ho-mau-Can-Tho_bo-tri-tran_v2-theo-truc.dwg`, thư mục `v2-theo-truc\`): 33 đoạn trục trên `Defpoints`, 48 thiết bị. P. khách + bếp: vòng trục 600 + trục giữa dải bếp; 1 cặp gió (cặp thứ 2 vướng sofa), 8 đèn chung (xen kẽ hai bên miệng gió, ≥ 1500), đèn thả tâm bàn, đầu báo khói / nhiệt ở khoảng giữa đèn, gió hút bếp trên trục bếp, 5 sprinkler 68°C + 1 sprinkler 93°C thẳng hàng thiết bị. PN master: vòng trục, 5 đèn đối xứng trục giường; PN: 3 đèn; mỗi PN 3 sprinkler. WC 1 vòng trục (vuông), WC 2 trục giữa (dài): 2 đèn + quạt hút xen giữa. 0 CRITICAL / 0 HARD-RULE; 9 DESIGN (gồm ghi chú: thiếu 1 cặp gió, 0,2 m² PN master ngoài R2000, WC 2 không còn chỗ lỗ thăm).
 
 ## Lỗi đã sửa khi chạy mẫu (để không lặp lại)
 - Block có trạng thái hiển thị (block động): hộp bao gồm cả phần tử ẩn → nội thất lệch ra ngoài căn; nay bỏ phần tử `invisible`. Block động `*Uxx` đọc tên gốc qua `AcDbBlockRepBTag`.

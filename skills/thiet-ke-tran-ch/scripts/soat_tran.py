@@ -930,7 +930,7 @@ def xuat_excel(path, du_an, file, phong_kq, so, thiet_bi, de_xuat, chua_biet):
     wb.save(path)
 
 
-def ve_anh(path, can_poly, phong_kq, thiet_bi, noi_that, de_xuat, so):
+def ve_anh(path, can_poly, phong_kq, thiet_bi, noi_that, de_xuat, so, truc=None):
     import matplotlib
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
@@ -956,9 +956,14 @@ def ve_anh(path, can_poly, phong_kq, thiet_bi, noi_that, de_xuat, so):
                 ax.fill(xs, ys, color="#868e96", alpha=0.45, hatch="////", lw=0)
             elif f["loai"] == "giuong":
                 ax.plot(xs, ys, color="#1971c2", lw=0.8)
+            elif truc is not None:
+                ax.plot(xs, ys, color="#adb5bd", lw=0.6)
         if f["loai"] == "giuong" and f.get("vung_goi") is not None:
             xs, ys = f["vung_goi"].exterior.xy
             ax.fill(xs, ys, color="#74c0fc", alpha=0.35, lw=0)
+    for a, b in truc or []:
+        if can_poly.buffer(10).intersects(LineString([a, b])):
+            ax.plot([a[0], b[0]], [a[1], b[1]], color="#c2255c", lw=0.8, ls=(0, (6, 3)))
     loi_tb = {id(x["tb"]) for x in so.ds if isinstance(x["tb"], dict) and x["loai"] in (CRIT, HARD, COORD)}
     for d in thiet_bi:
         if not can_poly.buffer(10).contains(Point(d["x"], d["y"])):
@@ -966,6 +971,8 @@ def ve_anh(path, can_poly, phong_kq, thiet_bi, noi_that, de_xuat, so):
         xs, ys = d["fp"].exterior.xy
         col = "#e03131" if id(d) in loi_tb else "#2f9e44"
         ax.plot(xs, ys, color=col, lw=1.2)
+        if truc is not None:
+            ax.text(d["x"], d["y"] + 120, d["ma"].split("-")[1], fontsize=5, ha="center", color="#495057")
         if d.get("thay_the"):
             ax.plot(d["x"], d["y"], "x", color="#e03131", ms=6)
     for d, ma, x, y, rot, ly in de_xuat:
