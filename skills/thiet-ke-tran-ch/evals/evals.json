@@ -1,0 +1,17 @@
+{
+  "skill_name": "thiet-ke-tran-ch",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Soát mặt bằng bố trí thiết bị trần 2 căn mẫu trong H:\\@Archivina 2026\\@bản vẽ mẫu căn hộ\\Test Layout noi that CH.dwg theo quy tắc trần Archivina, báo vị trí không phù hợp và đề xuất vị trí mới.",
+      "expected_output": "Xuất DXF bằng dwg_to_dxf_aec.ps1 (nổ cả tường ACA trong block CT1-T0-CH05A), chạy soat_tran.py; nhận 2 căn CH01, CH02; nhận diện downlight, sprinkler 68/93, đầu báo khói/nhiệt, miệng gió cấp/hồi, quạt hút, đèn rọi gương, đèn thả, lỗ thăm 600; tủ áo theo móc áo, giường theo tab đầu giường; báo cáo Excel theo phòng với 4 mức cảnh báo, không tự dời thiết bị PCCC; đề xuất vị trí mới có lý do; ảnh xem lại từng căn; không sửa file gốc.",
+      "files": []
+    },
+    {
+      "id": 2,
+      "prompt": "Lấy cho tôi block đầu báo khói và miệng gió cấp 1200x150 chuẩn để chèn vào bản vẽ dự án mới.",
+      "expected_output": "Chỉ ra assets/thu-vien/FA-SMOKE.dwg và HV-SAG-1200x150.dwg (tỷ lệ 1:1, chèn tỷ lệ 1, điểm chèn tâm, layer A-Thiet bi PCCC / A-HVAC), cách chèn -INSERT MÃ=đường dẫn; không tự sửa bản vẽ người dùng.",
+      "files": []
+    }
+  ]
+}

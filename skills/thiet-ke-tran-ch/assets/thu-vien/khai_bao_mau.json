@@ -1,0 +1,138 @@
+{
+ "_ghi_chu": "Khai báo dựng thư viện từ bản vẽ mẫu 'Test Layout noi that CH.dwg' (dùng với scripts/tao_thu_vien.py).",
+ "thiet_bi": [
+  {
+   "ma": "LT-DL-D90",
+   "ten": "Đèn downlight LED âm trần D90",
+   "tien_to": "CT1-T(3-21)-Xref Tran$0$",
+   "block_nguon": "XREF.TRAN P5$0$E1",
+   "ti_le": 1.0,
+   "layer": "A-Den",
+   "them_vong_phu": false
+  },
+  {
+   "ma": "LT-DL-WC-D90",
+   "ten": "Đèn downlight LED âm trần WC D90",
+   "tien_to": "",
+   "block_nguon": "AV_DenDowlight WC - DenDowlight AmTran-5881544-MB TRẦN 01 02",
+   "ti_le": 1.0,
+   "layer": "A-Den",
+   "them_vong_phu": false
+  },
+  {
+   "ma": "LT-MIR-D65",
+   "ten": "Đèn rọi gương D65",
+   "tien_to": "CT1-T(3-21)-Xref Tran$0$",
+   "block_nguon": "Đèn rọi gương",
+   "ti_le": 1.0,
+   "layer": "A-Den",
+   "them_vong_phu": false
+  },
+  {
+   "ma": "LT-PEND",
+   "ten": "Đầu chờ đèn thả (P. khách, P. ăn)",
+   "tien_to": "CT1-T(3-21)-Xref Tran$0$",
+   "block_nguon": "XREF.TRAN P5$0$$0$DEN BAN AN",
+   "ti_le": 40.0,
+   "layer": "A-Den",
+   "them_vong_phu": false
+  },
+  {
+   "ma": "LT-OUT",
+   "ten": "Đèn ốp trần ngoài nhà (lô gia)",
+   "tien_to": "CT1-T(3-21)-Xref Tran$0$",
+   "block_nguon": "XREF.TRAN P5$0$$0$dl04",
+   "ti_le": 1.875,
+   "layer": "A-Den",
+   "them_vong_phu": false
+  },
+  {
+   "ma": "FA-SMOKE",
+   "ten": "Đầu báo khói địa chỉ",
+   "tien_to": "CT1-T(3-21)-Xref Tran$0$",
+   "block_nguon": "ĐẦU BÁO KHÓI ĐỊA CHỈ",
+   "ti_le": 1.0,
+   "layer": "A-Thiet bi PCCC",
+   "them_vong_phu": false
+  },
+  {
+   "ma": "FA-HEAT",
+   "ten": "Đầu báo nhiệt cố định địa chỉ",
+   "tien_to": "CT1-T(3-21)-Xref Tran$0$",
+   "block_nguon": "ĐẦU BÁO NHIỆT CỐ ĐỊNH ĐỊA CHỈ",
+   "ti_le": 1.0,
+   "layer": "A-Thiet bi PCCC",
+   "them_vong_phu": false
+  },
+  {
+   "ma": "SP-D15-68",
+   "ten": "Đầu phun sprinkler quay xuống D15, 68°C, K=5,6 US",
+   "tien_to": "CT1-T(3-21)-Xref Tran$0$",
+   "block_nguon": "Sprinkler quay xuống D15",
+   "ti_le": 1.0,
+   "layer": "A-Thiet bi PCCC",
+   "them_vong_phu": false
+  },
+  {
+   "ma": "SP-D15-93",
+   "ten": "Đầu phun sprinkler quay xuống D15, 93°C, K=5,6 US",
+   "tien_to": "CT1-T(3-21)-Xref Tran$0$",
+   "block_nguon": "Sprinkler quay xuống D15 93 độ C",
+   "ti_le": 1.0,
+   "layer": "A-Thiet bi PCCC",
+   "them_vong_phu": true
+  },
+  {
+   "ma": "HV-SAG-1200x150",
+   "ten": "Miệng gió cấp điều hòa 150x1200",
+   "tien_to": "CT1-T(3-21)-Xref Tran$0$",
+   "block_nguon": "SAG 1200x200",
+   "ti_le": 1.0,
+   "layer": "A-HVAC",
+   "them_vong_phu": false
+  },
+  {
+   "ma": "HV-RAG-1200x150",
+   "ten": "Miệng gió hồi điều hòa 150x1200",
+   "tien_to": "CT1-T(3-21)-Xref Tran$0$",
+   "block_nguon": "RAG 1200x200",
+   "ti_le": 1.0,
+   "layer": "A-HVAC",
+   "them_vong_phu": false
+  },
+  {
+   "ma": "HV-FAG-300",
+   "ten": "Cửa cấp gió tươi 300x300",
+   "tien_to": "",
+   "block_nguon": "SAG 300x300",
+   "ti_le": 1.0,
+   "layer": "A-HVAC",
+   "them_vong_phu": false
+  },
+  {
+   "ma": "HV-EAG-200",
+   "ten": "Quạt hút mùi 200x200",
+   "tien_to": "CT1-T(3-21)-Xref Tran$0$",
+   "block_nguon": "EAG+OBD 200x200",
+   "ti_le": 1.0,
+   "layer": "A-HVAC1",
+   "them_vong_phu": false
+  },
+  {
+   "ma": "AC-AP-600",
+   "ten": "Lỗ thăm trần 600x600",
+   "tien_to": "CT1-T(3-21)-Xref Tran$0$",
+   "block_nguon": "XREF.TRAN P5$0$$0$A$C456554A7",
+   "ti_le": 1.0,
+   "layer": "A-Hoan thien tran",
+   "them_vong_phu": false
+  }
+ ],
+ "mau_layer": {
+  "A-HVAC": 2,
+  "A-Thiet bi PCCC": 1,
+  "A-Hoan thien tran": 8,
+  "A-Den": 150,
+  "A-HVAC1": 2
+ }
+}

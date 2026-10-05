@@ -50,9 +50,10 @@ def norm(s):
 
 
 def layer_goc(name):
-    """Ten layer sau khi bo tien to xref/bind: 'CH06|A-Vua trat' va '$0$A-Vua trat' deu thanh 'a-vua trat'."""
+    """Ten layer sau khi bo tien to xref/bind: 'CH06|A-Vua trat', '$0$A-Vua trat' va 'CH03$0$A-Vua trat'
+    (xref da bind) deu thanh 'a-vua trat'."""
     s = (name or "").split("|")[-1]
-    s = re.sub(r"^(\$\d+\$)+", "", s)
+    s = re.split(r"\$\d+\$", s)[-1]
     return norm(s)
 
 
@@ -218,7 +219,7 @@ def _doan_cua(entities):
         if t == "LINE":
             out.append(((e.dxf.start.x, e.dxf.start.y), (e.dxf.end.x, e.dxf.end.y)))
         elif t == "LWPOLYLINE":
-            pts = [(p[0], p[1]) for p in e.get_points("xy")]
+            pts = [(v.x, v.y) for v in e.vertices_in_wcs()]     # WCS: cua chen lat guong co extrusion (0,0,-1)
             if e.closed and len(pts) > 2:
                 pts.append(pts[0])
             out += [(pts[i], pts[i + 1]) for i in range(len(pts) - 1) if math.dist(pts[i], pts[i + 1]) > 0.5]

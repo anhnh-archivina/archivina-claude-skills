@@ -1,0 +1,46 @@
+{
+  "_ghi_chu": "Cấu hình soát trần căn hộ Archivina. Sửa ở đây khi dự án dùng tên block/layer khác. Tên block so khớp sau khi bỏ tiền tố xref đã bind (phần sau '$0$' cuối cùng) và bỏ dấu, không phân biệt hoa thường; dùng ký tự đại diện * ?.",
+  "nguong": {
+    "den_kc_toi_thieu": 1200,
+    "den_cach_tuong_toi_thieu": 500,
+    "den_cach_tuong_uu_tien": 600,
+    "lech_truc_cho_phep": 50,
+    "den_tha_lech_toi_da": 100,
+    "vung_goi_sau": 700,
+    "dau_bao_cach_gio_cap": 1000,
+    "dong_ranh_gan_dung": 250,
+    "dong_ranh_gan_dung_cac_buoc": [250, 500, 800, 1300],
+    "dt_phong_gan_dung_toi_da": 60,
+    "vung_tranh_quanh_thiet_bi": 300
+  },
+  "_nguong_chua_chot": ["dau_bao_cach_gio_cap: Archivina chưa chốt; báo COORDINATION WARNING kèm khoảng cách đo, cần tư vấn PCCC xác nhận"],
+  "layer_ranh": ["A-Vua trat", "A-Wall", "A-Column", "A-Line", "A-Lancan", "S-Wall", "A_Wall BT"],
+  "layer_cua": ["A-Door", "A-Window", "A-Glaz", "A-Cửa", "A-Cua", "A-Opening", "A-Window-G", "玻璃层"],
+  "layer_ten_phong": "A-Text",
+  "layer_thiet_bi": ["A-Den", "A-Thiet bi PCCC", "A-HVAC", "A-HVAC1", "A-HVAC2", "A-Hoan thien tran", "A-PCCC"],
+  "layer_loi": "A-Tran-Loi",
+  "hau_to_layer_de_xuat": "-DX",
+  "loai_phong": [
+    ["wc", "\\b(wc|ve sinh|tam|toilet|bath)\\b"],
+    ["ngu", "phong ngu|\\bngu\\b|bedroom|master"],
+    ["bep", "\\bbep\\b|kitchen"],
+    ["an", "phong an|\\ban\\b|dining"],
+    ["khach", "khach|living"],
+    ["da_nang", "da nang|multi"],
+    ["logia", "lo ?gia|ban cong|loggia|balcony"],
+    ["hanh_lang", "hanh lang|sanh|loi vao|corridor|entrance"]
+  ],
+  "nhan_can_ho": "^ch\\s*\\d+[a-z]?$",
+  "noi_that": {
+    "tu_ao": {"ten": ["*tu ao*", "*wardrobe*", "*closet*"], "con_moc_ao": ["*衣架*", "*hanger*", "*moc ao*", "*mac ao*"], "so_moc_ao_toi_thieu": 6},
+    "giuong": {"ten": ["*giuong*", "*bed*", "*床*"], "con_tab_dau_giuong": ["don *", "*tab dau giuong*", "*nightstand*", "*床头柜*"]},
+    "sofa": {"ten": ["*sofa*", "*沙发*", "*sopha*"]},
+    "ban_an": {"ten": ["*ban an*", "*餐桌*", "*dining*", "*taothem*"]},
+    "bon_cau": {"ten": ["*马桶*", "*bon cau*", "*toilet*", "*xi bet*", "*bet *"]},
+    "chau_rua": {"ten": ["*chaurua*", "*chau rua*", "*lavabo*", "*basin*", "*台盆*", "*洗手*"]},
+    "guong": {"ten": ["*tuguong*", "*tu guong*", "*guong*", "*mirror*"]},
+    "sen_tam": {"ten": ["sen*", "*shower*", "*淋浴*"]},
+    "vach_tam": {"ten": ["vk wc*", "*vach kinh*", "*shower screen*"]},
+    "bep_nau": {"ten": ["*bep gas*", "*3d gas*", "*hob*", "*灶*", "*bep tu*"]}
+  }
+}

@@ -4,3 +4,5 @@ __pycache__/
 *.dxf
 *.bak
 *.skill
+# thu vien block thiet bi tran (DWG 1:1) can di kem skill
+!skills/*/assets/**/*.dwg

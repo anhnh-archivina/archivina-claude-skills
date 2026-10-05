@@ -13,6 +13,7 @@ Không sửa file DWG gốc, không đụng các bản vẽ đang mở trong Aut
 | `ve_vao_ban_sao` | Chạy .scr trên bản sao, lưu DWG **mới** (từ chối ghi đè/trùng gốc) | DWG mới |
 | `kiem_tra_nhan` | Mọi nhãn diện tích khớp polyline chứa nó | Không |
 | `chay_script_tren_ban_sao` | Chạy script/LISP tùy ý trên bản sao tạm; `{OUT}` = thư mục trả kết quả | Tùy chọn DWG mới |
+| `soat_tran` | Soát mặt bằng thiết bị trần từ DXF (skill `thiet-ke-tran-ch`; biến `TRAN_CH_SCRIPTS` nếu skill không ở `~\.claude\skills`) | .xlsx, .png, .scr |
 
 ## Cài đặt (đã làm trên máy này, phạm vi user)
 ```

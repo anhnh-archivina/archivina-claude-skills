@@ -304,6 +304,30 @@ def kiem_tra_nhan(duong_dan_dxf: str, layer_phong: str = "A- Dien tich phong",
     return _py("kiem_tra_nhan.py", [dxf, "--layer-phong", layer_phong, "--layer-can", layer_can])
 
 
+TRAN_SCRIPTS = os.environ.get("TRAN_CH_SCRIPTS",
+                              os.path.join(os.path.expanduser("~"), ".claude", "skills", "thiet-ke-tran-ch", "scripts"))
+
+
+@mcp.tool()
+def soat_tran(duong_dan_dxf: str, thu_muc_ra: str = "", du_an: str = "", tuy_chon: list[str] | None = None) -> dict:
+    """Soát mặt bằng thiết bị trần căn hộ (skill thiet-ke-tran-ch, soat_tran.py) từ DXF đã xuất bằng xuat_dxf:
+    nhận diện phòng, tủ áo, giường, thiết bị vệ sinh và thiết bị trần; kiểm tra đèn ≥1200 mm / cách tường ≥500 mm,
+    tủ áo, vùng gối, trục WC, đèn thả, chồng lấn, PCCC; trả về JSON + BaoCaoSoatTran.xlsx, ảnh từng căn và
+    ve_de_xuat_tran.scr (vẽ đề xuất vào bản sao: đọc nội dung file rồi gọi chay_script_tren_ban_sao)."""
+    dxf = _can_file(duong_dan_dxf, ".dxf")
+    args = [dxf, "--out-dir", _thu_muc_ra(thu_muc_ra)] + (["--du-an", du_an] if du_an else []) + list(tuy_chon or [])
+    env_dir = SKILL_SCRIPTS
+    r = subprocess.run([PY, os.path.join(TRAN_SCRIPTS, "soat_tran.py"), *args], capture_output=True, timeout=3600,
+                       env=dict(os.environ, PYTHONUTF8="1", DIEN_TICH_CH_SCRIPTS=env_dir))
+    out = r.stdout.decode("utf-8", "ignore").strip()
+    err = "\n".join(l for l in r.stderr.decode("utf-8", "ignore").splitlines() if "copy process ignored" not in l)
+    try:
+        data = json.loads(out.lstrip("﻿"))
+    except json.JSONDecodeError:
+        data = out
+    return dict(ma_thoat=r.returncode, ket_qua=data, loi=err[-3000:] or None)
+
+
 @mcp.tool()
 def chay_script_tren_ban_sao(duong_dan_dwg: str, noi_dung_scr: str, dwg_ket_qua: str = "") -> dict:
     """Chạy một script AutoCAD (.scr, có thể chứa LISP dán trực tiếp) trên BẢN SAO tạm của DWG.
