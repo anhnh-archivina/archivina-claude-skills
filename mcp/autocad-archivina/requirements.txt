@@ -3,3 +3,4 @@ ezdxf
 shapely
 openpyxl
 matplotlib
+pywin32

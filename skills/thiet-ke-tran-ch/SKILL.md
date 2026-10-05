@@ -1,6 +1,6 @@
 ---
 name: thiet-ke-tran-ch
-description: 'Tran CH – Soát và đề xuất bố trí thiết bị trần (mặt bằng trần phản chiếu, RCP) căn hộ Archivina từ bản vẽ AutoCAD/AutoCAD Architecture: nhận diện phòng, tủ áo, giường, bàn ăn, sofa, thiết bị vệ sinh và thiết bị trần (đèn downlight D90, đèn rọi gương, đèn thả, đèn lô gia, đầu báo khói/nhiệt, sprinkler 68/93 độ, miệng gió cấp/hồi 1200x150, gió tươi, quạt hút, lỗ thăm 600x600); kiểm tra đèn cách nhau ≥1200 mm, cách tường ≥500 mm (ưu tiên 600), không đặt thiết bị trong tủ áo, đèn không trên vùng gối, WC theo trục thiết bị vệ sinh, đèn thả theo tâm bàn ăn, ưu tiên PCCC; báo vị trí không phù hợp, đề xuất vị trí mới, vẽ vào BẢN SAO DWG và xuất Excel. Kèm thư viện block thiết bị trần tỷ lệ 1:1. Dùng skill này bất cứ khi nào người dùng đưa mặt bằng trần / mặt bằng bố trí thiết bị trần căn hộ và nhờ soát, kiểm tra, bố trí, đề xuất vị trí đèn, miệng gió, sprinkler, đầu báo, lỗ thăm, hoặc cần lấy block thiết bị trần chuẩn, kể cả khi họ không nhắc tên skill.'
+description: 'Tran CH – Soát và bố trí thiết bị trần (RCP) căn hộ Archivina từ bản vẽ AutoCAD/AutoCAD Architecture: nhận diện phòng, tủ áo, giường, bàn ăn, sofa, thiết bị vệ sinh và thiết bị trần (downlight D90, đèn rọi gương, đèn thả, đèn lô gia, đầu báo khói/nhiệt, loa báo cháy, sprinkler 68/93°C, miệng gió cấp/hồi/hút, quạt hút, lỗ thăm 600); kiểm tra đèn ≥1200 mm, cách tường ≥500 mm, tủ áo, vùng gối, trục WC, đèn thả theo tâm bàn ăn, ưu tiên PCCC; báo vị trí sai, đề xuất vị trí mới; BỐ TRÍ MỚI cho căn chưa có thiết bị theo nội thất; vẽ vào BẢN SAO DWG (chạy ngầm hoặc mở trong AutoCAD đang chạy qua COM), xuất Excel. Kèm thư viện block 1:1. Dùng khi người dùng đưa mặt bằng trần / mặt bằng căn hộ và nhờ soát, kiểm tra, bố trí, đề xuất vị trí đèn, miệng gió, sprinkler, đầu báo, lỗ thăm, hoặc cần block thiết bị trần chuẩn, kể cả khi không nhắc tên skill.'
 ---
 
 # Tran CH – Soát và đề xuất bố trí thiết bị trần căn hộ (Archivina)
@@ -35,6 +35,25 @@ Có MCP `autocad-archivina` thì dùng `xuat_dxf`, `chay_script_tren_ban_sao`; k
 4. **Hỏi người dùng** trước khi vẽ đề xuất nếu có phòng `TECHNICAL REVIEW REQUIRED`, phòng có ranh gần đúng ảnh hưởng kết luận, hoặc block chưa nhận diện (sheet `Block chua nhan dien`).
 5. **Vẽ đề xuất vào bản sao** (khi người dùng đồng ý): chạy `ve_de_xuat_tran.scr` trên bản sao bằng `ve_polyline_vao_dwg.ps1` (skill `dien-tich-ch`) hoặc MCP `chay_script_tren_ban_sao` (cuối script đã có `_.QSAVE`). Script chèn block từ `assets/thu-vien/<MÃ>.dwg` lên layer `<layer>-DX`, vẽ vòng tròn R250 + mã lỗi `Lxx` trên `A-Tran-Loi` và đường nối vị trí cũ → mới. Thiết bị cũ không bị xóa. Layer, vòng, chữ, đường nối tạo bằng LISP `entmake` (tên layer có dấu cách, text style chiều cao cố định, OSNAP không làm lệch script); đường dẫn thư viện không được có dấu cách (script tự dừng nếu có). Sau khi vẽ: xuất DXF bản sao và kiểm tra số đối tượng trên `A-Tran-Loi`, `*-DX`.
 6. **Báo cáo:** bảng theo phòng (trục, thiết bị, kiểm tra, cảnh báo, trạng thái) như mục 13 của quy tắc gốc; nêu rõ phần đã kiểm tra thực tế và phần chưa kiểm tra được (phòng không dựng được ranh, block chưa nhận diện, thiết bị PCCC chờ tư vấn).
+
+## Bố trí mới (căn chưa có thiết bị trần) – `bo_tri_tran.py`
+```powershell
+$env:PYTHONUTF8=1; & "<python>" "<skill>\scripts\bo_tri_tran.py" "<file.dxf>" --out-dir "<thư mục>" --du-an "<tên>" [--layer-ten A-Dimension]
+```
+Thứ tự (thiết bị cố định theo nội thất trước, thiết bị linh hoạt chèn vào khoảng trống sau):
+1. Đèn thả tại **tâm mặt bàn ăn** (tìm hình chữ nhật mặt bàn trong block cụm bàn + ghế + tủ). WC: đèn rọi gương trên trục gương/chậu, cách tường 330; quạt hút trên bồn cầu, cách tường sau 400; đèn WC trên trục bồn cầu (cách tường sau 950) và tâm vùng tắm.
+2. Điều hòa (P. khách/ăn): cặp miệng gió hồi/cấp 1200×150 trong ô chữ nhật lớn nhất của phòng, gió hồi cách tường 600 (ưu tiên phía trong căn), gió cấp song song cách 2200 (hoặc cách tường đối diện ≥ 600), tránh sofa; số cặp ≈ diện tích / 20 m². PN không có miệng gió trần (theo mẫu: điều hòa treo tường).
+3. Đèn: lô gia trên trục giữa (~1 đèn/3,7 m); lưới đèn chung ~1 đèn/3 m², cách tường/mặt tủ 600, khoảng cách mục tiêu 1500 (tối thiểu 1200), đối xứng trục giường, đầu giường coi như tường (cột đèn đầu tiên ngay sau vùng gối), phòng chữ L chia ô chữ nhật; bổ sung đèn dọc đường lùi 600 / trục giữa xen giữa miệng gió.
+4. PCCC (P1): sprinkler theo ô phủ (≤ 13,5 m²/đầu, ≤ 3600 mm giữa đầu, ≤ 1800 mm tới tường – số liệu bản vẽ mẫu), đặt vào chỗ trống trong ô; đầu gần bếp đổi 93°C. Đầu báo khói gần tâm phòng (PN, P. khách, đa năng), cách gió cấp ≥ 1000; đầu báo nhiệt cách bếp 800 (không ngay trên bếp); miệng gió hút bếp trên bếp nấu.
+5. Lỗ thăm 600: máy điều hòa âm trần (góc phòng cách tường 450, gần cụm gió hồi, ngoài sofa/bàn ăn); WC (góc xa vùng tắm).
+Thông số ở `cau_hinh_tran.json` → `bo_tri_moi`; **PCCC và điều hòa là phương án sơ bộ theo mẫu, không phải tính toán theo tiêu chuẩn** – báo rõ cho người dùng. Script tự soát lại phương án bằng bộ luật của skill (Excel `BaoCaoBoTriTran.xlsx`, ảnh `xem_bo_tri_*.png`), xuất `bo_tri_tran.json` (cho vẽ COM) và `ve_bo_tri_tran.scr` (vẽ bản sao chạy ngầm, đúng layer thiết bị, không hậu tố -DX).
+
+## Nối AutoCAD đang mở (COM) – `ve_com.py` / MCP
+- `ve_com.py ban-sao --ten-ban-ve "<tab>.dwg" --ra <file mới, không dấu cách>`: `-WBLOCK *` ghi bản vẽ đang mở (kể cả thay đổi chưa lưu) ra file mới; tab gốc không đổi đường dẫn, không bị lưu.
+- `ve_com.py ve --dwg <bản sao> --json bo_tri_tran.json --goc <file gốc>`: mở bản sao trong AutoCAD đang chạy, chèn block thư viện (tỷ lệ 1, đúng layer), một nhóm UNDO, lưu bản sao, để mở cho người dùng xem. Từ chối nếu trùng file gốc.
+- MCP `autocad-archivina`: `acad_dang_mo`, `ban_sao_tu_ban_ve_dang_mo`, `bo_tri_tran`, `ve_bo_tri_vao_ban_sao_mo`.
+- **Không vẽ thẳng vào bản vẽ gốc đang mở** nếu người dùng không yêu cầu rõ; mặc định: bản sao → mở bản sao. Hỏi trước khi vẽ.
+- Nhận diện bổ sung: tên **block động** (`*Uxx` → tên gốc qua `AcDbBlockRepBTag`), **bỏ phần tử ẩn** (trạng thái hiển thị của block động) khi tính hộp bao/ký hiệu/nét tường.
 
 ## Script kiểm tra những gì (soat_tran.py)
 | Kiểm tra | Mức |

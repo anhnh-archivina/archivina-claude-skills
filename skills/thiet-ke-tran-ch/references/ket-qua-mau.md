@@ -32,7 +32,18 @@ Mặt bằng cả tầng, nền + xref trần `CT1-T(3-21)-Xref Tran` đã bind,
 - 276 cảnh báo: CRITICAL 5, HARD-RULE 109 (chủ yếu đèn cách tường < 500, đèn < 1200), COORDINATION 42 (24 cặp thiết bị chèn trùng, 7 đầu báo gần gió cấp…), DESIGN 120; 117 đèn đề xuất, vẽ thử trên bản sao đạt (`CT1-T5A-10_de-xuat-tran.dwg`).
 - **Không soát:** ~810 thiết bị ở các cụm khác trong Model (y −97 … −264 m) là **mặt bằng căn hộ phóng to** – người dùng xác nhận không cần soát (05/10/2026). Skill cũng không dựng được phòng ở đó nên không lẫn vào báo cáo.
 
+## Ví dụ 3 – bố trí mới trên `Căn hộ mẫu Cần Thơ.dwg` đang mở (05/10/2026)
+Bản sao lấy từ tab đang mở bằng `-WBLOCK *` (tab gốc giữ nguyên, chưa lưu), tên phòng trên layer `A-Dimension`, nội thất là block động (`A-WC-Boncau`, `A-WC-Bonrua`, `A-WC-Vachkinhtam`, `Tam vuong cua mo trong`) và block có trạng thái hiển thị (`Ban an 4 ghe`, `sofa 1600`: 85–93% phần tử ẩn). Kết quả `H:\@AI Claude Test\03-Cong-Cu\05-Skill-Test\ket-qua-Tran-Can-Tho\` – DWG `Can-ho-mau-Can-Tho_bo-tri-tran.dwg` (mở trong AutoCAD qua COM, 46 block, một nhóm UNDO).
+- P. khách + Bếp 31 m²: 2 cặp gió cấp/hồi, 1 đèn thả (tâm mặt bàn), 8 đèn chung, 3 sprinkler 68°C + 1 sprinkler 93°C gần bếp, đầu báo khói, đầu báo nhiệt, miệng gió hút bếp, lỗ thăm máy điều hòa.
+- PN master / PN: mỗi phòng 4 đèn (trục giường, tránh vùng gối, tủ áo), 2 sprinkler, 1 đầu báo khói.
+- WC 1 / WC 2: đèn rọi gương, 2 đèn WC (trục bồn cầu, vùng tắm), quạt hút; lỗ thăm ở WC 1 (WC 2 không còn góc trống).
+- Lô gia 1, 2: mỗi lô gia 1 đèn ngoài nhà.
+- Tự soát lại: 0 CRITICAL / 0 HARD-RULE; 5 DESIGN (đèn WC lệch 1200/500 theo luật WC theo trục, ghi chú lỗ thăm WC 2).
+
 ## Lỗi đã sửa khi chạy mẫu (để không lặp lại)
+- Block có trạng thái hiển thị (block động): hộp bao gồm cả phần tử ẩn → nội thất lệch ra ngoài căn; nay bỏ phần tử `invisible`. Block động `*Uxx` đọc tên gốc qua `AcDbBlockRepBTag`.
+- Bàn ăn dạng cụm (bàn + ghế + tủ): tâm hộp bao ≠ tâm bàn → tìm mặt bàn (chữ nhật 600–1300 × 700–2600) từ nét LINE/LWPOLYLINE.
+- Lưới đèn: so khoảng cách có dung sai 1 mm (1499,2 mm từng làm mất lưới 2×2).
 - Mặt bằng tầng: `pair_rays` / `snap_bridges` (skill `dien-tich-ch`) duyệt mọi cặp (24.500 tia → hàng trăm triệu phép thử) → dùng STRtree, kết quả không đổi (hồi quy Cần Thơ 70,9 m² và 7 phòng giữ nguyên); mạng ô dựng theo từng cụm.
 - `_doan_cua` (skill `dien-tich-ch`) đọc đỉnh LWPOLYLINE theo OCS → cửa chèn lật gương (extrusion 0,0,−1) bị đảo dấu X, mất cửa sổ mặt dựng và nối nhầm phòng. Đã đổi sang `vertices_in_wcs()`.
 - Khép ranh gần đúng: union toàn bộ nét rồi buffer (12.000 đoạn khung cửa chi tiết) mất > 10 phút → nong từng đoạn rồi union, tính một lần (1,5 s).

@@ -62,6 +62,28 @@ def khop(name, patterns):
     return any(fnmatch.fnmatchcase(n, bo_dau(p)) for p in patterns)
 
 
+_TEN_DONG = {}
+
+
+def ten_that(e, doc):
+    """Ten block cua INSERT; block dong (ten vo danh '*Uxx') -> ten block goc qua XDATA AcDbBlockRepBTag."""
+    name = e.dxf.name or ""
+    if not name.upper().startswith("*U"):
+        return name
+    if name not in _TEN_DONG:
+        goc = name
+        try:
+            xd = doc.blocks.get(name).block_record.get_xdata("AcDbBlockRepBTag")
+            h = next((v for c, v in xd if c == 1005), None)
+            br = doc.entitydb.get(h) if h else None
+            if br is not None:
+                goc = br.dxf.name
+        except Exception:
+            pass
+        _TEN_DONG[name] = goc
+    return _TEN_DONG[name]
+
+
 def lop(e):
     return tpp.layer_goc(e.dxf.layer)
 
@@ -69,6 +91,8 @@ def lop(e):
 def phang(ents, depth=0):
     """Trai phang doi tuong long nhau (da bien doi toa do ve WCS)."""
     for e in ents:
+        if e.dxf.get("invisible", 0):            # phan tu an (trang thai hien thi cua block dong)
+            continue
         if e.dxftype() == "INSERT" and depth < 4:
             try:
                 yield from phang(e.virtual_entities(), depth + 1)
@@ -106,7 +130,7 @@ def bb_ins(e, doc):
     name = e.dxf.name
     if name not in _BB:
         try:
-            ext = bbox.extents(doc.blocks.get(name), fast=True)
+            ext = bbox.extents([x for x in doc.blocks.get(name) if not x.dxf.get("invisible", 0)], fast=True)
             _BB[name] = (ext.extmin, ext.extmax) if ext.has_data else None
         except Exception:
             _BB[name] = None
@@ -161,7 +185,7 @@ def doc_thiet_bi(msp, doc, nd, vung):
             ext_w, ext_h = bb.bounds[2] - bb.bounds[0], bb.bounds[3] - bb.bounds[1]
             if not bb.intersects(vung):
                 continue
-            c = nd.theo_ten(e.dxf.name)
+            c = nd.theo_ten(ten_that(e, doc))
             if c is None:
                 kids = con_insert(e.dxf.name)
                 if len(kids) == 1 and len(list(doc.blocks.get(e.dxf.name))) == 1:
@@ -223,13 +247,13 @@ def doc_noi_that(msp, doc, cfg, vung):
             kids = con(e.dxf.name)
             n_moc = sum(1 for k in kids if khop(k.dxf.name, nt["tu_ao"]["con_moc_ao"]))
             n_tab = sum(1 for k in kids if khop(k.dxf.name, nt["giuong"]["con_tab_dau_giuong"]))
-            loai = ten_loai(e.dxf.name)
+            loai = ten_loai(ten_that(e, doc))
             if n_moc >= nt["tu_ao"]["so_moc_ao_toi_thieu"]:
                 loai = "tu_ao"
             elif n_tab >= 2 and loai is None:
                 loai = "giuong"
             if loai and bb.area < 40e6:
-                rec = dict(loai=loai, ten=ten_goc(e.dxf.name), fp=bb, x=bb.centroid.x, y=bb.centroid.y, handle=e.dxf.handle,
+                rec = dict(loai=loai, ten=ten_goc(ten_that(e, doc)), fp=bb, x=bb.centroid.x, y=bb.centroid.y, handle=e.dxf.handle,
                            layer=e.dxf.layer)
                 if loai == "tu_ao":
                     moc = [m for m in e.virtual_entities() if m.dxftype() == "INSERT" and khop(m.dxf.name, nt["tu_ao"]["con_moc_ao"])]
@@ -253,6 +277,10 @@ def doc_noi_that(msp, doc, cfg, vung):
                         except Exception:
                             pass
                     rec.update(phan_tich_giuong(bb, tb, cfg["nguong"]["vung_goi_sau"]))
+                elif loai == "ban_an":
+                    mb = mat_ban(e, doc)
+                    if mb is not None:          # block cum (ban + ghe + tu/ke): tam = tam mat ban, khong phai tam hop bao
+                        rec.update(fp_cum=bb, fp=mb, x=mb.centroid.x, y=mb.centroid.y)
                 out.append(rec)
                 continue
             if depth < 3 and (ext_w > 2500 or ext_h > 2500):
@@ -263,6 +291,49 @@ def doc_noi_that(msp, doc, cfg, vung):
 
     duyet(msp, 0)
     return out
+
+
+def mat_ban(ins, doc):
+    """Mat ban an trong block (toa do block): hinh chu nhat tu 2 net ngang cung hoanh do + 2 net doc o hai dau
+    (hoac LWPOLYLINE kin 4 dinh), canh ngan 600-1300, canh dai 700-2600 mm; lay hinh lon nhat, bien doi ve WCS.
+    Ghe ve de len canh ban khong lam hong (khong dung polygonize)."""
+    blk = doc.blocks.get(ins.dxf.name)
+    if blk is None:
+        return None
+    H, V, R = [], [], []
+    for e in blk:
+        if e.dxf.get("invisible", 0):
+            continue
+        t = e.dxftype()
+        if t == "LINE":
+            (x0, y0), (x1, y1) = (e.dxf.start.x, e.dxf.start.y), (e.dxf.end.x, e.dxf.end.y)
+            if abs(y0 - y1) < 1:
+                H.append((min(x0, x1), max(x0, x1), y0))
+            elif abs(x0 - x1) < 1:
+                V.append((min(y0, y1), max(y0, y1), x0))
+        elif t == "LWPOLYLINE" and e.closed:
+            p = [(v[0], v[1]) for v in e.get_points("xy")]
+            if len(p) == 4:
+                R.append(box(min(a for a, _ in p), min(b for _, b in p), max(a for a, _ in p), max(b for _, b in p)))
+    for i, (a0, a1, ya) in enumerate(H):
+        for b0, b1, yb in H[i + 1:]:
+            if abs(a0 - b0) > 5 or abs(a1 - b1) > 5 or abs(ya - yb) < 1:
+                continue
+            lo, hi = sorted((ya, yb))
+            if any(abs(x - a0) < 5 and c0 <= lo + 5 and c1 >= hi - 5 for c0, c1, x in V) and \
+                    any(abs(x - a1) < 5 and c0 <= lo + 5 and c1 >= hi - 5 for c0, c1, x in V):
+                R.append(box(a0, lo, a1, hi))
+    hop = []
+    for r in R:
+        w, h = r.bounds[2] - r.bounds[0], r.bounds[3] - r.bounds[1]
+        if 600 <= min(w, h) <= 1300 and 700 <= max(w, h) <= 2600:
+            hop.append(r)
+    if not hop:
+        return None
+    r = max(hop, key=lambda g: g.area)
+    m = ins.matrix44()
+    pts = [m.transform((x, y, 0)) for x, y in list(r.exterior.coords)[:4]]
+    return box(min(p.x for p in pts), min(p.y for p in pts), max(p.x for p in pts), max(p.y for p in pts))
 
 
 def phan_tich_giuong(bb, tabs, sau_goi):
@@ -570,12 +641,12 @@ def bo_tri_lai_den(room, dens, cam, ng, giuong):
             h = min(tam - lo, hi - tam)
             if n == 1:
                 return [tam]
-            if h <= 0 or 2 * h / (n - 1) < s:
+            if h <= 0 or 2 * h / (n - 1) < s - 1:          # dung sai 1 mm (toa do so thuc)
                 return None
             return [tam - h + i * 2 * h / (n - 1) for i in range(n)]
         if n == 1:
             return [(lo + hi) / 2]
-        if (hi - lo) / (n - 1) < s:
+        if (hi - lo) / (n - 1) < s - 1:
             return None
         return [lo + i * (hi - lo) / (n - 1) for i in range(n)]
 

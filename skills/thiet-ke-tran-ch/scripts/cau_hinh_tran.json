@@ -34,16 +34,37 @@
     ["hanh_lang", "hanh lang|sanh|loi vao|corridor|entrance"]
   ],
   "nhan_can_ho": "^ch\\s*\\d+[a-z]?$",
+  "bo_tri_moi": {
+    "_ghi_chu": "Thông số BỐ TRÍ MỚI (bo_tri_tran.py), rút từ bản vẽ mẫu Archivina 'Test Layout noi that CH.dwg' (05/10/2026). Phần PCCC và điều hòa là PHƯƠNG ÁN SƠ BỘ theo mẫu, không phải tính toán theo tiêu chuẩn: bộ môn PCCC / HVAC phải kiểm tra và quyết định.",
+    "den_dt_moi_den": 3.0,
+    "den_kc_muc_tieu": 1500,
+    "phong_co_luoi_den": ["ngu", "khach", "an", "bep", "da_nang", "hanh_lang", "khac"],
+    "sprinkler_dt_toi_da": 13.5,
+    "sprinkler_cach_tuong_toi_da": 1800,
+    "sprinkler_kc_toi_da": 3600,
+    "phong_co_sprinkler": ["ngu", "khach", "an", "bep", "da_nang", "hanh_lang", "khac"],
+    "phong_co_dau_bao_khoi": ["ngu", "khach", "an", "da_nang"],
+    "dau_bao_nhiet_cach_bep": 800,
+    "gio_dt_moi_cap": 20,
+    "phong_co_gio_tran": ["khach", "an"],
+    "gio_hoi_cach_tuong": 600,
+    "gio_cap_cach_gio_hoi": 2200,
+    "lo_tham_cach_tuong": 450,
+    "den_guong_cach_tuong": 330,
+    "den_wc_cach_tuong_sau_bon_cau": 950,
+    "quat_hut_cach_tuong": 400,
+    "den_ngoai_kc": 3700
+  },
   "noi_that": {
     "tu_ao": {"ten": ["*tu ao*", "*wardrobe*", "*closet*"], "con_moc_ao": ["*衣架*", "*hanger*", "*moc ao*", "*mac ao*"], "so_moc_ao_toi_thieu": 6},
     "giuong": {"ten": ["*giuong*", "*bed*", "*床*"], "con_tab_dau_giuong": ["don *", "*tab dau giuong*", "*nightstand*", "*床头柜*"]},
     "sofa": {"ten": ["*sofa*", "*沙发*", "*sopha*"]},
     "ban_an": {"ten": ["*ban an*", "*餐桌*", "*dining*", "*taothem*"]},
-    "bon_cau": {"ten": ["*马桶*", "*bon cau*", "*toilet*", "*xi bet*", "*bet *"]},
-    "chau_rua": {"ten": ["*chaurua*", "*chau rua*", "*lavabo*", "*basin*", "*台盆*", "*洗手*"]},
+    "bon_cau": {"ten": ["*马桶*", "*bon cau*", "*boncau*", "*toilet*", "*xi bet*", "*bet *"]},
+    "chau_rua": {"ten": ["*chaurua*", "*chau rua*", "*bonrua*", "*bon rua*", "*lavabo*", "*basin*", "*台盆*", "*洗手*"]},
     "guong": {"ten": ["*tuguong*", "*tu guong*", "*guong*", "*mirror*"]},
-    "sen_tam": {"ten": ["sen*", "*shower*", "*淋浴*"]},
-    "vach_tam": {"ten": ["vk wc*", "*vach kinh*", "*shower screen*"]},
-    "bep_nau": {"ten": ["*bep gas*", "*3d gas*", "*hob*", "*灶*", "*bep tu*"]}
+    "sen_tam": {"ten": ["sen*", "*sentam*", "*sen tam*", "tam vuong*", "*cabin tam*", "*shower*", "*淋浴*"]},
+    "vach_tam": {"ten": ["vk wc*", "*vach kinh*", "*vachkinh*", "*shower screen*"]},
+    "bep_nau": {"ten": ["*bep gas*", "*3d gas*", "*hob*", "*灶*", "*bep tu*", "*ho nau*", "*bep dien*"]}
   }
 }

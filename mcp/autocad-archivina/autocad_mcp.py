@@ -328,6 +328,54 @@ def soat_tran(duong_dan_dxf: str, thu_muc_ra: str = "", du_an: str = "", tuy_cho
     return dict(ma_thoat=r.returncode, ket_qua=data, loi=err[-3000:] or None)
 
 
+def _tran_py(script, args, timeout=3600):
+    r = subprocess.run([PY, os.path.join(TRAN_SCRIPTS, script), *args], capture_output=True, timeout=timeout,
+                       env=dict(os.environ, PYTHONUTF8="1", DIEN_TICH_CH_SCRIPTS=SKILL_SCRIPTS))
+    out = r.stdout.decode("utf-8", "ignore").strip()
+    err = "\n".join(l for l in r.stderr.decode("utf-8", "ignore").splitlines() if "copy process ignored" not in l)
+    try:
+        data = json.loads(out.lstrip("﻿"))
+    except json.JSONDecodeError:
+        data = out
+    return dict(ma_thoat=r.returncode, ket_qua=data, loi=err[-3000:] or None)
+
+
+@mcp.tool()
+def bo_tri_tran(duong_dan_dxf: str, thu_muc_ra: str = "", du_an: str = "", layer_ten_phong: str = "") -> dict:
+    """BỐ TRÍ MỚI thiết bị trần cho căn hộ chưa có thiết bị (skill thiet-ke-tran-ch, bo_tri_tran.py) từ DXF bản sao:
+    đèn (lưới theo trục giường / bàn ăn, WC theo trục thiết bị vệ sinh, lô gia), miệng gió cấp/hồi, quạt hút, sprinkler,
+    đầu báo, lỗ thăm – thông số theo bản vẽ mẫu Archivina, PCCC/HVAC là phương án sơ bộ. Tự soát lại phương án.
+    Trả về JSON + BaoCaoBoTriTran.xlsx, ảnh, bo_tri_tran.json (dùng cho ve_bo_tri_vao_ban_sao_mo) và .scr (bản sao chạy ngầm)."""
+    dxf = _can_file(duong_dan_dxf, ".dxf")
+    args = [dxf, "--out-dir", _thu_muc_ra(thu_muc_ra)] + (["--du-an", du_an] if du_an else []) + \
+        (["--layer-ten", layer_ten_phong] if layer_ten_phong else [])
+    return _tran_py("bo_tri_tran.py", args)
+
+
+@mcp.tool()
+def acad_dang_mo() -> dict:
+    """Liệt kê bản vẽ đang mở trong AutoCAD / AutoCAD Architecture đang chạy (COM, chỉ đọc): tên, đường dẫn, đã lưu chưa."""
+    import win32com.client
+    app = win32com.client.GetActiveObject("AutoCAD.Application")
+    return dict(phien_ban=app.Version, ban_ve=[dict(ten=d.Name, duong_dan=d.FullName, da_luu=bool(d.Saved)) for d in app.Documents],
+                dang_hoat_dong=app.ActiveDocument.Name)
+
+
+@mcp.tool()
+def ban_sao_tu_ban_ve_dang_mo(ten_ban_ve: str, duong_dan_ra: str) -> dict:
+    """Ghi toàn bộ bản vẽ ĐANG MỞ (kể cả thay đổi chưa lưu) ra file DWG MỚI bằng -WBLOCK * qua COM. Tab đang mở giữ nguyên
+    đường dẫn, không bị lưu; FILEDIA đặt tạm 0 rồi trả lại. duong_dan_ra: file mới, không dấu cách (dòng lệnh AutoCAD)."""
+    return _tran_py("ve_com.py", ["ban-sao", "--ten-ban-ve", ten_ban_ve, "--ra", duong_dan_ra], timeout=600)
+
+
+@mcp.tool()
+def ve_bo_tri_vao_ban_sao_mo(duong_dan_dwg_ban_sao: str, file_json: str, file_goc: str = "") -> dict:
+    """Mở BẢN SAO trong AutoCAD đang chạy (COM) và chèn thiết bị theo bo_tri_tran.json (block thư viện 1:1, đúng layer),
+    gom một nhóm UNDO, lưu bản sao, để mở cho người dùng xem. Từ chối nếu trùng file_goc. Chỉ gọi khi người dùng đồng ý."""
+    args = ["ve", "--dwg", duong_dan_dwg_ban_sao, "--json", file_json] + (["--goc", file_goc] if file_goc else [])
+    return _tran_py("ve_com.py", args, timeout=600)
+
+
 @mcp.tool()
 def chay_script_tren_ban_sao(duong_dan_dwg: str, noi_dung_scr: str, dwg_ket_qua: str = "") -> dict:
     """Chạy một script AutoCAD (.scr, có thể chứa LISP dán trực tiếp) trên BẢN SAO tạm của DWG.

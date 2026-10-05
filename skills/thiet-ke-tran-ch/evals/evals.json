@@ -14,6 +14,12 @@
       "files": []
     },
     {
+      "id": 4,
+      "prompt": "Kết nối MCP với AutoCAD Architecture tôi đang mở, áp dụng skill thiết kế trần để bố trí các thiết bị trên trần căn hộ mẫu Cần Thơ đang mở",
+      "expected_output": "Liệt kê bản vẽ đang mở (COM, chỉ đọc), thấy file gốc có thay đổi chưa lưu → hỏi vẽ vào đâu và phạm vi thiết bị; lấy bản sao bằng -WBLOCK * (tab gốc không đổi); xuất DXF nổ ACA; bo_tri_tran.py --layer-ten A-Dimension: 7 phòng, đèn thả ở tâm mặt bàn, PN 4 đèn theo trục giường tránh vùng gối/tủ áo, P. khách 2 cặp gió + lưới đèn, WC đèn gương/quạt hút/đèn theo trục, sprinkler/đầu báo sơ bộ; ve_com.py ve mở bản sao trong AutoCAD, chèn ~46 block 1:1 đúng layer, lưu bản sao; nói rõ PCCC/HVAC là sơ bộ; không lưu/không sửa file gốc.",
+      "files": []
+    },
+    {
       "id": 2,
       "prompt": "Lấy cho tôi block đầu báo khói và miệng gió cấp 1200x150 chuẩn để chèn vào bản vẽ dự án mới.",
       "expected_output": "Chỉ ra assets/thu-vien/FA-SMOKE.dwg và HV-SAG-1200x150.dwg (tỷ lệ 1:1, chèn tỷ lệ 1, điểm chèn tâm, layer A-Thiet bi PCCC / A-HVAC), cách chèn -INSERT MÃ=đường dẫn; không tự sửa bản vẽ người dùng.",

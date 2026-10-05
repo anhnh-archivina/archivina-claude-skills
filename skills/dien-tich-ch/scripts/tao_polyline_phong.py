@@ -67,6 +67,8 @@ _BO_QUA = [BLOCK_BO_QUA]   # co the doi bang --block-bo-qua
 def walk(entities, depth=0, max_depth=3):
     """Duyet doi tuong Model, di sau vao block/xref (INSERT) da duoc ezdxf bien doi toa do ve he Model."""
     for e in entities:
+        if e.dxf.get("invisible", 0):            # phan tu an (trang thai hien thi cua block dong)
+            continue
         if e.dxftype() == "INSERT":
             if depth >= max_depth or (_BO_QUA[0] is not None and _BO_QUA[0].search(e.dxf.name or "")):
                 continue
