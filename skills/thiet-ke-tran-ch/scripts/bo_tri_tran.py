@@ -662,16 +662,18 @@ def bo_tri_phong(bt, r, nt_phong, can_poly, cua=()):
         lt = lo_tham_cua(P, cua, b.get("lo_tham_wc_cach_tuong", 50)) if cua else None
         if lt is not None:
             lo_wc = them("AC-AP-600", lt[0], lt[1], "lỗ thăm trên vị trí cánh cửa đi WC mở")
-        # gioi han so den WC (<= 6 m2: toi da 3, khong tinh D65): bo den vuong lo tham truoc, roi den gan D65 nhat
+        # gioi han so den WC (<= 6 m2: toi da 3, khong tinh D65): bo den GAN D65 NHAT truoc (D65 da chieu sang chau rua,
+        # nguoi dung chon 05/10/2026), khong co D65 thi bo den vuong lo tham truoc; den con vuong lo tham thi doi doc truc
         gh = st.gioi_han_den(loai, P.area / 1e6, ng)
         if gh and len(den_wc) > gh[0]:
             d65 = next(((d["x"], d["y"]) for d in moi if d["ma"] == "LT-MIR-D65"), None)
-            bo = sorted(den_wc, key=lambda d: (0 if lo_wc is not None and d["fp"].distance(lo_wc["fp"]) < khe else 1,
-                                               math.dist((d["x"], d["y"]), d65) if d65 else 0))[:len(den_wc) - gh[0]]
+            bo = sorted(den_wc, key=lambda d: (math.dist((d["x"], d["y"]), d65) if d65 else 0,
+                                               0 if lo_wc is not None and d["fp"].distance(lo_wc["fp"]) < khe else 1))
+            bo = bo[:len(den_wc) - gh[0]]
             for d in bo:
                 xoa(d)
                 den_wc.remove(d)
-            bt.note(r, f"Giới hạn {gh[2]}: tối đa {gh[0]} đèn {gh[1]} → bỏ {len(bo)} đèn (ưu tiên đèn vướng lỗ thăm / gần D65).")
+            bt.note(r, f"Giới hạn {gh[2]}: tối đa {gh[0]} đèn {gh[1]} → bỏ {len(bo)} đèn gần D65 nhất.")
         if lo_wc is not None:
             for d in den_wc:
                 if d["fp"].distance(lo_wc["fp"]) >= khe:
@@ -699,8 +701,10 @@ def bo_tri_phong(bt, r, nt_phong, can_poly, cua=()):
                     bt.note(r, "Đèn WC vướng lỗ thăm trên cánh cửa, không dời được dọc trục.")
         c = P0.centroid
         if wc_dai:
-            p = doc_truc("HV-EAG-200", (c.x, c.y), doans, 100)
-            ly = "hút mùi trên trục qua tim bồn cầu, gần tâm phòng"
+            # sat phia bon cau: diem tren truc gan tam bon cau nhat ma khong vuong den / lo tham (ho 100)
+            p0 = (bon_cau[0]["x"], bon_cau[0]["y"]) if bon_cau else (c.x, c.y)
+            p = doc_truc("HV-EAG-200", p0, doans, 100)
+            ly = "hút mùi trên trục qua tim bồn cầu, sát phía bồn cầu" if bon_cau else "hút mùi trên trục, gần tâm phòng"
         else:
             p = (c.x, c.y) if ho("HV-EAG-200", (c.x, c.y), 0, 100) else None
             ly = "hút mùi tại tâm phòng vệ sinh"
