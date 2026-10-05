@@ -6,7 +6,16 @@ Bộ skill Claude Code dùng nội bộ Archivina để kiểm soát hồ sơ b�
 |---|---|
 | [`dien-tich-ch`](skills/dien-tich-ch/SKILL.md) (Dien tich CH) | Dựng polyline thông thủy từng phòng và đường bo căn hộ từ mặt bằng AutoCAD (kể cả đối tượng AutoCAD Architecture), loại trừ hộp kỹ thuật/cột, ghi nhãn m² và `DTCH` theo polyline vừa vẽ, xuất Excel, kiểm tra nhãn trên bản sao DWG. |
 
-## Cài đặt
+## MCP server
+| Server | Mô tả |
+|---|---|
+| [`autocad-archivina`](mcp/autocad-archivina/README.md) | Nối Claude Code với AutoCAD / AutoCAD Architecture qua AutoCAD Core Console chạy ngầm trên bản sao: đọc thông tin DWG, xuất DXF (nổ đối tượng ACA), dựng polyline phòng/căn hộ, vẽ vào bản sao, kiểm tra nhãn, chạy LISP trên bản sao. Dùng skill `dien-tich-ch`. |
+
+Cài: `python -m pip install --user -r mcp/autocad-archivina/requirements.txt`, rồi
+`claude mcp add autocad-archivina --scope user -e PYTHONUTF8=1 -- "<python.exe>" "<đường dẫn>\autocad_mcp.py"`
+(skill `dien-tich-ch` phải nằm ở `%USERPROFILE%\.claude\skills\`, hoặc đặt biến `DIEN_TICH_CH_SCRIPTS`).
+
+## Cài đặt skill
 Chép thư mục skill vào thư mục skill của Claude Code:
 
 - Dùng cho mọi dự án: `%USERPROFILE%\.claude\skills\<tên-skill>\`
