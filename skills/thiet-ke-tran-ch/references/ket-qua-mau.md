@@ -25,7 +25,15 @@ Lần chạy cuối (cấu hình chốt 05/10/2026: `luat_luoi_den_wc = theo_tru
 
 Vẽ thử `ve_de_xuat_tran.scr` trên bản sao: 8 vòng + 8 nhãn trên `A-Tran-Loi`, 13 block LT-DL-D90 (Ø110, tỷ lệ 1) trên `A-Den-DX`, chữ tiếng Việt hiển thị đúng → `Test-Layout-CH_de-xuat-tran.dwg`.
 
+## Ví dụ 2 – mặt bằng tầng `CT1-Mat Bang Tang 5A-10 (test trần).dwg` (05/10/2026)
+Mặt bằng cả tầng, nền + xref trần `CT1-T(3-21)-Xref Tran` đã bind, **không có Text tên phòng, không có Text mã căn**; 719 AEC_WALL, 208 AEC_DOOR, 36 AEC_WINDOW (28 block chứa ACA đã nổ). Kết quả: `H:\@AI Claude Test\03-Cong-Cu\05-Skill-Test\ket-qua-Tran-CT1-T5A-10\`. Thời gian ~5–6 phút (dựng phòng ~4,5 phút).
+- 19 căn (`Căn n (xref CHxx…)`), 163 phòng suy theo nội thất (46 WC, 45 PN, 21 lô gia, 21 P. khách/ăn, 30 chưa đặt tên), 5 khu chung, 20 ranh gần đúng, 4 ô nghi gộp PN + P. khách.
+- 1.444 thiết bị trong các căn; 0 block chưa nhận diện.
+- 276 cảnh báo: CRITICAL 5, HARD-RULE 109 (chủ yếu đèn cách tường < 500, đèn < 1200), COORDINATION 42 (24 cặp thiết bị chèn trùng, 7 đầu báo gần gió cấp…), DESIGN 120; 117 đèn đề xuất, vẽ thử trên bản sao đạt (`CT1-T5A-10_de-xuat-tran.dwg`).
+- **Chưa soát:** ~810 thiết bị ở các cụm khác trong Model (y −97 … −264 m) – không dựng được phòng ở đó.
+
 ## Lỗi đã sửa khi chạy mẫu (để không lặp lại)
+- Mặt bằng tầng: `pair_rays` / `snap_bridges` (skill `dien-tich-ch`) duyệt mọi cặp (24.500 tia → hàng trăm triệu phép thử) → dùng STRtree, kết quả không đổi (hồi quy Cần Thơ 70,9 m² và 7 phòng giữ nguyên); mạng ô dựng theo từng cụm.
 - `_doan_cua` (skill `dien-tich-ch`) đọc đỉnh LWPOLYLINE theo OCS → cửa chèn lật gương (extrusion 0,0,−1) bị đảo dấu X, mất cửa sổ mặt dựng và nối nhầm phòng. Đã đổi sang `vertices_in_wcs()`.
 - Khép ranh gần đúng: union toàn bộ nét rồi buffer (12.000 đoạn khung cửa chi tiết) mất > 10 phút → nong từng đoạn rồi union, tính một lần (1,5 s).
 - Nhóm căn bằng nong ranh 400 mm làm dính hai căn qua tường chung → nối phòng qua cửa đi.

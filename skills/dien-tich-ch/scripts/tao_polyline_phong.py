@@ -142,9 +142,17 @@ def pair_rays(rays, gap_max, barrier=None):
 
     barrier: hinh hoc cac net ranh; doan dong cat qua net ranh (khong chi cham o hai dau) bi loai.
     """
+    # chi xet cap tia trong ban kinh gap_max (STRtree) - mat bang ca tang co hang chuc nghin tia, duyet het cap qua cham;
+    # thu tu duyet (i tang, j tang) va tieu chi ghep giu nguyen nen ket qua khong doi
+    if not rays:
+        return []
+    goc_tia = shapely.points([r[0] for r in rays])
+    cay = shapely.STRtree(goc_tia)
+    if barrier is not None:
+        shapely.prepare(barrier)
     cands = []
     for i, (p, d, _) in enumerate(rays):
-        for j in range(i + 1, len(rays)):
+        for j in sorted(int(k) for k in cay.query(goc_tia[i], predicate="dwithin", distance=gap_max) if k > i):
             q, e2, _ = rays[j]
             dist = math.dist(p, q)
             if dist < 0.5 or dist > gap_max:
@@ -173,7 +181,8 @@ def pair_rays(rays, gap_max, barrier=None):
         if k != "dau" or i in used:
             continue
         best = None
-        for j, (q, _e2, k2) in enumerate(rays):
+        for j in sorted(int(k) for k in cay.query(goc_tia[i], predicate="dwithin", distance=GAP_GOC)):
+            q, _e2, k2 = rays[j]
             if j == i or k2 != "dau":
                 continue
             dist = math.dist(p, q)
@@ -198,10 +207,12 @@ def snap_bridges(chains):
     segs = [LineString(pts + ([pts[0]] if closed else [])) for closed, pts in chains]
     out = []
     ends = [pts[0] for closed, pts in chains if not closed] + [pts[-1] for closed, pts in chains if not closed]
+    cay = shapely.STRtree(segs) if segs else None
     for p in ends:
         P = Point(p)
         best = None
-        for s in segs:
+        gan = sorted(int(k) for k in cay.query(P, predicate="dwithin", distance=SNAP)) if cay is not None else []
+        for s in (segs[k] for k in gan):
             d = s.distance(P)
             if 1e-6 < d <= SNAP and (best is None or d < best[0]):
                 a = s.interpolate(s.project(P))

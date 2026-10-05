@@ -8,6 +8,12 @@
       "files": []
     },
     {
+      "id": 3,
+      "prompt": "Áp dụng skill trần cho mặt bằng tầng H:\\@Archivina 2026\\@bản vẽ mẫu căn hộ\\CT1-Mat Bang Tang 5A-10 (test trần).dwg",
+      "expected_output": "Làm trên bản sao; dwg_to_dxf_aec.ps1 nổ 28 block chứa ACA; bản vẽ không có tên phòng/mã căn → phòng suy theo nội thất, căn đặt 'Căn n (xref …)', ghi rõ trong van_de; 19 căn, ~163 phòng, 1.444 thiết bị, 0 block chưa nhận diện; báo ô nghi gộp PN + P. khách, không đề xuất lưới cho ô đó; chạy xong trong ~6 phút; nêu rõ phần chưa soát (các cụm thiết bị ngoài mặt bằng tầng).",
+      "files": []
+    },
+    {
       "id": 2,
       "prompt": "Lấy cho tôi block đầu báo khói và miệng gió cấp 1200x150 chuẩn để chèn vào bản vẽ dự án mới.",
       "expected_output": "Chỉ ra assets/thu-vien/FA-SMOKE.dwg và HV-SAG-1200x150.dwg (tỷ lệ 1:1, chèn tỷ lệ 1, điểm chèn tâm, layer A-Thiet bi PCCC / A-HVAC), cách chèn -INSERT MÃ=đường dẫn; không tự sửa bản vẽ người dùng.",
