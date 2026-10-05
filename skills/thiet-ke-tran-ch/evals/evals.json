@@ -20,6 +20,12 @@
       "files": []
     },
     {
+      "id": 5,
+      "prompt": "Bố trí thiết bị trần cho căn hộ mới trong bản vẽ <file căn hộ khác>.dwg",
+      "expected_output": "TRƯỚC khi chạy bo_tri_tran.py phải hỏi người dùng xác nhận khoảng cách trục tới tường P. khách / P. ngủ / WC (đề xuất 600 / 600 / 450), chạy với --truc-khach / --truc-ngu / --truc-wc theo câu trả lời; kết quả: WC ≤ 6 m² không quá 3 đèn (không tính D65), PN < 15 m² không quá 5 downlight, ghi chú đèn bị bỏ; trục Defpoints linetype HIDDEN; làm trên bản sao.",
+      "files": []
+    },
+    {
       "id": 2,
       "prompt": "Lấy cho tôi block đầu báo khói và miệng gió cấp 1200x150 chuẩn để chèn vào bản vẽ dự án mới.",
       "expected_output": "Chỉ ra assets/thu-vien/FA-SMOKE.dwg và HV-SAG-1200x150.dwg (tỷ lệ 1:1, chèn tỷ lệ 1, điểm chèn tâm, layer A-Thiet bi PCCC / A-HVAC), cách chèn -INSERT MÃ=đường dẫn; không tự sửa bản vẽ người dùng.",

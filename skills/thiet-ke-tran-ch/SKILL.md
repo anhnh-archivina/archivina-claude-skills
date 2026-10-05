@@ -38,10 +38,16 @@ Có MCP `autocad-archivina` thì dùng `xuat_dxf`, `chay_script_tren_ban_sao`; k
 
 ## Bố trí mới (căn chưa có thiết bị trần) – `bo_tri_tran.py`
 ```powershell
-$env:PYTHONUTF8=1; & "<python>" "<skill>\scripts\bo_tri_tran.py" "<file.dxf>" --out-dir "<thư mục>" --du-an "<tên>" [--layer-ten A-Dimension]
+$env:PYTHONUTF8=1; & "<python>" "<skill>\scripts\bo_tri_tran.py" "<file.dxf>" --out-dir "<thư mục>" --truc-khach <mm> --truc-ngu <mm> --truc-wc <mm> --du-an "<tên>" [--layer-ten A-Dimension]
 ```
+**BẮT BUỘC trước khi chạy cho căn hộ mới (người dùng chốt 05/10/2026):** hỏi người dùng (AskUserQuestion) xác nhận **khoảng cách trục đặt thiết bị tới tường** của **P. khách** (kể cả ăn / bếp / phòng khác; mặc định đề xuất 600), **P. ngủ** (tới tường / mặt tủ áo; 600) và **WC** (WC vuông: hình chữ nhật trục cách mép trong tường; WC dài: đầu trục cách tường; 450). Chỉ chạy sau khi có câu trả lời, truyền bằng `--truc-khach / --truc-ngu / --truc-wc` (MCP `bo_tri_tran`: `truc_khach_mm`, `truc_ngu_mm`, `truc_wc_mm` bắt buộc). Giá trị > 500: phòng quá hẹp thì lùi 500; ghi rõ giá trị đã dùng trong báo cáo.
+
+**Giới hạn số đèn (người dùng chốt 05/10/2026)** – áp cho cả bố trí mới và soát (`nguong` trong `cau_hinh_tran.json`):
+- **WC ≤ 6 m²: tối đa 3 đèn** (không tính đèn D65 trên chậu rửa). Bố trí mới bỏ bớt: đèn vướng lỗ thăm trước, rồi đèn gần D65 nhất.
+- **Phòng ngủ < 15 m²: tối đa 5 downlight** (kể cả đèn tâm hốc). Bố trí mới bỏ đèn giữa cạnh trước, rồi đèn hốc; giữ 4 đèn góc.
+- Soát bản vẽ: vượt → **HARD-RULE WARNING** "Số lượng đèn vượt giới hạn".
 **Nguyên tắc TRỤC (người dùng chốt 05/10/2026, bản 3)** – đèn và thiết bị có tâm nằm trên trục; trục vẽ trên layer `Defpoints` (không in), **linetype `HIDDEN`** (tỉ lệ đối tượng để nét gạch ~150 mm, `net_truc_gach`):
-1. **Trục phòng thường** (P. khách / ăn / bếp, PN, đa năng, hành lang, phòng chưa rõ): **1 hình chữ nhật khép kín cách mép trong tường và mặt tủ (tủ bếp, tủ áo) 500–600 mọi hướng** (ưu tiên 600).
+1. **Trục phòng thường** (P. khách / ăn / bếp, PN, đa năng, hành lang, phòng chưa rõ): **1 hình chữ nhật khép kín cách mép trong tường và mặt tủ (tủ bếp, tủ áo) theo khoảng người dùng xác nhận** (mặc định 600, hẹp thì 500).
    - Hình chữ nhật **theo tường chính = cạnh dài nhất của phòng** (tường không song song nhau).
    - Là **hình chữ nhật lớn nhất nằm trong phòng đã trừ tủ** → tự **bỏ các hốc** (hốc vào PN, hốc bếp, sảnh căn). Bếp chung phòng khách: dải bếp hẹp là hốc, nằm ngoài hình chữ nhật.
    - Khối tủ bếp suy từ bếp nấu + chậu rửa trên cùng tường, sâu 600. Phòng quá hẹp: trục giữa.
@@ -69,6 +75,7 @@ Thông số ở `cau_hinh_tran.json` → `bo_tri_moi`; **PCCC và điều hòa l
 | Thiết bị trong vùng tủ áo (vùng = dải móc áo trong block tủ) | CONFLICT; PCCC → CRITICAL, TECHNICAL REVIEW REQUIRED |
 | Thiết bị chồng nhau | COORDINATION; dời thiết bị ưu tiên thấp hơn (P5 trước P1), tìm chỗ trống tránh thiết bị khác; không có chỗ → "Không tìm được vị trí thay thế". PCCC và đèn thả (theo tâm bàn ăn/sofa) giữ nguyên, chỉ báo phối hợp |
 | Hai block cùng mã trùng vị trí (< 50 mm) | COORDINATION "Thiết bị chèn trùng" – xóa bản trùng (OVERKILL) sau khi bộ môn xác nhận |
+| Số đèn vượt giới hạn: WC ≤ 6 m² > 3 đèn (không tính D65); PN < 15 m² > 5 downlight | HARD-RULE |
 | Phòng ngủ: đèn trên vùng gối (700 mm từ đầu giường), gió cấp gần vùng gối, lỗ thăm trên giường | DESIGN / COORDINATION |
 | WC: đèn rọi gương lệch trục gương > 50 mm; đèn không trùng trục chậu / bồn cầu / sen | DESIGN (đề xuất theo trục gương) |
 | WC: đèn downlight WC lệch 1200/500 (chốt 05/10/2026: `luat_luoi_den_wc = theo_truc`) | DESIGN, không đề xuất lưới lại; đổi `cung` để áp như đèn chung |

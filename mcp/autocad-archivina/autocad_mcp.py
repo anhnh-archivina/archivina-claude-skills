@@ -341,13 +341,17 @@ def _tran_py(script, args, timeout=3600):
 
 
 @mcp.tool()
-def bo_tri_tran(duong_dan_dxf: str, thu_muc_ra: str = "", du_an: str = "", layer_ten_phong: str = "") -> dict:
-    """BỐ TRÍ MỚI thiết bị trần cho căn hộ chưa có thiết bị (skill thiet-ke-tran-ch, bo_tri_tran.py) từ DXF bản sao:
-    đèn (lưới theo trục giường / bàn ăn, WC theo trục thiết bị vệ sinh, lô gia), miệng gió cấp/hồi, quạt hút, sprinkler,
-    đầu báo, lỗ thăm – thông số theo bản vẽ mẫu Archivina, PCCC/HVAC là phương án sơ bộ. Tự soát lại phương án.
-    Trả về JSON + BaoCaoBoTriTran.xlsx, ảnh, bo_tri_tran.json (dùng cho ve_bo_tri_vao_ban_sao_mo) và .scr (bản sao chạy ngầm)."""
+def bo_tri_tran(duong_dan_dxf: str, truc_khach_mm: float, truc_ngu_mm: float, truc_wc_mm: float,
+                thu_muc_ra: str = "", du_an: str = "", layer_ten_phong: str = "") -> dict:
+    """BỐ TRÍ MỚI thiết bị trần theo TRỤC cho căn hộ chưa có thiết bị (skill thiet-ke-tran-ch, bo_tri_tran.py) từ DXF bản
+    sao: trục hình chữ nhật cách tường, đèn, cửa gió, quạt hút, đầu báo, lỗ thăm – PCCC/HVAC là phương án sơ bộ.
+    BẮT BUỘC hỏi người dùng xác nhận trước khi gọi: khoảng cách trục tới tường P. khách (truc_khach_mm, mặc định đề xuất
+    600), P. ngủ (truc_ngu_mm, 600), WC (truc_wc_mm, 450). Giới hạn đèn: WC ≤ 6 m² tối đa 3 đèn (không tính D65),
+    PN < 15 m² tối đa 5 downlight. Trả về JSON + BaoCaoBoTriTran.xlsx, ảnh, bo_tri_tran.json (dùng cho
+    ve_bo_tri_vao_ban_sao_mo) và .scr (bản sao chạy ngầm)."""
     dxf = _can_file(duong_dan_dxf, ".dxf")
-    args = [dxf, "--out-dir", _thu_muc_ra(thu_muc_ra)] + (["--du-an", du_an] if du_an else []) + \
+    args = [dxf, "--out-dir", _thu_muc_ra(thu_muc_ra), "--truc-khach", str(truc_khach_mm), "--truc-ngu", str(truc_ngu_mm),
+            "--truc-wc", str(truc_wc_mm)] + (["--du-an", du_an] if du_an else []) + \
         (["--layer-ten", layer_ten_phong] if layer_ten_phong else [])
     return _tran_py("bo_tri_tran.py", args)
 

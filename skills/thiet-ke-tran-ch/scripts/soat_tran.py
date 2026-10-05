@@ -674,6 +674,15 @@ def bo_tri_lai_den(room, dens, cam, ng, giuong):
     return best[1] if best else []
 
 
+def gioi_han_den(loai, dt_m2, ng):
+    """(so den chung toi da, mo ta loai den, mo ta dieu kien) hoac None. WC: den chung WC (khong tinh D65 guong)."""
+    if "wc" in loai and dt_m2 <= ng.get("wc_dt_gioi_han_den", 6.0) + 1e-9:
+        return ng.get("wc_so_den_toi_da", 3), "WC (không tính D65 chậu rửa)", f"WC ≤ {ng.get('wc_dt_gioi_han_den', 6.0):g} m²"
+    if "ngu" in loai and dt_m2 < ng.get("pn_dt_gioi_han_den", 15.0):
+        return ng.get("pn_so_den_toi_da", 5), "downlight", f"phòng ngủ < {ng.get('pn_dt_gioi_han_den', 15.0):g} m²"
+    return None
+
+
 def soat(ds_phong, thiet_bi, noi_that, ng, so):
     de_xuat = []          # (thiet bi cu hoac None, ma, x, y, rot, ly do)
     phong_kq = []
@@ -754,6 +763,13 @@ def soat(ds_phong, thiet_bi, noi_that, ng, so):
                 so.them(r["can"], ten, a, muc_luoi, "Đèn cách tường", f"{a['ma']} cách tường {kt:.0f} mm < {ng['den_cach_tuong_toi_thieu']} mm.",
                         round(kt), ng["den_cach_tuong_toi_thieu"])
                 vp_den = vp_den or not wc_mem
+        # 2b) gioi han so den (nguoi dung chot 05/10/2026): WC <= 6 m2 toi da 3 den (khong tinh D65 guong);
+        #     phong ngu < 15 m2 toi da 5 downlight
+        gh = gioi_han_den(r["loai"], P.area / 1e6, ng)
+        if gh and len(dens) > gh[0]:
+            so.them(r["can"], ten, "", HARD, "Số lượng đèn vượt giới hạn",
+                    f"{len(dens)} đèn {gh[1]} > tối đa {gh[0]} ({gh[2]}, phòng {P.area / 1e6:.1f} m²): bỏ bớt đèn.",
+                    len(dens), gh[0])
         # 3) chong lan giua thiet bi
         for i, a in enumerate(tb):
             for b in tb[i + 1:]:

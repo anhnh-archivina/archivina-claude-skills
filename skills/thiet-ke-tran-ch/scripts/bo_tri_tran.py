@@ -23,7 +23,11 @@ WC: vuong -> hinh chu nhat truc cach mep trong tuong 450, DEN TAI 4 GOC, HUT MUI
 Lo gia: truc giua. Truc ve tren layer Defpoints, linetype HIDDEN. Sprinkler: tat theo cau hinh ("bo_tri_sprinkler").
 Thong so: cau_hinh_tran.json -> "bo_tri_moi". PCCC / dieu hoa la PHUONG AN SO BO.
 
-    python bo_tri_tran.py <file.dxf> --out-dir <thu muc> [--du-an ten] [--layer-ten A-Dimension]
+Gioi han den: WC <= 6 m2 toi da 3 den (khong tinh D65); PN < 15 m2 toi da 5 downlight (bo den giua canh / hoc truoc).
+
+    python bo_tri_tran.py <file.dxf> --out-dir <thu muc> --truc-khach 600 --truc-ngu 600 --truc-wc 450
+                          [--du-an ten] [--layer-ten A-Dimension]
+    (khoang cach truc toi tuong P. khach / P. ngu / WC: HOI NGUOI DUNG XAC NHAN truoc moi can moi)
 Xuat: bo_tri_tran.json (thiet bi + truc cho ve_com.py), BaoCaoBoTriTran.xlsx, xem_bo_tri_<can>.png, ve_bo_tri_tran.scr.
 """
 import argparse
@@ -344,6 +348,10 @@ def bo_tri_phong(bt, r, nt_phong, can_poly, cua=()):
     def trong(p, cach_tb=khe + R_DEN):
         return all(d["fp"].distance(Point(p)) >= cach_tb for d in moi)
 
+    def xoa(d):
+        moi.remove(d)
+        bt.ds.remove(d)
+
     def ho(ma, p, rot=0.0, cach=khe, bo=()):
         """Ky hieu `ma` dat tai p cach moi thiet bi da dat >= `cach` (mep - mep)."""
         fp = fp_ky_hieu(bt.cat[ma], p[0], p[1], rot)
@@ -399,10 +407,12 @@ def bo_tri_phong(bt, r, nt_phong, can_poly, cua=()):
         doans = doan_giua(U, 300)
     else:
         # 1 hinh chu nhat khep kin theo tuong chinh, lon nhat trong phong (bo hoc), lui 600 (khong du: 500)
+        # khoang lui theo loai phong (PN / phong khac) - nguoi dung xac nhan truoc moi can moi (--truc-khach / --truc-ngu)
+        offs = b.get("truc_cach_tuong_theo_phong", {}).get("ngu" if "ngu" in loai else "khach", b["truc_cach_tuong"])
         goc = goc_tuong_chinh(P0)
         R0 = hcn_lon_nhat(U, goc)
         if R0 is not None:
-            for o in b["truc_cach_tuong"]:
+            for o in offs:
                 R = R0.buffer(-o, join_style=2)
                 if R.is_empty:
                     continue
@@ -412,7 +422,7 @@ def bo_tri_phong(bt, r, nt_phong, can_poly, cua=()):
                     doans = [Doan(p, q) for p, q in zip(xy, xy[1:])]
                     break
             if not doans:
-                doans = doan_giua(R0, b["truc_cach_tuong"][1])
+                doans = doan_giua(R0, offs[-1])
             # phan phong ngoai hinh chu nhat (cat theo canh keo dai): sat khoi tu bep -> truc bep; con lai du lon -> hoc
             con = U.difference(R0)
             vung_bep = []
@@ -428,10 +438,10 @@ def bo_tri_phong(bt, r, nt_phong, can_poly, cua=()):
                     else:
                         hoc.append(g)
             if tu_bep is not None and (vung_bep or "bep" in loai and not loai & {"khach", "an"}):
-                doan_bep = truc_bep(U, kh_bep, b["truc_cach_tuong"][0])
+                doan_bep = truc_bep(U, kh_bep, offs[0])
                 doans += doan_bep
         if not doans:
-            doans = doan_giua(U, b["truc_cach_tuong"][1])
+            doans = doan_giua(U, offs[-1])
     if not doans:
         bt.note(r, "Phòng quá hẹp: không dựng được trục đặt đèn.")
         return moi
@@ -524,6 +534,18 @@ def bo_tri_phong(bt, r, nt_phong, can_poly, cua=()):
                        "giữ tại tâm hốc theo yêu cầu, ngoại lệ luật cách tường.")
     if not (wc or logia) and loai & set(b["phong_co_luoi_den"]) and not dens:
         bt.note(r, "Không đặt được đèn chung trên trục.")
+    # gioi han so den (PN < 15 m2: <= 5 downlight): bo den giua canh truoc, roi den hoc; giu 4 goc
+    gh = st.gioi_han_den(loai, P.area / 1e6, ng)
+    if gh and not wc:
+        ds_den = [d for d in moi if d["ma"] in DEN]
+        if len(ds_den) > gh[0]:
+            goc4 = {(round(p[0]), round(p[1])) for p in (hcn or [])}
+            bo = sorted(ds_den, key=lambda d: 2 if (round(d["x"]), round(d["y"])) in goc4 else 1 if "hốc" in d["ly_do"] else 0)
+            bo = bo[:len(ds_den) - gh[0]]
+            for d in bo:
+                xoa(d)
+            dens = [p for p in dens if not any(math.dist(p, (d["x"], d["y"])) < 1 for d in bo)]
+            bt.note(r, f"Giới hạn {gh[2]}: tối đa {gh[0]} {gh[1]} → bỏ {len(bo)} đèn (giữa cạnh / hốc), giữ đèn góc.")
     if logia:
         d = doans[0]
         n = max(1, round(d.L / b["den_ngoai_kc"]))
@@ -640,6 +662,17 @@ def bo_tri_phong(bt, r, nt_phong, can_poly, cua=()):
         lt = lo_tham_cua(P, cua, b.get("lo_tham_wc_cach_tuong", 50)) if cua else None
         if lt is not None:
             lo_wc = them("AC-AP-600", lt[0], lt[1], "lỗ thăm trên vị trí cánh cửa đi WC mở")
+        # gioi han so den WC (<= 6 m2: toi da 3, khong tinh D65): bo den vuong lo tham truoc, roi den gan D65 nhat
+        gh = st.gioi_han_den(loai, P.area / 1e6, ng)
+        if gh and len(den_wc) > gh[0]:
+            d65 = next(((d["x"], d["y"]) for d in moi if d["ma"] == "LT-MIR-D65"), None)
+            bo = sorted(den_wc, key=lambda d: (0 if lo_wc is not None and d["fp"].distance(lo_wc["fp"]) < khe else 1,
+                                               math.dist((d["x"], d["y"]), d65) if d65 else 0))[:len(den_wc) - gh[0]]
+            for d in bo:
+                xoa(d)
+                den_wc.remove(d)
+            bt.note(r, f"Giới hạn {gh[2]}: tối đa {gh[0]} đèn {gh[1]} → bỏ {len(bo)} đèn (ưu tiên đèn vướng lỗ thăm / gần D65).")
+        if lo_wc is not None:
             for d in den_wc:
                 if d["fp"].distance(lo_wc["fp"]) >= khe:
                     continue
@@ -804,11 +837,25 @@ def main():
     ap.add_argument("--cau-hinh", default=os.path.join(HERE, "cau_hinh_tran.json"))
     ap.add_argument("--catalog", default=os.path.join(SKILL, "assets", "thu-vien", "catalog.json"))
     ap.add_argument("--thu-vien", default=os.path.join(SKILL, "assets", "thu-vien"))
+    ap.add_argument("--truc-khach", type=float, default=None, help="truc cach tuong P. khach / an / bep / phong khac (mm)")
+    ap.add_argument("--truc-ngu", type=float, default=None, help="truc cach tuong / mat tu ao phong ngu (mm)")
+    ap.add_argument("--truc-wc", type=float, default=None, help="truc WC vuong cach mep trong tuong; WC dai: dau truc cach tuong (mm)")
     a = ap.parse_args()
     sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8")
     cfg = json.load(open(a.cau_hinh, encoding="utf-8"))
     if a.layer_ten:
         cfg["layer_ten_phong"] = a.layer_ten
+    # khoang lui truc nguoi dung xac nhan cho can nay: gia tri xac nhan truoc, khong du cho thi lui 500 (neu lon hon)
+    bm = cfg["bo_tri_moi"]
+    tp = bm.setdefault("truc_cach_tuong_theo_phong", {})
+    for k, v in (("khach", a.truc_khach), ("ngu", a.truc_ngu)):
+        if v is not None:
+            tp[k] = [v, 500.0] if v > 500 else [v]
+    if a.truc_wc is not None:
+        bm["truc_wc_vuong_cach_tuong"] = bm["den_wc_dai_cach_tuong"] = a.truc_wc
+    print("[truc cach tuong] khach %s, ngu %s, WC vuong %s, WC dai dau truc %s" % (
+        tp.get("khach", bm["truc_cach_tuong"]), tp.get("ngu", bm["truc_cach_tuong"]),
+        bm["truc_wc_vuong_cach_tuong"], bm["den_wc_dai_cach_tuong"]), file=sys.stderr)
     catalog = json.load(open(a.catalog, encoding="utf-8"))
     st.tpp._BO_QUA[0] = st.tpp.BLOCK_BO_QUA
     t0 = time.time()
