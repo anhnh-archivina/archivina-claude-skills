@@ -119,6 +119,24 @@
    "them_vong_phu": false
   },
   {
+   "ma": "HV-EXG-200",
+   "ten": "Miệng gió hút 200x200",
+   "tien_to": "CT1-T(3-21)-Xref Tran$0$",
+   "block_nguon": "3453",
+   "ti_le": 1.0,
+   "layer": "A-HVAC2",
+   "them_vong_phu": false
+  },
+  {
+   "ma": "FA-SPK",
+   "ten": "Loa (hệ báo cháy)",
+   "tien_to": "CT1-T(3-21)-Xref Tran$0$",
+   "block_nguon": "LOA",
+   "ti_le": 1.0,
+   "layer": "A-Den",
+   "them_vong_phu": false
+  },
+  {
    "ma": "AC-AP-600",
    "ten": "Lỗ thăm trần 600x600",
    "tien_to": "CT1-T(3-21)-Xref Tran$0$",
@@ -133,6 +151,7 @@
   "A-Thiet bi PCCC": 1,
   "A-Hoan thien tran": 8,
   "A-Den": 150,
-  "A-HVAC1": 2
+  "A-HVAC1": 2,
+  "A-HVAC2": 2
  }
 }

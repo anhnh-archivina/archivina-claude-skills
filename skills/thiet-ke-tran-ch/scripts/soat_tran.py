@@ -663,7 +663,7 @@ def soat(ds_phong, thiet_bi, noi_that, ng, so):
         # 8) dau bao gan gio cap
         caps = [d for d in tb if d["cat"]["nhom"] == "gio_cap"]
         for d in tb:
-            if d["cat"]["he_thong"] == "FIRE_ALARM" and caps:
+            if d["cat"]["nhom"] in ("dau_bao_khoi", "dau_bao_nhiet") and caps:
                 kc = min(c["fp"].distance(Point(d["x"], d["y"])) for c in caps)
                 if kc < ng["dau_bao_cach_gio_cap"]:
                     so.them(r["can"], ten, d, COORD, "Đầu báo gần miệng gió cấp",

@@ -12,10 +12,11 @@
     "dong_ranh_gan_dung_cac_buoc": [250, 500, 800, 1300],
     "dt_phong_gan_dung_toi_da": 60,
     "vung_tranh_quanh_thiet_bi": 300,
-    "luat_luoi_den_wc": "cung"
+    "luat_luoi_den_wc": "theo_truc"
   },
-  "_nguong_chua_chot": ["luat_luoi_den_wc: 'cung' = đèn WC áp 1200/500 như đèn chung (HARD-RULE, theo chữ quy tắc 6.3); 'theo_truc' = đèn WC theo trục thiết bị vệ sinh, vi phạm 1200/500 chỉ ghi DESIGN. Chờ người dùng chốt."],
-  "_nguong_da_chot": ["dau_bao_cach_gio_cap = 1000 mm (người dùng chốt 05/10/2026); vi phạm báo COORDINATION WARNING, đầu báo không tự dời"],
+  "_nguong_chua_chot": [],
+  "_nguong_da_chot": ["dau_bao_cach_gio_cap = 1000 mm (người dùng chốt 05/10/2026); vi phạm báo COORDINATION WARNING, đầu báo không tự dời",
+                      "luat_luoi_den_wc = 'theo_truc' (người dùng chốt 05/10/2026): đèn WC đặt theo trục chậu rửa / bồn cầu / sen; lệch 1200/500 chỉ ghi DESIGN, không đề xuất lưới lại. 'cung' = áp 1200/500 như đèn chung"],
   "layer_ranh": ["A-Vua trat", "A-Wall", "A-Column", "A-Line", "A-Lancan", "S-Wall", "A_Wall BT"],
   "layer_cua": ["A-Door", "A-Window", "A-Glaz", "A-Cửa", "A-Cua", "A-Opening", "A-Window-G", "玻璃层"],
   "layer_ten_phong": "A-Text",

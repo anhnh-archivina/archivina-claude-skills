@@ -19,6 +19,8 @@ Quy cách chung: **tỷ lệ 1:1 (mm), chèn tỷ lệ 1**, điểm chèn tại 
 | HV-RAG-1200x150 | Miệng gió hồi điều hòa 150×1200 | 1200×150 | A-HVAC | ĐHKK | P2 | `RAG 1200x200` |
 | HV-FAG-300 | Cửa cấp gió tươi 300×300 | 300×300 | A-HVAC | ĐHKK | P2 | `SAG 300x300` (chỉ có ở chú giải) |
 | HV-EAG-200 | Quạt hút mùi 200×200 | 200×200 | A-HVAC1 | Thông gió | P2 | `EAG+OBD 200x200` |
+| HV-EXG-200 | Miệng gió hút 200×200 | 200×200 | A-HVAC2 | Thông gió | P2 | `3453` (người dùng xác nhận 05/10/2026) |
+| FA-SPK | Loa hệ báo cháy | 134×125 | A-Den (theo bản vẽ mẫu) | Báo cháy | P1 | `LOA` (ký hiệu trên layer `lhp-fire equipment`) |
 | AC-AP-600 | Lỗ thăm trần 600×600 | 610×610 (panel 600) | A-Hoan thien tran | Bảo trì | P3 | block vô danh `A$C456554A7` |
 
 - **Vòng phủ R2000** của sprinkler nằm trong block nhưng trên layer riêng `A-PCCC-Phu` (màu 250, **không in**). Tắt/đóng băng layer này để ẩn. Skill **không** dùng vòng 2 m làm quy tắc thiết kế (quy tắc gốc, device_rules mục 10), chỉ để tham khảo khi kiểm tra.
@@ -26,7 +28,7 @@ Quy cách chung: **tỷ lệ 1:1 (mm), chèn tỷ lệ 1**, điểm chèn tại 
 - `Thu-vien-thiet-bi-tran.dwg`: bản tổng hợp mọi block trên đúng layer, có nhãn mã – tên – kích thước – layer (dùng làm palette / DesignCenter). `Thu-vien-thiet-bi-tran.png`: ảnh xem nhanh.
 - Chèn vào bản vẽ khác: `-INSERT <MÃ>=<đường dẫn>\<MÃ>.dwg`, tỷ lệ 1, đặt layer hiện hành là layer trong bảng.
 - `SVC-7654` (tròn Ø154, trên mặt bằng mẫu) = **đèn downlight WC** (người dùng xác nhận 05/10/2026): nhận diện là `LT-DL-WC-D90` qua bí danh; block thư viện vẫn lấy theo ký hiệu chú giải 150×150.
-- Block không đưa vào thư viện: `LOA` (loa, có trong khối trần nhưng không thuộc danh mục skill), `3453` (200×200 trên `A-HVAC2`) – chưa xác nhận loại thiết bị.
+- `LOA` = loa (người dùng xác nhận); ký hiệu vẽ trên layer `lhp-fire equipment` nên skill xếp vào hệ báo cháy (P1): không tự dời, chỉ báo phối hợp. `3453` = miệng gió hút (người dùng xác nhận). Cả hai đã thêm vào thư viện (16 block).
 
 ## 2. Dựng lại / bổ sung thư viện
 ```powershell

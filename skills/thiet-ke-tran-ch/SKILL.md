@@ -45,6 +45,7 @@ Có MCP `autocad-archivina` thì dùng `xuat_dxf`, `chay_script_tren_ban_sao`; k
 | Hai block cùng mã trùng vị trí (< 50 mm) | COORDINATION "Thiết bị chèn trùng" – xóa bản trùng (OVERKILL) sau khi bộ môn xác nhận |
 | Phòng ngủ: đèn trên vùng gối (700 mm từ đầu giường), gió cấp gần vùng gối, lỗ thăm trên giường | DESIGN / COORDINATION |
 | WC: đèn rọi gương lệch trục gương > 50 mm; đèn không trùng trục chậu / bồn cầu / sen | DESIGN (đề xuất theo trục gương) |
+| WC: đèn downlight WC lệch 1200/500 (chốt 05/10/2026: `luat_luoi_den_wc = theo_truc`) | DESIGN, không đề xuất lưới lại; đổi `cung` để áp như đèn chung |
 | Đèn thả lệch tâm bàn ăn / bộ sofa > 100 mm | DESIGN (đề xuất về tâm) |
 | Lỗ thăm ở 1/3 giữa phòng khách | DESIGN |
 | Đầu báo cách miệng gió cấp < 1000 mm (ngưỡng Archivina, chốt 05/10/2026) | COORDINATION, PCCC/HVAC phối hợp; không tự dời đầu báo |
@@ -59,7 +60,7 @@ Có MCP `autocad-archivina` thì dùng `xuat_dxf`, `chay_script_tren_ban_sao`; k
 - Dự án dùng tên block/layer khác: thêm bí danh vào catalog/cấu hình rồi chạy lại; không sửa code.
 
 ## Thư viện thiết bị trần
-`assets/thu-vien/`: 14 block `<MÃ>.dwg` + `Thu-vien-thiet-bi-tran.dwg` (bản tổng hợp có nhãn) + `catalog.json`. Tỷ lệ 1:1 mm, điểm chèn tại tâm, chèn tỷ lệ 1, đối tượng bên trong layer 0 (theo layer khi chèn). Dựng lại thư viện từ bản vẽ mẫu: `scripts/tao_thu_vien.py` (xem file tham chiếu).
+`assets/thu-vien/`: 16 block `<MÃ>.dwg` + `Thu-vien-thiet-bi-tran.dwg` (bản tổng hợp có nhãn) + `catalog.json`. Tỷ lệ 1:1 mm, điểm chèn tại tâm, chèn tỷ lệ 1, đối tượng bên trong layer 0 (theo layer khi chèn). Dựng lại thư viện từ bản vẽ mẫu: `scripts/tao_thu_vien.py` (xem file tham chiếu).
 
 ## Giới hạn
 - Không thay thiết kế PCCC/HVAC/chiếu sáng có tính toán; không kết luận tuân thủ quy chuẩn.
