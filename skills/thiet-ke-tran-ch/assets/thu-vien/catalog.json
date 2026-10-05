@@ -31,7 +31,7 @@
     {"ma": "HV-EXG-200", "ten": "Miệng gió hút 200x200", "layer": "A-HVAC2", "he_thong": "HVAC_EXHAUST", "uu_tien": "P2", "nhom": "gio_hut", "rong": 200, "cao": 200,
      "bi_danh": ["HV-EXG-200", "3453", "*mieng gio hut*"], "chu_ky": null, "block_goc": "CT1-T(3-21)-Xref Tran$0$3453 (người dùng xác nhận là miệng gió hút, 05/10/2026)"},
     {"ma": "FA-SPK", "ten": "Loa (hệ báo cháy)", "layer": "A-Den", "he_thong": "FIRE_ALARM", "uu_tien": "P1", "nhom": "loa", "rong": 134, "cao": 125,
-     "bi_danh": ["FA-SPK", "LOA", "*loa bao chay*", "*speaker*"], "chu_ky": null, "block_goc": "CT1-T(3-21)-Xref Tran$0$LOA (ký hiệu trên layer 'lhp-fire equipment'; bản vẽ mẫu chèn trên layer A-Den)"},
+     "bi_danh": ["FA-SPK", "LOA", "*loa bao chay*", "*speaker*"], "chu_ky": null, "block_goc": "CT1-T(3-21)-Xref Tran$0$LOA (loa báo cháy, người dùng xác nhận 05/10/2026; bản vẽ mẫu chèn trên layer A-Den)"},
     {"ma": "AC-AP-600", "ten": "Lỗ thăm trần 600x600", "layer": "A-Hoan thien tran", "he_thong": "ACCESS", "uu_tien": "P3", "nhom": "lo_tham", "rong": 610, "cao": 610,
      "bi_danh": ["AC-AP-600", "*lo tham*", "*access*panel*"], "chu_ky": {"layer": ["A-Hoan thien tran"], "rong": [580, 640], "cao": [580, 640]}, "block_goc": "XREF.TRAN P5$0$$0$A$C456554A7 (block vô danh, nhận diện theo layer + kích thước 600)"}
   ]

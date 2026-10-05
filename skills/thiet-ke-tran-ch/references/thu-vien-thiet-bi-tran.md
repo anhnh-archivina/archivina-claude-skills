@@ -28,7 +28,7 @@ Quy cách chung: **tỷ lệ 1:1 (mm), chèn tỷ lệ 1**, điểm chèn tại 
 - `Thu-vien-thiet-bi-tran.dwg`: bản tổng hợp mọi block trên đúng layer, có nhãn mã – tên – kích thước – layer (dùng làm palette / DesignCenter). `Thu-vien-thiet-bi-tran.png`: ảnh xem nhanh.
 - Chèn vào bản vẽ khác: `-INSERT <MÃ>=<đường dẫn>\<MÃ>.dwg`, tỷ lệ 1, đặt layer hiện hành là layer trong bảng.
 - `SVC-7654` (tròn Ø154, trên mặt bằng mẫu) = **đèn downlight WC** (người dùng xác nhận 05/10/2026): nhận diện là `LT-DL-WC-D90` qua bí danh; block thư viện vẫn lấy theo ký hiệu chú giải 150×150.
-- `LOA` = loa (người dùng xác nhận); ký hiệu vẽ trên layer `lhp-fire equipment` nên skill xếp vào hệ báo cháy (P1): không tự dời, chỉ báo phối hợp. `3453` = miệng gió hút (người dùng xác nhận). Cả hai đã thêm vào thư viện (16 block).
+- `LOA` = **loa báo cháy** (người dùng xác nhận 05/10/2026): hệ báo cháy P1, không tự dời, chỉ báo phối hợp. `3453` = miệng gió hút (người dùng xác nhận). Cả hai đã thêm vào thư viện (16 block).
 
 ## 2. Dựng lại / bổ sung thư viện
 ```powershell
