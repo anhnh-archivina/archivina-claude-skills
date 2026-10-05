@@ -47,7 +47,7 @@ Có MCP `autocad-archivina` thì dùng `xuat_dxf`, `chay_script_tren_ban_sao`; k
 | WC: đèn rọi gương lệch trục gương > 50 mm; đèn không trùng trục chậu / bồn cầu / sen | DESIGN (đề xuất theo trục gương) |
 | Đèn thả lệch tâm bàn ăn / bộ sofa > 100 mm | DESIGN (đề xuất về tâm) |
 | Lỗ thăm ở 1/3 giữa phòng khách | DESIGN |
-| Đầu báo cách miệng gió cấp < 1000 mm (ngưỡng tạm) | COORDINATION, cần PCCC xác nhận |
+| Đầu báo cách miệng gió cấp < 1000 mm (ngưỡng Archivina, chốt 05/10/2026) | COORDINATION, PCCC/HVAC phối hợp; không tự dời đầu báo |
 
 **Đề xuất lưới đèn:** vùng đặt = phòng lùi 600 mm (không được thì 500) trừ tủ áo và vùng tránh 300 mm quanh thiết bị khác; lưới nx × ny ≤ số đèn hiện có, khoảng cách ≥ 1200, đối xứng qua trục giường (phòng ngủ), bỏ điểm rơi vào vùng gối. Đây là **phương án tham khảo** cho kiến trúc sư chỉnh, không phải bố trí chiếu sáng có tính toán độ rọi.
 

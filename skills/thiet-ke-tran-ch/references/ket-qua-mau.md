@@ -5,11 +5,13 @@ Nguồn: `H:\@Archivina 2026\@bản vẽ mẫu căn hộ\Test Layout noi that CH
 ## Nhận diện
 - **Căn hộ:** CH02 (phía trên, 11 phòng: P. khách + bếp 61,1 m², 4 PN, 3 WC, đa năng, 2 lô gia) và CH01 (phía dưới, 9 phòng: P. khách + bếp 40,7 m², 3 PN, 3 WC, đa năng, lô gia đôi). Ranh hai căn ở tường y ≈ −16.300 (khớp nguồn xref: nội thất căn dưới thuộc `CH03$0$…`).
 - **Phòng:** 20/20 vùng tên phòng có ranh; 4 PN của CH02 nằm ở mặt dựng vẽ ngắt quãng → ranh gần đúng (khép khe 1,0 / 1,0 / 1,6 / 2,6 m).
-- **Thiết bị (159):** LT-DL-D90 74, SP-D15-68 29, FA-SMOKE 11, AC-AP-600 8, HV-EAG-200 7, HV-SAG 6, HV-RAG 6, LT-MIR-D65 6, LT-OUT 4, LT-PEND 4, FA-HEAT 2, SP-D15-93 2.
+- **Thiết bị (175):** LT-DL-D90 74, LT-DL-WC-D90 16 (block `SVC-7654`, người dùng xác nhận là đèn downlight WC; 3 bản chèn trùng), SP-D15-68 29, FA-SMOKE 11, AC-AP-600 8, HV-EAG-200 7, HV-SAG 6, HV-RAG 6, LT-MIR-D65 6, LT-OUT 4, LT-PEND 4, FA-HEAT 2, SP-D15-93 2.
 - **Nội thất:** giường 7, tủ áo 7, bồn cầu 6, tủ gương 6, sen 6, bàn ăn 6, vách tắm 3, chậu rửa 2, sofa 2, bếp 1.
-- **Block chưa nhận diện (19):** `SVC-7654` (Ø154, layer `A-Den` / `A-Hoan thien tran`, chủ yếu trong WC và hành lang), `LOA` (loa), `3453` (200×200 trên `A-HVAC2`) – chờ người dùng xác nhận loại.
+- **Block chưa nhận diện (3):** `LOA` (loa), `3453` (200×200 trên `A-HVAC2`) – chờ người dùng xác nhận loại.
 
-## Cảnh báo (16) và đề xuất (13 đèn mới)
+Sau khi nhận đèn WC (lần chạy cuối): 35 cảnh báo (CRITICAL 2, HARD-RULE 17, COORDINATION 7, DESIGN 9), 14 đèn đề xuất. Phần lớn HARD-RULE mới là đèn WC cách tường 416–495 mm / cách nhau 992–1130 mm – phụ thuộc lựa chọn `luat_luoi_den_wc` (chưa chốt). Bảng dưới là lần chạy trước khi nhận đèn WC.
+
+## Cảnh báo (16) và đề xuất (13 đèn mới) – trước khi nhận đèn WC
 | Căn – phòng | Nội dung | Mức |
 |---|---|---|
 | CH02 – PN 4, CH01 – PN 1 | Sprinkler SP-D15-68 nằm trên vùng tủ áo – không tự dời, cần tư vấn PCCC | CRITICAL |

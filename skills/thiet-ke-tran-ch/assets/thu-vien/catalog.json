@@ -5,7 +5,7 @@
     {"ma": "LT-DL-D90", "ten": "Đèn downlight LED âm trần D90", "layer": "A-Den", "he_thong": "LIGHTING", "uu_tien": "P5", "nhom": "den_chung", "rong": 110, "cao": 110,
      "bi_danh": ["LT-DL-D90", "E1", "*downlight*d90*", "*den dowlight led am tran d90*"], "chu_ky": null, "block_goc": "XREF.TRAN P5$0$E1"},
     {"ma": "LT-DL-WC-D90", "ten": "Đèn downlight LED âm trần WC D90", "layer": "A-Den", "he_thong": "LIGHTING", "uu_tien": "P5", "nhom": "den_chung", "rong": 150, "cao": 150,
-     "bi_danh": ["LT-DL-WC-D90", "AV_DenDowlight WC*", "*dowlight wc*"], "chu_ky": null, "block_goc": "AV_DenDowlight WC - DenDowlight AmTran-5881544-MB TRẦN 01 02"},
+     "bi_danh": ["LT-DL-WC-D90", "AV_DenDowlight WC*", "*dowlight wc*", "SVC-7654"], "chu_ky": null, "block_goc": "AV_DenDowlight WC - DenDowlight AmTran-5881544-MB TRẦN 01 02 (chú giải); trên mặt bằng mẫu đặt bằng block SVC-7654 Ø154 (người dùng xác nhận 05/10/2026)"},
     {"ma": "LT-MIR-D65", "ten": "Đèn rọi gương D65", "layer": "A-Den", "he_thong": "LIGHTING", "uu_tien": "P4", "nhom": "den_guong", "rong": 67.5, "cao": 67.5,
      "bi_danh": ["LT-MIR-D65", "den roi guong*", "*mirror*light*"], "chu_ky": null, "block_goc": "Đèn rọi gương"},
     {"ma": "LT-PEND", "ten": "Đầu chờ đèn thả (P. khách, P. ăn)", "layer": "A-Den", "he_thong": "LIGHTING", "uu_tien": "P5", "nhom": "den_tha", "rong": 502, "cao": 284.2,

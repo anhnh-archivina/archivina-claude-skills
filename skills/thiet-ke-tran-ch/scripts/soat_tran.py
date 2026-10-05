@@ -527,6 +527,16 @@ def soat(ds_phong, thiet_bi, noi_that, ng, so):
         tb = [d for d in thiet_bi if P.contains(Point(d["x"], d["y"]))]
         for d in tb:
             d["can"], d["phong"] = r["can"], r["ten"]
+        # block cung ma chen trung vi tri (< 50 mm): bao mot lan, bo ban trung khoi moi kiem tra/de xuat sau
+        trung = []
+        for i, a in enumerate(tb):
+            if a in trung:
+                continue
+            for b in tb[i + 1:]:
+                if b not in trung and a["ma"] == b["ma"] and math.dist((a["x"], a["y"]), (b["x"], b["y"])) < 50:
+                    trung.append(b)
+                    b["trung_voi"] = a["handle"]
+        tb = [d for d in tb if d not in trung]
         nt = [f for f in noi_that if P.buffer(200).contains(Point(f["x"], f["y"])) or P.intersection(f["fp"]).area > 0.5 * f["fp"].area]
         tu = [f for f in nt if f["loai"] == "tu_ao"]
         giuong = next((f for f in nt if f["loai"] == "giuong"), None)
@@ -545,6 +555,10 @@ def soat(ds_phong, thiet_bi, noi_that, ng, so):
             so.them(r["can"], ten, "", DESIGN, "Ranh phòng gần đúng",
                     f"Nền chưa khép kín phòng (mặt dựng/cửa sổ/vách kính vẽ ngắt quãng): ranh dựng gần đúng bằng cách khép khe hở "
                     f"≤ {2 * r['gan_dung'] / 1000:.1f} m; khoảng cách tới tường ở phía khe hở chỉ là ước lượng, cần kiểm tra lại.")
+        for b in trung:
+            so.them(r["can"], ten, b, COORD, "Thiết bị chèn trùng",
+                    f"Hai block {b['ma']} trùng vị trí (handle {b['trung_voi']} và {b['handle']}): xóa bản trùng "
+                    f"(OVERKILL) sau khi bộ môn xác nhận, kiểm tra lại số lượng trong bảng thống kê.")
         # 1) tu ao
         cam_tu = unary_union([f["fp"] for f in tu]) if tu else Polygon()
         for d in tb:
@@ -559,30 +573,28 @@ def soat(ds_phong, thiet_bi, noi_that, ng, so):
         # 2) den chung: khoang cach, cach tuong
         dens = [d for d in tb if d["cat"]["nhom"] == "den_chung"]
         vp_den = False
+        # WC: "cung" = ap 1200/500 nhu den chung (HARD); "theo_truc" = den WC theo truc thiet bi ve sinh, 1200/500 chi ghi DESIGN
+        wc_mem = "wc" in r["loai"] and ng.get("luat_luoi_den_wc", "cung") == "theo_truc"
+        muc_luoi = DESIGN if wc_mem else HARD
         for i, a in enumerate(dens):
             for b in dens[i + 1:]:
                 kc = math.dist((a["x"], a["y"]), (b["x"], b["y"]))
                 if kc < ng["den_kc_toi_thieu"] - 1:
-                    so.them(r["can"], ten, a, HARD, "Khoảng cách đèn",
+                    so.them(r["can"], ten, a, muc_luoi, "Khoảng cách đèn",
                             f"{a['ma']} cách {b['ma']} tại ({b['x']:.0f}, {b['y']:.0f}) {kc:.0f} mm < {ng['den_kc_toi_thieu']} mm.",
                             round(kc), ng["den_kc_toi_thieu"])
-                    vp_den = True
+                    vp_den = vp_den or not wc_mem
         for a in dens:
             kt = kc_tuong(P, a["x"], a["y"])
             if kt < ng["den_cach_tuong_toi_thieu"] - 1:
-                so.them(r["can"], ten, a, HARD, "Đèn cách tường", f"{a['ma']} cách tường {kt:.0f} mm < {ng['den_cach_tuong_toi_thieu']} mm.",
+                so.them(r["can"], ten, a, muc_luoi, "Đèn cách tường", f"{a['ma']} cách tường {kt:.0f} mm < {ng['den_cach_tuong_toi_thieu']} mm.",
                         round(kt), ng["den_cach_tuong_toi_thieu"])
-                vp_den = True
+                vp_den = vp_den or not wc_mem
         # 3) chong lan giua thiet bi
         for i, a in enumerate(tb):
             for b in tb[i + 1:]:
                 if a["fp"].intersects(b["fp"]) and a["fp"].intersection(b["fp"]).area > 1:
-                    if a["ma"] == b["ma"] and math.dist((a["x"], a["y"]), (b["x"], b["y"])) < 50:
-                        so.them(r["can"], ten, b, COORD, "Thiết bị chèn trùng",
-                                f"Hai block {a['ma']} trùng vị trí (handle {a['handle']} và {b['handle']}): xóa bản trùng "
-                                f"(OVERKILL) sau khi bộ môn xác nhận, kiểm tra lại số lượng trong bảng thống kê.")
-                        continue
-                    lo = a if a["cat"]["uu_tien"] > b["cat"]["uu_tien"] else b
+                    lo =a if a["cat"]["uu_tien"] > b["cat"]["uu_tien"] else b
                     hi = b if lo is a else a
                     giu = lo["cat"]["he_thong"] in PCCC or lo["cat"]["nhom"] == "den_tha"
                     so.them(r["can"], ten, lo, COORD, "Thiết bị chồng nhau",
@@ -655,7 +667,7 @@ def soat(ds_phong, thiet_bi, noi_that, ng, so):
                 kc = min(c["fp"].distance(Point(d["x"], d["y"])) for c in caps)
                 if kc < ng["dau_bao_cach_gio_cap"]:
                     so.them(r["can"], ten, d, COORD, "Đầu báo gần miệng gió cấp",
-                            f"Cách miệng gió cấp {kc:.0f} mm (ngưỡng tạm {ng['dau_bao_cach_gio_cap']} mm, chưa chốt): cần tư vấn PCCC/HVAC xác nhận.",
+                            f"Cách miệng gió cấp {kc:.0f} mm < {ng['dau_bao_cach_gio_cap']} mm (ngưỡng Archivina): cần PCCC/HVAC phối hợp dời miệng gió hoặc đầu báo.",
                             round(kc), ng["dau_bao_cach_gio_cap"])
         # ---- de xuat ---------------------------------------------------------------------------------------
         co_dinh = [d for d in tb if d["cat"]["nhom"] != "den_chung"]

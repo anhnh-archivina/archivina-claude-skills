@@ -25,7 +25,8 @@ Quy cách chung: **tỷ lệ 1:1 (mm), chèn tỷ lệ 1**, điểm chèn tại 
 - Tên block giữ nguyên mã, catalog ghi kèm tên gốc để tra ngược.
 - `Thu-vien-thiet-bi-tran.dwg`: bản tổng hợp mọi block trên đúng layer, có nhãn mã – tên – kích thước – layer (dùng làm palette / DesignCenter). `Thu-vien-thiet-bi-tran.png`: ảnh xem nhanh.
 - Chèn vào bản vẽ khác: `-INSERT <MÃ>=<đường dẫn>\<MÃ>.dwg`, tỷ lệ 1, đặt layer hiện hành là layer trong bảng.
-- Block không đưa vào thư viện: `LOA` (loa, có trong khối trần nhưng không thuộc danh mục skill), `SVC-7654` (đèn tròn Ø154 không có trong chú giải) – cần người dùng xác nhận loại thiết bị nếu muốn thêm.
+- `SVC-7654` (tròn Ø154, trên mặt bằng mẫu) = **đèn downlight WC** (người dùng xác nhận 05/10/2026): nhận diện là `LT-DL-WC-D90` qua bí danh; block thư viện vẫn lấy theo ký hiệu chú giải 150×150.
+- Block không đưa vào thư viện: `LOA` (loa, có trong khối trần nhưng không thuộc danh mục skill), `3453` (200×200 trên `A-HVAC2`) – chưa xác nhận loại thiết bị.
 
 ## 2. Dựng lại / bổ sung thư viện
 ```powershell

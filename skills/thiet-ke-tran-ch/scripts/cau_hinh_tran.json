@@ -11,9 +11,11 @@
     "dong_ranh_gan_dung": 250,
     "dong_ranh_gan_dung_cac_buoc": [250, 500, 800, 1300],
     "dt_phong_gan_dung_toi_da": 60,
-    "vung_tranh_quanh_thiet_bi": 300
+    "vung_tranh_quanh_thiet_bi": 300,
+    "luat_luoi_den_wc": "cung"
   },
-  "_nguong_chua_chot": ["dau_bao_cach_gio_cap: Archivina chưa chốt; báo COORDINATION WARNING kèm khoảng cách đo, cần tư vấn PCCC xác nhận"],
+  "_nguong_chua_chot": ["luat_luoi_den_wc: 'cung' = đèn WC áp 1200/500 như đèn chung (HARD-RULE, theo chữ quy tắc 6.3); 'theo_truc' = đèn WC theo trục thiết bị vệ sinh, vi phạm 1200/500 chỉ ghi DESIGN. Chờ người dùng chốt."],
+  "_nguong_da_chot": ["dau_bao_cach_gio_cap = 1000 mm (người dùng chốt 05/10/2026); vi phạm báo COORDINATION WARNING, đầu báo không tự dời"],
   "layer_ranh": ["A-Vua trat", "A-Wall", "A-Column", "A-Line", "A-Lancan", "S-Wall", "A_Wall BT"],
   "layer_cua": ["A-Door", "A-Window", "A-Glaz", "A-Cửa", "A-Cua", "A-Opening", "A-Window-G", "玻璃层"],
   "layer_ten_phong": "A-Text",
