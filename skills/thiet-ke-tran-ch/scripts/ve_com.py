@@ -5,7 +5,8 @@
   ban-sao  : ghi toan bo ban ve dang mo (ke ca thay doi chua luu) ra file MOI bang -WBLOCK * ; tab dang mo khong doi
              duong dan, khong bi luu. FILEDIA dat tam 0 roi tra lai gia tri cu.
   ve       : mo file DWG (ban sao) trong AutoCAD dang chay, chen thiet bi tu bo_tri_tran.json (block thu vien 1:1,
-             dung layer), gom trong 1 nhom UNDO, luu ban sao. Tu choi neu file la file dang mo khac / khong phai ban sao.
+             dung layer) va truc (layer Defpoints, linetype HIDDEN nap tu acad(iso).lin neu chua co, ti le doi tuong
+             de net gach ~150 mm), gom trong 1 nhom UNDO, luu ban sao. Tu choi neu file la file dang mo khac / khong phai ban sao.
 
     python ve_com.py ban-sao --ten-ban-ve "<ten tab .dwg>" --ra <duong dan .dwg moi, khong dau cach>
     python ve_com.py ve --dwg <ban sao .dwg> --json <bo_tri_tran.json> [--goc <duong dan file goc de tu choi>]
@@ -105,6 +106,25 @@ def xoa_cu(doc, js_cu):
     return len(xoa), len(tb) + len(tr)
 
 
+def nap_linetype(app, doc, ten, dai_gach):
+    """Nap linetype `ten` neu chua co (acadiso.lin khi MEASUREMENT=1, nguoc lai acad.lin) va tra ve ti le doi tuong de net
+    gach dau tien dai `dai_gach` mm (doc dinh nghia qua LISP -> USERR1, tra lai gia tri cu)."""
+    if ten.upper() not in {L.Name.upper() for L in doc.Linetypes}:
+        goi(doc.Linetypes.Load, ten, "acadiso.lin" if goi(doc.GetVariable, "MEASUREMENT") == 1 else "acad.lin")
+    cu = goi(doc.GetVariable, "USERR1")
+    goi(doc.SetVariable, "USERR1", -1.0)
+    goi(doc.SendCommand, f'(setvar "USERR1" (cond ((cdr (assoc 49 (tblsearch "LTYPE" "{ten}")))) (0.0)))\n')
+    t, g = time.time(), -1.0
+    while time.time() - t < 20:
+        cho_ranh(app, 5)
+        g = goi(doc.GetVariable, "USERR1")
+        if g != -1.0:
+            break
+        time.sleep(0.3)
+    goi(doc.SetVariable, "USERR1", cu)
+    return dai_gach / abs(g) if g not in (-1.0, 0.0) else 1.0
+
+
 def ve(dwg, js, goc=None, js_cu=None):
     dwg = os.path.abspath(dwg)
     if goc and os.path.normcase(os.path.abspath(goc)) == os.path.normcase(dwg):
@@ -133,9 +153,14 @@ def ve(dwg, js, goc=None, js_cu=None):
         lt = data.get("layer_truc", "Defpoints")
         if lt not in lays:
             goi(doc.Layers.Add, lt)
-        for t in data.get("truc", []):          # truc dat den / thiet bi: layer Defpoints (khong in)
+        ltn = data.get("linetype_truc")
+        lts = nap_linetype(app, doc, ltn, data.get("net_truc_gach", 150)) if ltn and data.get("truc") else None
+        for t in data.get("truc", []):          # truc dat den / thiet bi: layer Defpoints (khong in), linetype HIDDEN
             ln = goi(ms.AddLine, diem(t["x1"], t["y1"]), diem(t["x2"], t["y2"]))
             ln.Layer = lt
+            if ltn:
+                ln.Linetype = ltn
+                ln.LinetypeScale = lts
         for d in data["thiet_bi"]:
             src = d["ma"] if d["ma"].upper() in blk else os.path.join(data["thu_vien"], d["ma"] + ".dwg")
             ref = goi(ms.InsertBlock, diem(d["x"], d["y"]), src, 1.0, 1.0, 1.0, math.radians(d["rot"]))
@@ -147,6 +172,8 @@ def ve(dwg, js, goc=None, js_cu=None):
     goi(doc.Regen, 1)
     goi(doc.Save)
     kq = dict(dwg=doc.FullName, da_chen=n, so_truc=len(data.get("truc", [])), da_luu=bool(doc.Saved))
+    if ltn:
+        kq["linetype_truc"] = f"{ltn} (ti le doi tuong {lts:.1f})"
     if da_xoa:
         kq["da_xoa_phuong_an_cu"] = f"{da_xoa[0]}/{da_xoa[1]}"
     return kq

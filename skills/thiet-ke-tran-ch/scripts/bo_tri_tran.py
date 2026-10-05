@@ -9,15 +9,18 @@ Phong thuong (khach, an, bep, ngu, da nang, hanh lang, chua ro):
   - Phan phong ngoai hinh chu nhat: sat khoi tu bep -> TRUC BEP (giua, song song chieu dai bep, den 2 dau + giua
     neu > 2400); con lai (hoc sanh can, hoc sanh PN) -> 1 DEN TAI TAM HOC.
   - DEN: DUNG 4 GOC hinh chu nhat (ke ca phia dau giuong); canh dai hon 2400 thi them den o giua (chia deu, tranh vung
-    goi, cach nhau >= 1200).
-  - CUA GIO DIEU HOA (P. khach / an): CUNG CHIEU, doc 2 canh dai, PHAN BO DEU theo chieu dai phong, o giua hai den
-    cach nhau > 1400; gio hoi canh phia trong can, gio cap canh doi dien; co the nam tren sofa / ban an.
-  - DAU BAO KHOI: tren truc; PN o canh phia CHAN GIUONG (chieu tam giuong); vuong den thi cach den 300 mm.
-    DAU BAO NHIET: CHI trong bep, tren truc den bep, ngang bep nau.
-  - Den tha tai tam mat ban an; mieng gio hut bep tren bep nau; LO THAM P. khach NGOAI TRUC, gan cum gio hoi.
-WC: dai -> 1 truc giua theo chieu dai, 2 den dau tien cach tuong 450 (them den giua neu > 2400); vuong -> vong truc
-    cach mep trong tuong 450, den ngang bon cau / vung tam; HUT MUI tai TAM phong; den D65 tai TAM CHAU RUA.
-Lo gia: truc giua. Truc ve tren layer Defpoints. Sprinkler: tat theo cau hinh ("bo_tri_sprinkler": false).
+    goi, cach nhau >= 1200). P. khach / an ("phong_den_deu"): moi canh chia DEU, khoang <= 1800 va > 1400 (du cho gio).
+  - CUA GIO DIEU HOA (P. khach / an): tung cap gio hoi / gio cap DOI DIEN, THANG HANG (cung vi tri doc chieu dai) tren
+    2 canh dai, o giua hai den; cac cap phan bo deu; co the nam tren noi that (tranh vung den tha).
+  - LO THAM P. khach tai TAM hinh chu nhat truc.
+  - Den tha: gan tam ban an nhat, CACH DEN DOWNLIGHT >= 200 (mep ky hieu), co the lech tim ban.
+  - DAU BAO KHOI / NHIET: tren truc, tai DIEM GIUA hai den lien ke. PN: canh phia CHAN GIUONG; P. khach: khoang gan tam
+    phong, cach gio cap >= 1000. NHIET: CHI trong bep, tren truc den bep, khoang gan bep nau.
+  - Mieng gio hut bep tren bep nau.
+WC: vuong -> hinh chu nhat truc cach mep trong tuong 450, DEN TAI 4 GOC, HUT MUI tai TAM phong; dai -> 1 truc theo chieu
+    dai DI QUA TAM BON CAU, den tai tam bon cau va tam vung tam (chieu len truc), hut mui tren truc. Den D65 tai TAM
+    CHAU RUA. LO THAM WC tren vung canh cua di mo (cach mat tuong 50); den vuong lo tham thi doi doc truc, ghi chu.
+Lo gia: truc giua. Truc ve tren layer Defpoints, linetype HIDDEN. Sprinkler: tat theo cau hinh ("bo_tri_sprinkler").
 Thong so: cau_hinh_tran.json -> "bo_tri_moi". PCCC / dieu hoa la PHUONG AN SO BO.
 
     python bo_tri_tran.py <file.dxf> --out-dir <thu muc> [--du-an ten] [--layer-ten A-Dimension]
@@ -25,6 +28,7 @@ Xuat: bo_tri_tran.json (thiet bi + truc cho ve_com.py), BaoCaoBoTriTran.xlsx, xe
 """
 import argparse
 import io
+import itertools
 import json
 import math
 import os
@@ -43,6 +47,24 @@ import soat_tran as st  # noqa: E402
 
 SKILL = os.path.dirname(HERE)
 R_DEN = 55          # ban kinh ky hieu downlight D90 (Ø110)
+DEN = ("LT-DL-D90", "LT-DL-WC-D90")
+
+
+def fp_ky_hieu(c, x, y, rot):
+    return affinity.rotate(box(x - c["rong"] / 2, y - c["cao"] / 2, x + c["rong"] / 2, y + c["cao"] / 2), rot, origin=(x, y))
+
+
+def doc_cua_di(msp, cfg):
+    """Cung quay canh cua di (WCS): (ban le H, ban kinh R, [2 dau mut cung]). Cung chen lat guong da quy ve WCS."""
+    want = {st.tpp.layer_goc(x) for x in cfg["layer_cua"]}
+    out = []
+    for ents in st.tpp._nhom_cua(msp, want):
+        for e in ents:
+            if e.dxftype() != "ARC" or not 500 <= e.dxf.radius <= 1200:
+                continue
+            h = e.ocs().to_wcs(e.dxf.center)
+            out.append(((h.x, h.y), e.dxf.radius, [(e.start_point.x, e.start_point.y), (e.end_point.x, e.end_point.y)]))
+    return out
 
 
 class BoTri:
@@ -56,7 +78,7 @@ class BoTri:
 
     def them(self, ma, x, y, rot=0.0, ly_do="", r=None):
         c = self.cat[ma]
-        fp = affinity.rotate(box(x - c["rong"] / 2, y - c["cao"] / 2, x + c["rong"] / 2, y + c["cao"] / 2), rot, origin=(x, y))
+        fp = fp_ky_hieu(c, x, y, rot)
         d = dict(cat=c, ma=ma, x=x, y=y, fp=fp, rot=rot, block=ma,
                  layer=c["layer"], handle=f"MOI{len(self.ds) + 1:03d}", insert=(x, y), ly_do=ly_do,
                  phong_moi=r["ten"] if r else "", can_moi=r["can"] if r else "")
@@ -250,8 +272,51 @@ def khe_tren_truc(doans, diem, rong_min):
     return out
 
 
+def truc_qua_diem(U, c0, goc, lui):
+    """Truc WC dai: duong theo huong `goc` di qua diem c0 (tam bon cau), cat trong U, rut `lui` o hai dau."""
+    ux, uy = math.cos(math.radians(goc)), math.sin(math.radians(goc))
+    g = LineString([(c0[0] - ux * 20000, c0[1] - uy * 20000), (c0[0] + ux * 20000, c0[1] + uy * 20000)]).intersection(U)
+    g = min(getattr(g, "geoms", [g]), key=lambda q: q.distance(Point(c0))) if not g.is_empty else None
+    if g is None or g.geom_type != "LineString":
+        return None
+    c = list(g.coords)
+    d = Doan(c[0], c[-1])
+    return Doan(d.diem(lui), d.diem(d.L - lui)) if d.L > 2 * lui + 1 else None
+
+
+def lo_tham_cua(P, cua, cach_tuong):
+    """Lo tham 600 ngay tren vung canh cua di WC mo: canh lo tham cach mat tuong co cua `cach_tuong`, giua be rong canh.
+    Tra ve ((x, y), goc) hoac None (khong thay cua cua phong)."""
+    ext = list(P.exterior.coords)
+    best = None
+    for H, R, ds in cua:
+        # dau mut "dong" cua cung = dau nam doc tuong (o cua = doan H -> E1)
+        for E1 in ds:
+            m = Point((H[0] + E1[0]) / 2, (H[1] + E1[1]) / 2)
+            dk = P.exterior.distance(m)
+            if dk <= 300 and (best is None or dk < best[0]):
+                best = (dk, H, R, E1, m)
+    if best is None:
+        return None
+    _, H, R, E1, m = best
+    a, b2 = min(zip(ext, ext[1:]), key=lambda s: LineString(s).distance(m))
+    L = math.dist(a, b2)
+    wx, wy = (b2[0] - a[0]) / L, (b2[1] - a[1]) / L
+    if abs((E1[0] - H[0]) * wx + (E1[1] - H[1]) * wy) < 0.7 * R:      # cung khong nam doc canh nay
+        return None
+    s = 1 if (E1[0] - H[0]) * wx + (E1[1] - H[1]) * wy > 0 else -1
+    t = (H[0] - a[0]) * wx + (H[1] - a[1]) * wy
+    hx, hy = a[0] + wx * t, a[1] + wy * t
+    nx, ny = -wy, wx
+    if not P.contains(Point(hx + s * wx * R / 2 + nx * 50, hy + s * wy * R / 2 + ny * 50)):
+        nx, ny = -nx, -ny
+    k = 305 + cach_tuong
+    c = (hx + s * wx * R / 2 + nx * k, hy + s * wy * R / 2 + ny * k)
+    return c, math.degrees(math.atan2(wy, wx)) % 180.0
+
+
 # ------------------------------------------------------------------------------------------------ bo tri mot phong
-def bo_tri_phong(bt, r, nt_phong, can_poly):
+def bo_tri_phong(bt, r, nt_phong, can_poly, cua=()):
     P = r["poly"]
     P0 = P.buffer(-200, join_style=2).buffer(200, join_style=2)          # bo hoc cua / khung nho
     P0 = max(getattr(P0, "geoms", [P0]), key=lambda g: g.area) if not P0.is_empty else P
@@ -279,6 +344,21 @@ def bo_tri_phong(bt, r, nt_phong, can_poly):
     def trong(p, cach_tb=khe + R_DEN):
         return all(d["fp"].distance(Point(p)) >= cach_tb for d in moi)
 
+    def ho(ma, p, rot=0.0, cach=khe, bo=()):
+        """Ky hieu `ma` dat tai p cach moi thiet bi da dat >= `cach` (mep - mep)."""
+        fp = fp_ky_hieu(bt.cat[ma], p[0], p[1], rot)
+        return all(x["fp"].distance(fp) >= cach for x in moi if x not in bo)
+
+    def doc_truc(ma, p, ds_doan, cach=khe, toi_da=3000):
+        """Diem tren truc gan p nhat (doi doc truc buoc 25) ma ky hieu khong vuong thiet bi khac."""
+        d = min(ds_doan, key=lambda d: d.kc(p))
+        t0 = min(max(d.t(p), 0.0), d.L)
+        for s in range(0, toi_da, 25):
+            for t in ((t0 + s, t0 - s) if s else (t0,)):
+                if 0 <= t <= d.L and ho(ma, d.diem(t), 0, cach):
+                    return d.diem(t)
+        return None
+
     # ---- vung tran dung duoc (tru khoi tu bep, tu ao)
     tu_bep = None
     cam_nt = [f["fp"] for f in tu]
@@ -290,17 +370,31 @@ def bo_tri_phong(bt, r, nt_phong, can_poly):
     U = max(getattr(U, "geoms", [U]), key=lambda g: g.area)
 
     # ---- truc
-    hcn, doans, doan_bep, hoc, wc_dai = None, [], [], [], False
+    hcn, doans, doan_bep, hoc, wc_dai, hcn_wc = None, [], [], [], False, None
     if wc:
         xy = list(U.minimum_rotated_rectangle.exterior.coords)
         dai, ngan = sorted((math.dist(xy[0], xy[1]), math.dist(xy[1], xy[2])), reverse=True)
         if dai / max(ngan, 1) >= b["wc_ty_le_dai"]:
-            # WC dai: truc giua theo chieu dai, 2 dau cach tuong 450 (2 den dau tien)
-            doans, wc_dai = doan_giua(U, b["den_wc_dai_cach_tuong"]), True
+            # WC dai: truc theo chieu dai DI QUA TAM BON CAU (khong co bon cau: truc giua), 2 dau cach tuong 450
+            wc_dai = True
+            i = 0 if math.dist(xy[0], xy[1]) >= math.dist(xy[1], xy[2]) else 1
+            goc_dai = math.degrees(math.atan2(xy[i + 1][1] - xy[i][1], xy[i + 1][0] - xy[i][0])) % 180.0
+            d = truc_qua_diem(U, (bon_cau[0]["x"], bon_cau[0]["y"]), goc_dai, b["den_wc_dai_cach_tuong"]) if bon_cau else None
+            if d:                    # keo truc toi den tam bon cau / tam vung tam neu nam ngoai doan cach tuong 450
+                ts = [d.t((bon_cau[0]["x"], bon_cau[0]["y"]))] + ([d.t((vt.centroid.x, vt.centroid.y))] if vt is not None else [])
+                d = Doan(d.diem(min(0.0, *ts)), d.diem(max(d.L, *ts)))
+            doans = [d] if d else doan_giua(U, b["den_wc_dai_cach_tuong"])
         else:
-            # WC vuong: vong truc cach mep trong tuong 450
+            # WC vuong: hinh chu nhat truc cach mep trong tuong 450, den tai 4 goc
             o = b["truc_wc_vuong_cach_tuong"]
-            doans = doan_vong(U, [o], 100)[0] or doan_giua(U, o)
+            R0 = hcn_lon_nhat(U, goc_tuong_chinh(P0))
+            R = R0.buffer(-o, join_style=2) if R0 is not None else None
+            if R is not None and not R.is_empty and R.geom_type == "Polygon":
+                xy = list(R.exterior.coords)
+                hcn_wc = xy[:4]
+                doans = [Doan(p, q) for p, q in zip(xy, xy[1:])]
+            else:
+                doans = doan_vong(U, [o], 100)[0] or doan_giua(U, o)
     elif logia:
         doans = doan_giua(U, 300)
     else:
@@ -380,10 +474,7 @@ def bo_tri_phong(bt, r, nt_phong, can_poly):
                 dens.append(p)
                 them("LT-DL-D90", p, 0, ly_do)
 
-    # ---- 1. thiet bi chuc nang ngoai truc
-    if loai & {"khach", "an", "bep"}:
-        for f in ban:
-            them("LT-PEND", (f["x"], f["y"]), 0, "tâm mặt bàn ăn")
+    # ---- 1. thiet bi chuc nang ngoai truc (den tha dat sau den / gio / lo tham: duoc lech tim ban)
     if wc and (chau or guong):
         f = (chau or guong)[0]
         them("LT-MIR-D65", (f["x"], f["y"]), 0, "đèn D65 tại tâm chậu rửa")
@@ -393,22 +484,29 @@ def bo_tri_phong(bt, r, nt_phong, can_poly):
     # ---- 2. den
     dens = []
     goi = giuong.get("vung_goi") if giuong else None
+    deu = bool(loai & set(b.get("phong_den_deu", [])))
+    co_gio = hcn is not None and bool(loai & set(b["phong_co_gio_tran"]))
     if hcn is not None and loai & set(b["phong_co_luoi_den"]):
-        # 4 goc truoc (dung goc, ke ca phia dau giuong), canh > 2400 them den giua (tranh vung goi), cach nhau >= 1200
+        # 4 goc truoc (dung goc, ke ca phia dau giuong), canh > 2400 them den giua (tranh vung goi), cach nhau >= 1200;
+        # P. khach / an: moi canh chia deu, khoang <= den_kc_deu_toi_da va > gio_khe_den_toi_thieu (du cho cua gio)
         for p in hcn:
             if all(math.dist(p, q) >= ng["den_kc_toi_thieu"] - 1 for q in dens):
                 dens.append(p)
         for p, q in zip(hcn, hcn[1:] + hcn[:1]):
             L = math.dist(p, q)
-            if L > b["den_kc_toi_da"]:
-                n = math.ceil(L / b["den_kc_toi_da"])
-                for k in range(1, n):
-                    m = (p[0] + (q[0] - p[0]) * k / n, p[1] + (q[1] - p[1]) * k / n)
-                    if (goi is None or not goi.contains(Point(m))) and all(math.dist(m, x) >= ng["den_kc_toi_thieu"] - 1 for x in dens):
-                        dens.append(m)
-        dens = [p for p in dens if not any(d["ma"] == "LT-PEND" and math.dist(p, (d["x"], d["y"])) < 600 for d in moi)]
+            if deu:
+                n = max(1, math.ceil(L / b["den_kc_deu_toi_da"] - 1e-6))
+                while n > 1 and co_gio and L / n <= b["gio_khe_den_toi_thieu"]:
+                    n -= 1
+            else:
+                n = math.ceil(L / b["den_kc_toi_da"]) if L > b["den_kc_toi_da"] else 1
+            for k in range(1, n):
+                m = (p[0] + (q[0] - p[0]) * k / n, p[1] + (q[1] - p[1]) * k / n)
+                if (goi is None or not goi.contains(Point(m))) and all(math.dist(m, x) >= ng["den_kc_toi_thieu"] - 1 for x in dens):
+                    dens.append(m)
         for p in dens:
-            them("LT-DL-D90", p, 0, "đèn chung: góc / giữa cạnh hình chữ nhật trục")
+            them("LT-DL-D90", p, 0, "đèn chung: góc / chia đều cạnh hình chữ nhật trục" if deu else
+                 "đèn chung: góc / giữa cạnh hình chữ nhật trục")
     elif doans and loai & set(b["phong_co_luoi_den"]) and not (wc or logia):
         den_tren_doan(doans[0], dens, "đèn chung trên trục giữa (phòng hẹp)", bo_goi=True)
     for d in doan_bep:
@@ -432,9 +530,9 @@ def bo_tri_phong(bt, r, nt_phong, can_poly):
         for k in range(n):
             them("LT-OUT", d.diem(d.L * (k + 0.5) / n), 0, "đèn ngoài nhà trên trục giữa lô gia")
 
-    # ---- 3. cua gio dieu hoa: cung chieu (doc 2 canh dai), phan bo deu, o giua hai den cach nhau > 1400
+    # ---- 3. cua gio dieu hoa: tung cap hoi / cap DOI DIEN THANG HANG tren 2 canh dai, o giua hai den, cac cap phan bo deu
     gio_cap, gio_hoi = [], []
-    if hcn is not None and loai & set(b["phong_co_gio_tran"]):
+    if co_gio:
         n = max(1, round(P.area / 1e6 / b["gio_dt_moi_cap"]))
         canh = [Doan(p, q) for p, q in zip(hcn, hcn[1:] + hcn[:1])]
         i0 = 0 if canh[0].L >= canh[1].L else 1
@@ -443,127 +541,188 @@ def bo_tri_phong(bt, r, nt_phong, can_poly):
         if math.dist(A.diem(A.L / 2), (ref.x, ref.y)) > math.dist(B.diem(B.L / 2), (ref.x, ref.y)):
             A, B = B, A                                              # A = canh dai phia trong can -> gio hoi
         kmin = b["gio_khe_den_toi_thieu"]
-        kA = [k for k in khe_tren_truc([A], dens, kmin) if k[1] > kmin]
-        kB = [k for k in khe_tren_truc([B], dens, kmin) if k[1] > kmin]
-        da = []
-        for j in range(n):
-            muc = A.L * (j + 0.5) / n                                # phan bo deu theo chieu dai phong
-            def khong_chong(p, d):
-                fp = affinity.rotate(box(p[0] - 600, p[1] - 75, p[0] + 600, p[1] + 75), d.goc, origin=p)
-                return all(not x["fp"].intersects(fp.buffer(khe)) for x in moi)
+        bien = 600 + R_DEN + 50                                      # nua cua gio + den + khe
+        kB = [(B.t(p), L) for p, L, _ in khe_tren_truc([B], dens, kmin) if L > kmin]
+        # vung den tha (tam ban an): cap gio tranh neu con lua chon khac
+        tha = unary_union([Point(f["x"], f["y"]).buffer(400) for f in ban]) if ban and loai & {"khach", "an", "bep"} else None
 
-            def vi_tri_khe(ks, d):
-                """Moi khoang giua hai den: vi tri cua gio gan giua khoang nhat ma khong chong thiet bi (dich buoc 100,
-                van nam gon giua hai den)."""
-                out = []
-                for p, L, _ in ks:
-                    tm = d.t(p)
-                    m = L / 2 - (600 + R_DEN + 50)
-                    for dt in sorted(range(-int(m // 100) * 100, int(m // 100) * 100 + 1, 100), key=abs) if m >= 0 else []:
-                        q = d.diem(tm + dt)
-                        if khong_chong(q, d):
-                            out.append((q, L, d))
-                            break
-                return out
-            ung = [k for k in vi_tri_khe(kA, A) if all(math.dist(k[0], x[0]) > 1 for x in da)]
-            ung_b = vi_tri_khe(kB, B)
-            # chon cap khoang (A, B) gan vi tri phan bo deu nhat; khong chong len thiet bi khac (vd den tha)
-            cap = sorted(((abs(A.t(ka[0]) - muc) + abs(B.t(kb[0]) - B.t(A.diem(muc))), ka, kb) for ka in ung for kb in ung_b),
-                         key=lambda x: x[0])
-            if not cap:
+        def fp_gio(p, d):
+            return affinity.rotate(box(p[0] - 600, p[1] - 75, p[0] + 600, p[1] + 75), d.goc, origin=p)
+
+        def khong_chong(p, d):
+            fp = fp_gio(p, d)          # hai den dau khoang: ho 50 (nhu `bien`); thiet bi khac: khe
+            return all(x["fp"].distance(fp) >= (50 - 1 if x["ma"] in DEN else khe) for x in moi)
+        ung = []                                                     # (tA, diem A, diem B, cham vung den tha)
+        for p, L, _ in khe_tren_truc([A], dens, kmin):
+            m = L / 2 - bien
+            if L <= kmin or m < 0:
+                continue
+            for dt in sorted(range(-int(m // 50) * 50, int(m // 50) * 50 + 1, 50), key=abs):
+                pa = A.diem(A.t(p) + dt)
+                tb = B.t(pa)
+                pb = B.diem(tb)
+                if (any(abs(tb - t) <= Lb / 2 - bien + 1 for t, Lb in kB) and 0 <= tb <= B.L
+                        and khong_chong(pa, A) and khong_chong(pb, B)):
+                    vt_tha = tha is not None and (fp_gio(pa, A).intersects(tha) or fp_gio(pb, B).intersects(tha))
+                    ung.append((A.t(pa), pa, pb, int(vt_tha)))
+                    break
+        chon = None
+        for k in range(min(n, len(ung)), 0, -1):
+            for comb in itertools.combinations(sorted(ung, key=lambda u: u[0]), k):
+                ts = [0.0] + [u[0] for u in comb] + [A.L]
+                key = (sum(u[3] for u in comb),
+                       round(sum(abs(u[0] - A.L * (j + 0.5) / k) for j, u in enumerate(comb)), -1),
+                       max(y - x for x, y in zip(ts, ts[1:])))
+                if chon is None or key < chon[0]:
+                    chon = (key, comb)
+            if chon:
                 break
-            _, pa, pb = cap[0]
-            da.append(pa)
-            kA = [k for k in kA if abs(A.t(k[0]) - A.t(pa[0])) > k[1] / 2]
-            kB = [k for k in kB if abs(B.t(k[0]) - B.t(pb[0])) > k[1] / 2]
-            gio_hoi.append(them("HV-RAG-1200x150", pa[0], A.goc, "gió hồi: giữa hai đèn trên cạnh dài phía trong căn"))
-            gio_cap.append(them("HV-SAG-1200x150", pb[0], B.goc, "gió cấp: giữa hai đèn trên cạnh dài đối diện, cùng chiều"))
+        for _, pa, pb, _ in (chon[1] if chon else []):
+            gio_hoi.append(them("HV-RAG-1200x150", pa, A.goc, "gió hồi: giữa hai đèn trên cạnh dài phía trong căn, đối diện gió cấp"))
+            gio_cap.append(them("HV-SAG-1200x150", pb, B.goc, "gió cấp: giữa hai đèn trên cạnh dài đối diện, thẳng hàng gió hồi"))
         if len(gio_cap) < n:
-            bt.note(r, f"Chỉ đặt được {len(gio_cap)}/{n} cặp cửa gió cùng chiều (thiếu khoảng giữa hai đèn > {kmin} mm trên cạnh dài).")
+            bt.note(r, f"Chỉ đặt được {len(gio_cap)}/{n} cặp cửa gió đối diện thẳng hàng (thiếu khoảng giữa hai đèn > {kmin} mm "
+                       "trùng nhau trên hai cạnh dài).")
+
+    # ---- 3b. lo tham P. khach: TAM hinh chu nhat truc
+    if co_gio:
+        c = Polygon(hcn).centroid
+        if ho("AC-AP-600", (c.x, c.y), A.goc):
+            them("AC-AP-600", (c.x, c.y), A.goc, "lỗ thăm tại tâm hình chữ nhật trục thiết bị")
+        else:
+            them("AC-AP-600", (c.x, c.y), A.goc, "lỗ thăm tại tâm hình chữ nhật trục thiết bị (vướng thiết bị khác: kiểm tra)")
+            bt.note(r, "Lỗ thăm tại tâm hình chữ nhật trục vướng thiết bị khác.")
+
+    # ---- 3c. den tha: gan tam ban an nhat, cach den downlight >= den_tha_cach_den (mep), duoc lech tim ban
+    if loai & {"khach", "an", "bep"}:
+        for f in ban:
+            c0 = (f["x"], f["y"])
+            x0, y0, x1, y1 = f["fp"].bounds
+            pf = prep(f["fp"])
+            ung = sorted(((x, y) for x in range(int(x0), int(x1) + 1, 25) for y in range(int(y0), int(y1) + 1, 25)
+                          if pf.contains(Point(x, y))), key=lambda p: math.dist(p, c0))
+            cach = b.get("den_tha_cach_den", 200)
+            p = next((p for p in [c0] + ung
+                      if all(x["fp"].distance(fp_ky_hieu(bt.cat["LT-PEND"], p[0], p[1], 0)) >= (cach if x["ma"] in DEN else khe)
+                             for x in moi)), None)
+            if p is None:
+                them("LT-PEND", c0, 0, "tâm mặt bàn ăn (vướng thiết bị: kiểm tra)")
+                bt.note(r, "Đèn thả: không tìm được vị trí trên mặt bàn ăn cách downlight ≥ 200 mm.")
+            else:
+                lech = math.dist(p, c0)
+                them("LT-PEND", p, 0, "tâm mặt bàn ăn" if lech < 1 else f"đèn thả lệch tâm bàn {lech:.0f} mm, cách downlight ≥ {cach}")
 
     # ---- 4. WC: den + hut mui
+    lo_wc = None
     if wc:
         dws = []
-        if wc_dai:
+        if wc_dai and (bon_cau or vt is not None):
+            # WC dai: den tai tam bon cau va tam vung tam (chieu len truc qua tim bon cau)
+            if bon_cau:
+                dws.append((len_truc((bon_cau[0]["x"], bon_cau[0]["y"])), "đèn WC tại tâm bồn cầu (trục qua tim bồn cầu)"))
+            if vt is not None:
+                dws.append((len_truc((vt.centroid.x, vt.centroid.y)), "đèn WC tại tâm vùng tắm, trên trục"))
+        elif wc_dai:
             d = doans[0]
             n = max(1, math.ceil(d.L / b["den_kc_toi_da"])) if d.L > b["den_kc_toi_da"] else 1
             for k in range(n + 1):
                 dws.append((d.diem(d.L * k / n), "đèn WC trên trục giữa" + (", cách tường 450" if k in (0, n) else "")))
+        elif hcn_wc:
+            dws += [(p, "đèn WC tại góc hình chữ nhật trục (cách tường 450)") for p in hcn_wc]
         else:
-            if bon_cau:
-                dws.append((len_truc((bon_cau[0]["x"], bon_cau[0]["y"])), "đèn WC trên trục, ngang bồn cầu"))
-            if vt is not None:
-                dws.append((len_truc((vt.centroid.x, vt.centroid.y)), "đèn WC trên trục, ngang vùng tắm"))
-            if not dws:
-                c = truc.interpolate(0.5, normalized=True)
-                dws.append(((c.x, c.y), "đèn WC trên trục"))
-        nhan = []
+            c = truc.interpolate(0.5, normalized=True)
+            dws.append(((c.x, c.y), "đèn WC trên trục"))
+        den_wc = []
         for p, ly in dws:
-            if all(math.dist(p, q) >= 2 * (R_DEN + khe) for q, _ in nhan):
-                nhan.append((p, ly))
-                them("LT-DL-WC-D90", p, 0, ly)
+            if all(math.dist(p, (q["x"], q["y"])) >= 2 * (R_DEN + khe) for q in den_wc):
+                den_wc.append(them("LT-DL-WC-D90", p, 0, ly))
+        # lo tham WC: ngay tren vung canh cua di mo; den vuong -> doi doc truc
+        lt = lo_tham_cua(P, cua, b.get("lo_tham_wc_cach_tuong", 50)) if cua else None
+        if lt is not None:
+            lo_wc = them("AC-AP-600", lt[0], lt[1], "lỗ thăm trên vị trí cánh cửa đi WC mở")
+            for d in den_wc:
+                if d["fp"].distance(lo_wc["fp"]) >= khe:
+                    continue
+                p0 = (d["x"], d["y"])
+                ung = []
+                for dd in doans:
+                    if dd.kc(p0) > 2:
+                        continue
+                    for s in range(25, 2000, 25):
+                        for t in (dd.t(p0) + s, dd.t(p0) - s):
+                            q = dd.diem(t)
+                            if 0 <= t <= dd.L and ho("LT-DL-WC-D90", q, 0, khe, bo=(d,)):
+                                ung.append((s, q))
+                                break
+                        else:
+                            continue
+                        break
+                if ung:
+                    s, q = min(ung)
+                    d.update(x=q[0], y=q[1], insert=q, fp=fp_ky_hieu(d["cat"], q[0], q[1], 0),
+                             ly_do=d["ly_do"] + f"; dời {s} mm dọc trục tránh lỗ thăm cửa")
+                    bt.note(r, f"Đèn WC dời {s} mm dọc trục để tránh lỗ thăm trên cánh cửa.")
+                else:
+                    bt.note(r, "Đèn WC vướng lỗ thăm trên cánh cửa, không dời được dọc trục.")
         c = P0.centroid
-        p = len_truc((c.x, c.y)) if wc_dai else (c.x, c.y)
-        p = tranh_den(p, [q for q, _ in nhan], 100 + R_DEN + khe) if wc_dai else p
-        if p is not None and trong(p, 100):
-            them("HV-EAG-200", p, 0, "hút mùi tại tâm phòng vệ sinh")
+        if wc_dai:
+            p = doc_truc("HV-EAG-200", (c.x, c.y), doans, 100)
+            ly = "hút mùi trên trục qua tim bồn cầu, gần tâm phòng"
         else:
-            bt.note(r, "Tâm phòng vệ sinh vướng đèn / thiết bị: chưa đặt hút mùi.")
+            p = (c.x, c.y) if ho("HV-EAG-200", (c.x, c.y), 0, 100) else None
+            ly = "hút mùi tại tâm phòng vệ sinh"
+        if p is not None:
+            them("HV-EAG-200", p, 0, ly)
+        else:
+            bt.note(r, "Tâm phòng vệ sinh / trục vướng đèn, lỗ thăm: chưa đặt hút mùi.")
 
-    # ---- 5. dau bao khoi: tren truc; PN phia chan giuong; vuong den -> cach den 300
+    # ---- 5. dau bao khoi / nhiet: tren truc, tai DIEM GIUA hai den lien ke (khoang gan vi tri uu tien nhat)
     tat_den = dens + [(d["x"], d["y"]) for d in moi if d["ma"] in ("LT-DL-WC-D90", "LT-OUT")]
+
+    def giua_den(ds_doan, uu_tien, loc=None):
+        ks = [k for k in khe_tren_truc(ds_doan, tat_den, 2 * (R_DEN + 70 + khe)) if trong(k[0], khe + 70)]
+        if loc:
+            ks = [k for k in ks if loc(k[0])] or ks
+        return min(ks, key=lambda k: math.dist(k[0], uu_tien))[0] if ks else None
+
     if loai & set(b["phong_co_dau_bao_khoi"]) and not (wc or logia):
-        p = None
+        p, p_tranh = None, None
         if giuong is not None and goi is not None and hcn is not None:
             canh = [Doan(a, c) for a, c in zip(hcn, hcn[1:] + hcn[:1])]
             gc = goi.centroid
             ung = [d for d in canh if abs(d.u[0] * (giuong["y"] - gc.y) - d.u[1] * (giuong["x"] - gc.x)) > 0.5 * math.dist((giuong["x"], giuong["y"]), (gc.x, gc.y))]
             d = max(ung or canh, key=lambda d: d.kc((gc.x, gc.y)))
-            p = d.diem(min(max(d.t((giuong["x"], giuong["y"])), 0), d.L))
-            ly = "đầu báo khói trên trục phía chân giường"
+            p_tranh = d.diem(min(max(d.t((giuong["x"], giuong["y"])), 0), d.L))
+            p = giua_den([d], p_tranh)
+            ly = "đầu báo khói trên trục phía chân giường, giữa hai đèn"
         else:
-            khe_ = khe_tren_truc([d for d in doans if d not in doan_bep], tat_den, 2 * (R_DEN + 70 + khe))
-            khe_ = [k for k in khe_ if trong(k[0], khe + 60)]
-            if gio_cap:
-                cc = unary_union([d["fp"] for d in gio_cap])
-                khe_ = [k for k in khe_ if cc.distance(Point(k[0])) >= ng["dau_bao_cach_gio_cap"]] or khe_
             c = P.centroid
-            if khe_:
-                p = min(khe_, key=lambda k: math.dist(k[0], (c.x, c.y)))[0]
+            cc = unary_union([d["fp"] for d in gio_cap]) if gio_cap else None
+            p = giua_den([d for d in doans if d not in doan_bep], (c.x, c.y),
+                         (lambda q: cc.distance(Point(q)) >= ng["dau_bao_cach_gio_cap"]) if cc is not None else None)
             ly = "đầu báo khói trên trục, giữa hai đèn"
-        if p is not None:
-            p2 = tranh_den(p, tat_den, 300)
-            if p2 is not None and trong(p2, khe + 60):
-                them("FA-SMOKE", p2, 0, ly + ("" if p2 == p else ", cách đèn 300"))
-            else:
-                bt.note(r, "Không đặt được đầu báo khói trên trục (vướng đèn / thiết bị).")
-    # dau bao nhiet: CHI trong bep, tren truc dat den cua bep
+        if p is None and p_tranh is not None:
+            p = tranh_den(p_tranh, tat_den, 300)
+            ly = "đầu báo khói trên trục phía chân giường, cách đèn 300"
+        if p is not None and trong(p, khe + 60):
+            them("FA-SMOKE", p, 0, ly)
+        else:
+            bt.note(r, "Không đặt được đầu báo khói trên trục giữa hai đèn (vướng đèn / thiết bị).")
+    # dau bao nhiet: CHI trong bep, tren truc dat den cua bep, giua hai den, khoang gan bep nau
     if bep:
         truc_h = doan_bep or (doans if "bep" in loai and not (loai & {"khach", "an"}) else [])
         if truc_h:
-            p = tranh_den(len_truc((bep[0]["x"], bep[0]["y"]), truc_h), tat_den, 300)
+            p = giua_den(truc_h, len_truc((bep[0]["x"], bep[0]["y"]), truc_h))
             if p is not None and trong(p, khe + 60):
-                them("FA-HEAT", p, 0, "đầu báo nhiệt trên trục đèn bếp, ngang bếp nấu")
+                them("FA-HEAT", p, 0, "đầu báo nhiệt trên trục đèn bếp, giữa hai đèn")
             else:
-                bt.note(r, "Không đặt được đầu báo nhiệt trên trục bếp.")
+                bt.note(r, "Không đặt được đầu báo nhiệt trên trục bếp giữa hai đèn.")
         else:
             bt.note(r, "Không có trục bếp: chưa đặt đầu báo nhiệt.")
 
-    # ---- 6. lo tham 600
-    if gio_cap:
-        # P. khach: NGOAI truc, gan cum gio hoi (bao tri may dieu hoa am tran), canh theo tuong chinh
-        goc = goc_tuong_chinh(P0)
-        vung = U.buffer(-(305 + khe), join_style=2).difference(truc.buffer(305 + khe))
-        if hoc:
-            vung = vung.difference(unary_union(hoc))
-        vung = vung.difference(unary_union([d["fp"].buffer(305 + khe) for d in moi] + [f["fp"] for f in sofa + ban]))
-        if not vung.is_empty:
-            mx = gio_hoi[0] if gio_hoi else gio_cap[0]
-            q = nearest_points(vung, Point(mx["x"], mx["y"]))[0]
-            them("AC-AP-600", (q.x, q.y), goc, "lỗ thăm ngoài trục, gần máy điều hòa âm trần")
-        else:
-            bt.note(r, "Không còn chỗ ngoài trục cho lỗ thăm 600.")
-    elif wc:
+    # ---- 6. lo tham WC khi khong nhan duoc cua di: tren truc, xa vung tam (P. khach: muc 3b; WC co cua: muc 4)
+    if wc and lo_wc is None:
+        bt.note(r, "Không nhận được cung cửa đi WC: lỗ thăm đặt trên trục.")
         cho = tat_den + [(d["x"], d["y"]) for d in moi if d["ma"] not in ("LT-MIR-D65",)]
         khe_ = [k for k in khe_tren_truc(doans, cho, 2 * (305 + khe + R_DEN)) if trong(k[0], 305 + khe)
                 and U.buffer(-300).contains(Point(k[0])) and (vt is None or vt.distance(Point(k[0])) >= 305)]
@@ -610,14 +769,19 @@ def xuat_scr(path, ds, truc, thu_vien, cfg):
     def ls(s):
         return '"' + st.tpp.acad_str(s).replace("\\", "\\\\").replace('"', "'") + '"'
     mau = {"A-Den": 150, "A-Thiet bi PCCC": 1, "A-HVAC": 2, "A-HVAC1": 2, "A-HVAC2": 2, "A-Hoan thien tran": 8}
-    L = ["CMDECHO", "0", "OSMODE", "0", "ATTREQ", "0", "FILEDIA", "0",
+    L = ["CMDECHO", "0", "OSMODE", "0", "ATTREQ", "0", "FILEDIA", "0", "(vl-load-com)",
          "(defun mk-lay (n c) (if (not (tblsearch \"LAYER\" n)) (entmake (list (cons 0 \"LAYER\") (cons 100 \"AcDbSymbolTableRecord\") "
          "(cons 100 \"AcDbLayerTableRecord\") (cons 2 n) (cons 70 0) (cons 62 c) (cons 6 \"Continuous\")))) n)"]
     for lay in sorted({d["layer"] for d in ds}):
         L.append(f"(mk-lay {ls(lay)} {mau.get(lay, 7)})")
     lt = cfg["bo_tri_moi"]["layer_truc"]
+    ltn = cfg["bo_tri_moi"].get("linetype_truc", "HIDDEN")
+    # linetype truc: nap neu chua co (acadiso.lin khi MEASUREMENT=1); ti le net de net gach dai `net_truc_gach` mm
+    L += [f'(if (not (tblsearch "LTYPE" "{ltn}")) (command "_.-LINETYPE" "_L" "{ltn}" (if (= (getvar "MEASUREMENT") 1) "acadiso.lin" "acad.lin") ""))',
+          f'(setq lts (vl-some (function (lambda (x) (if (and (= (car x) 49) (> (cdr x) 0)) (cdr x)))) (tblsearch "LTYPE" "{ltn}")))',
+          f'(setq lts (if lts (/ {cfg["bo_tri_moi"].get("net_truc_gach", 150)}.0 lts) 1.0))']
     for _, _, a, b in truc:
-        L.append(f'(entmake (list (cons 0 "LINE") (cons 8 {ls(lt)}) (list 10 {a[0]:.1f} {a[1]:.1f} 0.0) (list 11 {b[0]:.1f} {b[1]:.1f} 0.0)))')
+        L.append(f'(entmake (list (cons 0 "LINE") (cons 8 {ls(lt)}) (cons 6 "{ltn}") (cons 48 lts) (list 10 {a[0]:.1f} {a[1]:.1f} 0.0) (list 11 {b[0]:.1f} {b[1]:.1f} 0.0)))')
     da = set()
     for d in ds:
         f = os.path.join(thu_vien, d["ma"] + ".dwg").replace("\\", "/")
@@ -659,6 +823,7 @@ def main():
     co_san = [d for d in co_san if vung.contains(Point(d["x"], d["y"]))]
     bt = BoTri(catalog, cfg)
     can_poly = {t: c for c, t in cans}
+    cua = doc_cua_di(msp, cfg)
     for r in ds_phong:
         if r["poly"] is None:
             continue
@@ -667,7 +832,8 @@ def main():
             continue
         nt_phong = [f for f in noi_that if r["poly"].buffer(200).contains(Point(f["x"], f["y"]))
                     or r["poly"].intersection(f["fp"]).area > 0.5 * f["fp"].area]
-        bo_tri_phong(bt, r, nt_phong, can_poly.get(r["can"]))
+        bo_tri_phong(bt, r, nt_phong, can_poly.get(r["can"]),
+                     [c for c in cua if r["poly"].distance(Point(c[0])) < 1500])
     print(f"[bo tri] {time.time() - t0:.0f}s, {len(bt.ds)} thiet bi, {len(bt.truc)} doan truc", file=sys.stderr)
     # soat lai chinh phuong an vua bo tri
     so = st.SoTay()
@@ -690,7 +856,9 @@ def main():
                phong=d["phong_moi"], ly_do=d["ly_do"]) for d in bt.ds]
     truc = [dict(can=c, phong=p, x1=round(a_[0], 1), y1=round(a_[1], 1), x2=round(b_[0], 1), y2=round(b_[1], 1)) for c, p, a_, b_ in bt.truc]
     js = os.path.join(a.out_dir, "bo_tri_tran.json")
-    json.dump(dict(thu_vien=a.thu_vien, layer_truc=cfg["bo_tri_moi"]["layer_truc"], truc=truc, thiet_bi=ra),
+    json.dump(dict(thu_vien=a.thu_vien, layer_truc=cfg["bo_tri_moi"]["layer_truc"],
+                   linetype_truc=cfg["bo_tri_moi"].get("linetype_truc", "HIDDEN"),
+                   net_truc_gach=cfg["bo_tri_moi"].get("net_truc_gach", 150), truc=truc, thiet_bi=ra),
               open(js, "w", encoding="utf-8"), ensure_ascii=False, indent=1)
     dem = {}
     for x in so.ds:
