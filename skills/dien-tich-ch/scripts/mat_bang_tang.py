@@ -109,7 +109,7 @@ def diem(e, tol):
 def doc_ban_ve(msp, layers_ranh, layers_phu, min_phu):
     base = {layer_goc(x) for x in layers_ranh}
     phu = {layer_goc(x) for x in layers_phu}
-    R = dict(chains=[], chain_lay=[], tien_to=[], kinh=[], cua=[], cua_diem=[], lan_can=[], nhom=[], noi_that=[], vat_can=[])
+    R = dict(chains=[], chain_lay=[], tien_to=[], kinh=[], cua=[], cua_diem=[], cung_cua=[], lan_can=[], nhom=[], noi_that=[], vat_can=[])
     for e, names in duyet(msp):
         t = e.dxftype()
         if t not in ("LINE", "LWPOLYLINE", "POLYLINE", "ARC", "CIRCLE"):
@@ -133,6 +133,8 @@ def doc_ban_ve(msp, layers_ranh, layers_phu, min_phu):
             R["kinh"].append(pts)
         if lay in CUA:
             R["cua_diem"] += pts
+            if t == "ARC" and 400 <= float(e.dxf.radius) <= 1300:     # cung quay canh cua di
+                R["cung_cua"].append(LineString(pts))
             if t in ("LINE", "LWPOLYLINE"):
                 R["cua"].append(pts)
         if lay in LAN_CAN:
@@ -454,6 +456,43 @@ def phan_tich(a, doc, msp):
         return out, blk
     vung = []
     room_nodes = {n for v in can.values() for n in v}
+    node_xref = {n: k for k, v in can.items() for n in v}
+
+    def phia_ben_kia(arc, g):
+        """Node o phia ben kia o cua cua cung quay canh 'arc' (mo vao vung g): tra ve xref cua can neu la phong cua can,
+        hoac xref theo tien to neu la vung cua can; None neu la hanh lang chung / ngoai."""
+        pts = list(arc.coords)
+        if len(pts) < 3:
+            return None
+        (x1, y1), (x2, y2), (x3, y3) = pts[0], pts[len(pts) // 2], pts[-1]
+        dd = 2 * (x1 * (y2 - y3) + x2 * (y3 - y1) + x3 * (y1 - y2))
+        if abs(dd) < 1e-9:
+            return None
+        ux = ((x1 * x1 + y1 * y1) * (y2 - y3) + (x2 * x2 + y2 * y2) * (y3 - y1) + (x3 * x3 + y3 * y3) * (y1 - y2)) / dd
+        uy = ((x1 * x1 + y1 * y1) * (x3 - x2) + (x2 * x2 + y2 * y2) * (x1 - x3) + (x3 * x3 + y3 * y3) * (x2 - x1)) / dd
+        H = (ux, uy)
+        e_mo, e_dong = sorted([pts[0], pts[-1]], key=lambda q: -g.exterior.distance(Point(q)))   # dau canh mo nam sau trong vung
+        L_ = math.dist(H, e_mo)
+        if L_ < 1:
+            return None
+        nx, ny = (H[0] - e_mo[0]) / L_, (H[1] - e_mo[1]) / L_           # huong ra ngoai vung (nguoc canh mo)
+        M = ((H[0] + e_dong[0]) / 2, (H[1] + e_dong[1]) / 2)          # giua o cua
+        for d in (350, 500, 700):
+            q = Point(M[0] + nx * d, M[1] + ny * d)
+            i = tim_mat(q, faces, ftree)
+            if i is None:
+                continue
+            n_ = par[i]
+            if node[n_].area < 0.3e6 or node[n_].buffer(-100).is_empty:
+                continue                      # tuong / o cua: thu xa hon
+            if n_ in node_xref:
+                return "can"
+            if any(node[n_].contains(pm) for pm in ma_pts) or node[n_].area > 40e6:
+                return None
+            pre, fr_ = tien_to(node[n_])
+            return pre if fr_ >= 0.6 else None
+        return None
+    ct_ = shapely.STRtree(R["cung_cua"]) if R["cung_cua"] else None
     for n, g in node.items():
         if n in rooms or g.area < 0.4e6 or g.area > 40e6 or g.buffer(-150).is_empty:
             continue
@@ -472,28 +511,57 @@ def phan_tich(a, doc, msp):
         nt, blk = noi_that(g)
         tong_nt = sum(nt.values())
         may_giat = any("may giat" in b_ for b_ in blk)
+        # cua di mo vao vung (cung quay canh nam trong vung): khong gian co cua la PHONG, khong phai hop ky thuat.
+        # Phia ben kia cua la phong/khong gian cua chinh can -> phong cua can; la hanh lang chung -> ngoai can.
+        cua_vao = [R["cung_cua"][k] for k in (ct_.query(g) if ct_ is not None else [])
+                   if R["cung_cua"][k].intersection(g.buffer(20)).length > 0.3 * R["cung_cua"][k].length]
+        co_cua = bool(cua_vao)
+        cua_tu_can = any(phia_ben_kia(arc, g) in ("can", p) for arc in cua_vao)
+        # phong cung can thong voi vung qua doan dong o mo (de gop hoc sanh/hanh lang vao phong)
+        thong = collections.Counter()
+        cau = collections.defaultdict(list)
+        if bt is not None:
+            for k in bt.query(g.buffer(5)):
+                m = br_long[k].interpolate(0.5, normalized=True)
+                if g.exterior.distance(m) < 2:
+                    for rn in can[p]:
+                        if node[rn].distance(m) < 250:
+                            thong[rn] += br_long[k].length
+                            cau[rn].append(list(br_long[k].coords))
         if fr < 0.6:
             loai, ten = "ngoai", None
-        elif (lc or nh) and g.area >= 2.0e6:
+        elif co_cua and not cua_tu_can:
+            loai, ten = "ngoai", None              # phong co cua mo ra hanh lang chung (phong ky thuat/sinh hoat chung)
+        elif (lc or nh or may_giat or nt["may"] >= 5) and not co_cua and nt["wc"] < 8 and g.area < 25e6                 and not g.buffer(-200).is_empty:
+            # lo gia, ke ca goc dat cuc nong / may giat canh lo gia (nguoi dung chot 07/10/2026: khong phai HKT)
             loai, ten = "lo gia", "Lô gia"
         elif tong_nt >= 3 and g.area >= 2.5e6:
             loai = "phong thieu ten"
-            ten = "Wc" if nt["wc"] >= 8 else "Lô gia" if (may_giat or nt["may"] >= 5) else "Phòng ngủ" if g.area >= 6e6 else "(chưa rõ)"
-        elif mo >= 1 and g.area < 4.5e6:
+            ten = "Wc" if nt["wc"] >= 8 else "Lô gia" if (may_giat or nt["may"] >= 5) else "Phòng ngủ" if g.area >= 6e6 else "Phòng (chưa tên)"
+        elif co_cua:
+            # khong gian co cua di = phong (nguoi dung chot 07/10/2026); HKT phai xay kin, khong cua
+            loai, ten = "phong thieu ten", ("Wc" if nt["wc"] >= 8 else "Phòng (chưa tên)")
+        elif mo >= 1 and g.area < 6e6:
             loai, ten = "hanh lang", None
         else:
             loai, ten = "loai tru", None
+        gop_vao = None
+        if loai == "hanh lang" and thong and not g.buffer(-300).is_empty:     # hoc rong >= 600 mm; dai hep = tuong/bau, khong gop
+            # hoc sanh/hanh lang truoc cua phong: gop vao phong no thong ra, uu tien phong khach/sinh hoat chung
+            mo_ = [rn for rn in thong if any(re_mo.search(bo_dau(t)) for t in rooms[rn]["ten"])]
+            gop_vao = max(mo_ or list(thong), key=lambda rn: (thong[rn], node[rn].area))
         c = g.representative_point()
         vung.append(dict(n=n, xref=p, ma=gan[p][0], dt=g.area / 1e6, lan_can=lc, nhom=nh, noi_that=round(tong_nt, 1),
-                         wc=round(nt["wc"], 1), may=round(nt["may"], 1), may_giat=may_giat, mo=mo, frac=fr,
-                         loai=loai, ten=ten, c=(c.x, c.y)))
+                         wc=round(nt["wc"], 1), may=round(nt["may"], 1), may_giat=may_giat, mo=mo, frac=fr, co_cua=co_cua,
+                         loai=loai, ten=ten, gop_vao=gop_vao, cau=cau.get(gop_vao, []) if gop_vao is not None else [],
+                         gop_vao_ten=" + ".join(rooms[gop_vao]["ten"]) if gop_vao is not None else None, c=(c.x, c.y)))
     vung.sort(key=lambda v: (v["ma"], -v["c"][1], v["c"][0]))
     for i, v in enumerate(vung, 1):
         v["id"] = i
     return dict(problems=problems, faces=[f.wkb for f in faces], par=par, rooms=rooms, can=dict(can), gan=gan,
                 vung=vung, ma_can=[(t, xy) for t, xy, i in ma_can], so_le=so_le, con_ho=con_ho, tk=dict(tk), tk1=dict(tk1),
                 so_kinh=len(kinh), so_phong_ho_lan1=len(opens), khung=tk_cua, file=os.path.basename(a.dxf),
-                vat_can=[(l.wkb, w) for l, w in R["vat_can"]], cua_diem=R["cua_diem"],
+                vat_can=[(l.wkb, w) for l, w in R["vat_can"]], cua_diem=R["cua_diem"], cung_cua=[l.wkb for l in R["cung_cua"]],
                 ve_nen=[list(l.coords) for l in R["lan_can"]] + [p + ([p[0]] if c else []) for c, p in R["chains"]])
 
 
@@ -627,10 +695,30 @@ def xuat(a, doc, msp, st):
             y += BUOC
         return best
 
+    ftree_x = shapely.STRtree(faces)
     cans = []
     for xref, ns in st["can"].items():
         ma = st["gan"][xref][0]
-        phong = [dict(ten=" + ".join(st["rooms"][n]["ten"]), geom=don_gian(node[n]), info=st["rooms"][n]["info"], them=False) for n in ns]
+        raw = {n: node[n] for n in ns}
+        gop = collections.defaultdict(list)          # phong -> cac hoc sanh/hanh lang gop vao
+        for v in st["vung"]:
+            if v["xref"] == xref and v.get("gop_vao") in raw and v["loai"] == "hanh lang" and v["id"] not in doi                     and not node[v["n"]].buffer(-300).is_empty:
+                A_, B_ = raw[v["gop_vao"]], node[v["n"]]
+                # dai o mo mong giua hai mat (be day tuong tai cho mo, giua hai doan dong) cung gop vao
+                noi = [faces[k] for k in ftree_x.query(B_.buffer(5)) if faces[k].area < 1e6
+                       and faces[k].distance(A_) < 1 and faces[k].distance(B_) < 1 and not faces[k].within(A_.buffer(1))]
+                u_ = unary_union([A_, B_] + noi)
+                if not isinstance(u_, Polygon) and v.get("cau") and A_.distance(B_) <= 250:
+                    # khe mong (lop trat, be day tuong tai cho mo): lap dai chu nhat doc theo doan dong o mo, rong bang khe
+                    G_ = unary_union([LineString(c_).buffer(min(300.0, LineString(c_).distance(A_) + 10), cap_style=2)
+                                      for c_ in v["cau"]])
+                    u_ = unary_union([A_, B_, G_.intersection(unary_union([A_, B_]).buffer(300, join_style=2))])
+                if isinstance(u_, Polygon):          # chi gop khi lien mot khoi (thong qua o mo)
+                    raw[v["gop_vao"]] = u_
+                    gop[v["gop_vao"]].append(v["id"])
+        phong = [dict(ten=" + ".join(st["rooms"][n]["ten"]), geom=don_gian(raw[n]), info=st["rooms"][n]["info"], them=False,
+                      gop=gop.get(n, [])) for n in ns]
+        da_gop = {i for v in gop.values() for i in v}
         them, hl = [], []
         for v in st["vung"]:
             if v["xref"] != xref:
@@ -645,7 +733,7 @@ def xuat(a, doc, msp, st):
             elif loai == "phong thieu ten":
                 hl.append(dict(id=v["id"], geom=g))
                 problems.append((CB, "Vùng chưa rõ", f"{ma}: vùng #{v['id']} ({v['dt']:.1f} m²) có nội thất nhưng không đoán được tên; tạm tính vào DTCH, không vẽ polyline phòng. Đặt tên bằng --doi \"#{v['id']}=<tên>\"."))
-            elif loai == "hanh lang":
+            elif loai == "hanh lang" and v["id"] not in da_gop:
                 hl.append(dict(id=v["id"], geom=g))
         u = unary_union([p["geom"] for p in phong + them] + [h["geom"] for h in hl])
         g_ = a.day_tuong_max / 2
@@ -755,7 +843,15 @@ def xuat(a, doc, msp, st):
 
     # ---- van de -----------------------------------------------------------------------------------------------------
     vd = [(None, h, m, muc) for muc, h, m in problems]
+    cung = [wkb.loads(x) for x in st.get("cung_cua", [])]
+    ctr = shapely.STRtree(cung) if cung else None
     for c in cans:
+        for i_, h in enumerate(c["ho"], 1):
+            if ctr is not None and any(cung[k].intersection(h.buffer(20)).length > 0.3 * cung[k].length for k in ctr.query(h)):
+                vd.append((c["ma"], "Loại trừ có cửa", f"Phần loại trừ #{i_} ({h.area / 1e6:.2f} m²) có cửa đi mở vào: không gian có cửa là phòng, không phải HKT – kiểm tra lại.", LOI))
+        for p in c["phong"]:
+            if p.get("gop"):
+                vd.append((c["ma"], "Gộp hốc sảnh", f"'{p['ten']}' đã gộp hốc sảnh/hành lang #{', #'.join(map(str, p['gop']))} (không gian thông với phòng, không có cửa).", GY))
         for i_, h in enumerate(c["ho"], 1):
             b_ = h.bounds
             vd.append((c["ma"], "Phần loại trừ", f"#{i_}: {h.area / 1e6:.2f} m² ({b_[2]-b_[0]:.0f}×{b_[3]-b_[1]:.0f} mm) tại ({(b_[0]+b_[2])/2:.0f}, {(b_[1]+b_[3])/2:.0f}) – vùng kín không cửa trong căn, coi là hộp kỹ thuật/cột; cần xác nhận.", CB))
@@ -794,11 +890,11 @@ def xuat(a, doc, msp, st):
         for p in sorted(ph, key=lambda p: p["ten"]):
             n += 1
             mt = "Thông thủy theo mặt hoàn thiện" + (f"; vùng #{p['id']} không có text tên, tên đặt theo nội thất" if p["them"] else "") \
-                 + (f"; đã trừ cột/vật đứng riêng {p['ho']:.2f} m²" if p["ho"] > 0 else "") + ("; không gian mở, gộp 1 polyline" if " + " in p["ten"] else "")
+                 + (f"; đã trừ cột/vật đứng riêng {p['ho']:.2f} m²" if p["ho"] > 0 else "") + ("; không gian mở, gộp 1 polyline" if " + " in p["ten"] else "") + (f"; gồm hốc sảnh #{', #'.join(map(str, p['gop']))}" if p.get("gop") else "")
             ws.append([n, DA, FT, c["ma"], p["ten"], "DT phòng", mt, round(p["dt"], 4), None, None, None, CB if (p["them"] or p["ho"] > 0) else DAT, None, "Đã dựng"])
         for p in lg:
             n += 1
-            ws.append([n, DA, FT, c["ma"], "Lô gia", "DT lô gia (tính 100%)", ("Có text tên" if not p["them"] else f"Vùng #{p['id']}, không có text tên") + "; đo đến mặt trong lan can/vách",
+            ws.append([n, DA, FT, c["ma"], "Lô gia", "DT lô gia (tính 100%)", ("Có text tên" if not p["them"] else f"Vùng #{p['id']}, không có text tên") + "; đo đến mặt trong lan can/vách" + ("; góc đặt cục nóng/máy giặt" if p["them"] and p["dt"] < 2.0 else ""),
                        round(p["dt"], 4), None, None, None, CB if p["them"] else DAT, None, "Đã dựng"])
         c["sp"], c["sl"] = sum(p["dt"] for p in ph), sum(p["dt"] for p in lg)
         n += 1; ws.append([n, DA, FT, c["ma"], None, "Đường bo thông thủy căn", f"Layer '{LAYER_CAN}', xref {c['xref']}", round(c["dt_bo"], 4), None, None, None, DAT, None, "Đã dựng"])
@@ -812,10 +908,11 @@ def xuat(a, doc, msp, st):
     for i_, (cn, hm, mt, muc) in enumerate(vd, 1):
         wv.append([i_, DA, FT, cn, None, hm, mt, None, None, None, None, muc, None, "Chờ xử lý"])
     wz = wb.create_sheet("Vung chua ten")
-    wz.append(["#", "Căn", "Xref", "DT (m²)", "Phân loại", "Tên đề xuất", "Giáp lan can", "Giáp lam nhôm", "Nét nội thất (m)", "Nét TB vệ sinh (m)", "Ô mở sang phòng", "Tâm X", "Tâm Y", "Chỉnh (--doi)"])
+    wz.append(["#", "Căn", "Xref", "DT (m²)", "Phân loại", "Tên đề xuất", "Giáp lan can", "Giáp lam nhôm", "Nét nội thất (m)", "Nét TB vệ sinh (m)", "Ô mở sang phòng", "Tâm X", "Tâm Y", "Chỉnh (--doi)", "Có cửa đi", "Gộp vào phòng"])
     for v in st["vung"]:
         wz.append([v["id"], v["ma"], v["xref"], round(v["dt"], 4), v["loai"], v["ten"], "x" if v["lan_can"] else "", "x" if v["nhom"] else "",
-                   v["noi_that"], v["wc"], v["mo"], round(v["c"][0]), round(v["c"][1]), "%s=%s" % (v["id"], doi[v["id"]][1] or doi[v["id"]][0]) if v["id"] in doi else ""])
+                   v["noi_that"], v["wc"], v["mo"], round(v["c"][0]), round(v["c"][1]), "%s=%s" % (v["id"], doi[v["id"]][1] or doi[v["id"]][0]) if v["id"] in doi else "",
+                   "x" if v.get("co_cua") else "", v.get("gop_vao_ten") or ""])
     w0.append([f"BÁO CÁO DIỆN TÍCH THÔNG THỦY – {DA} {a.tang or ''}".strip()])
     w0.append([f"File: {st['file']} (bản sao). Ngày {datetime.date.today():%d/%m/%Y}. Đơn vị mm. Làm tròn 1 số thập phân khi hiển thị, tính trên giá trị chưa làm tròn."])
     w0.append([])

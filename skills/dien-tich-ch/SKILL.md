@@ -104,6 +104,10 @@ Dấu hiệu: một file chứa cả tầng, mỗi căn là một xref đã bind
    & "<python>" "<skill>\scripts\mat_bang_tang.py" phan-tich "<file.dxf>" --out-dir "<thư mục>"
    ```
    Tự làm: thêm layer ranh phụ (lan can, tường BTCT, khung nhôm, kính; bỏ nét con < 200 mm), đóng ô mở chưa vẽ cửa ≤ 2,6 m theo mặt trát rồi **bỏ** các đoạn đóng dài chia đôi không gian mở hoặc cắt hốc trong phòng, dựng **mặt trong vách kính** cho phòng còn hở, nối khe vẽ 6–25 mm, gán phòng vào căn theo tiền tố xref, ghép mã căn gần nhất, phân loại vùng chưa tên. Xuất `de_xuat_ranh_phong.png`, `phan_loai_vung.png` (đánh số #), `mbt_phan_tich.json`.
+   Quy tắc phân loại (người dùng chốt 07/10/2026 sau khi soát CT1):
+   - **Không gian có cửa đi là phòng.** HKT phải xây kín, không cửa. Cửa mở từ hành lang chung thì là phòng chung, ngoài căn.
+   - **Hốc sảnh trước cửa phòng** (thông, không cửa, rộng ≥ 600 mm) gộp vào phòng nó thông ra, ưu tiên sinh hoạt chung.
+   - **Góc đặt cục nóng/máy giặt cạnh lô gia** là lô gia, kể cả khi < 2 m².
 3. **Trình người dùng duyệt hai ảnh** (bắt buộc, không tự vẽ): ghép mã căn ↔ xref; phòng còn hở (`phong_ho`); phân loại từng vùng # (lô gia / phòng thiếu tên + tên đề xuất theo nội thất / hành lang trong căn / ngoài căn / loại trừ). Chỉ ra chỗ không đối xứng giữa các căn cùng loại. Người dùng chỉnh bằng số #.
 4. **Xuất** theo phân loại đã duyệt:
    ```powershell
