@@ -64,18 +64,26 @@ BLOCK_BO_QUA = re.compile(r"\b(ghi ?ch[uú]|note|legend|chu giai|khung|luoi|tran
 _BO_QUA = [BLOCK_BO_QUA]   # co the doi bang --block-bo-qua
 
 
-def walk(entities, depth=0, max_depth=3):
-    """Duyet doi tuong Model, di sau vao block/xref (INSERT) da duoc ezdxf bien doi toa do ve he Model."""
+def walk(entities, depth=0, max_depth=3, _par=None):
+    """Duyet doi tuong Model, di sau vao block/xref (INSERT) da duoc ezdxf bien doi toa do ve he Model.
+
+    Doi tuong layer 0 trong block lay layer cua INSERT chua no (dung quy uoc AutoCAD): vi du lan can ve o layer 0 trong
+    block chen tren layer A-Lancan duoc tinh la A-Lancan (CT1 tang 5A-10: ~2.500 net lan can nam o layer 0)."""
     for e in entities:
         if e.dxf.get("invisible", 0):            # phan tu an (trang thai hien thi cua block dong)
             continue
         if e.dxftype() == "INSERT":
             if depth >= max_depth or (_BO_QUA[0] is not None and _BO_QUA[0].search(e.dxf.name or "")):
                 continue
+            lay = _par if (_par and layer_goc(e.dxf.layer) == "0") else e.dxf.layer
             try:
-                yield from walk(e.virtual_entities(), depth + 1, max_depth)
+                subs = list(e.virtual_entities())
             except Exception:
                 continue
+            for v in subs:                       # ban sao ao: doi layer khong anh huong ban ve
+                if layer_goc(v.dxf.layer) == "0":
+                    v.dxf.layer = lay
+            yield from walk(subs, depth + 1, max_depth, lay)
         else:
             yield e
 

@@ -84,3 +84,7 @@ Có hai cách, đều chính xác và kiểm soát được:
 1. **Người dùng vẽ LINE/PLINE** ngang chỗ hở trên layer **`A-Dong ranh phong`** trong bản vẽ (hoặc bản sao), script tự đọc.
 2. Người dùng nói bằng lời, Claude truyền `--them-ranh=x1,y1,x2,y2;x1,y1,x2,y2`. **Viết `--them-ranh=` có dấu `=`**: tọa độ âm bắt đầu bằng `-` sẽ bị hiểu nhầm là tùy chọn.
 Không tự đoán đường đóng ranh; chỉ đưa ra đề xuất kèm hình `xem_lai.png` rồi chờ người dùng xác nhận.
+
+## 7. Mặt bằng tầng nhiều căn, nét layer 0 trong block (06/10/2026)
+- `walk()` (dùng chung mọi script) nay cho **đối tượng layer 0 trong block lấy layer của INSERT chứa nó**, theo quy ước AutoCAD. Ví dụ lan can vẽ ở layer 0 trong block chèn trên `A-Lancan`. Chạy lại Cần Thơ, Test AI, Test đo dt: kết quả không đổi.
+- Mặt bằng tầng (xref căn hộ đã bind, mã căn `CHxx` ngoài cửa, hành lang chung): dùng `scripts/mat_bang_tang.py`; quy tắc ở `references/quy-uoc-mat-bang-tang.md` (vách kính đo mặt trong, ô mở ≤ 2,6 m đóng theo mặt trát, bếp mở gộp, lô gia và phòng thiếu tên đặt theo nội thất, gom căn theo tiền tố xref).
