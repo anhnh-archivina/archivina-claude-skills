@@ -4,7 +4,7 @@ Bộ skill Claude Code dùng nội bộ Archivina để kiểm soát hồ sơ b�
 
 | Skill | Mô tả |
 |---|---|
-| [`dien-tich-ch`](skills/dien-tich-ch/SKILL.md) (Dien tich CH) | Dựng polyline thông thủy từng phòng và đường bo căn hộ từ mặt bằng AutoCAD (kể cả đối tượng AutoCAD Architecture), loại trừ hộp kỹ thuật/cột, ghi nhãn m² và `DTCH` theo polyline vừa vẽ, xuất Excel, kiểm tra nhãn trên bản sao DWG. |
+| [`dien-tich-ch`](skills/dien-tich-ch/SKILL.md) (Dien tich CH) | Dựng polyline thông thủy từng phòng và đường bo căn hộ từ mặt bằng AutoCAD (kể cả đối tượng AutoCAD Architecture), loại trừ hộp kỹ thuật/cột, ghi nhãn m² và `DTCH` theo polyline vừa vẽ (nhãn là Field liên kết polyline, sửa tay đường bo thì nhãn tự cập nhật), xuất Excel, kiểm tra nhãn trên bản sao DWG. |
 | [`thiet-ke-tran-ch`](skills/thiet-ke-tran-ch/SKILL.md) (Tran CH) | Soát mặt bằng bố trí thiết bị trần căn hộ theo quy tắc trần Archivina (đèn ≥1200 / ≥500 mm, tủ áo, vùng gối, trục WC, đèn thả, ưu tiên PCCC), báo Excel 4 mức cảnh báo + ảnh từng căn, đề xuất vị trí mới vẽ vào bản sao DWG. Kèm thư viện 16 block thiết bị trần tỷ lệ 1:1 (`assets/thu-vien/`). Cần skill `dien-tich-ch` (bộ dựng phòng). |
 
 ## MCP server

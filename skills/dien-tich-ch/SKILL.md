@@ -1,6 +1,6 @@
 ---
 name: dien-tich-ch
-description: 'Dien tich CH – Tự dựng polyline đóng kín bo diện tích thông thủy từng phòng VÀ đường bo thông thủy cả căn hộ (layer "Dien tich thong thuy", loại trừ hộp kỹ thuật/cột, nhãn "DTCH: xx.x m2" ở giữa phòng khách) từ mặt bằng căn hộ AutoCAD (.dwg/.dxf), kể cả bản vẽ dùng đối tượng AutoCAD Architecture (Tường, Cửa đi, Cửa sổ); bám tường Wall, polyline bo cột, nét vữa hoàn thiện và nét bao khung cửa sổ/cửa đi (không bám cánh mở), không tự lùi lớp trát khi bản vẽ không vẽ lớp trát, đóng ô cửa ≤ 1,2 m, ghi nhãn m² theo style tên phòng, xuất Excel, lưu vào BẢN SAO DWG. Dùng skill này bất cứ khi nào người dùng đưa mặt bằng căn hộ và nhờ bo/vẽ/tạo polyline phòng hoặc đường bo căn hộ, đo diện tích từng phòng hay cả căn, "bo thông thủy", "DTCH", tạo polyline lớp "A- Dien tich phong" hoặc "Dien tich thong thuy", hoặc soát xem polyline nhân viên đã bo có đúng nét hoàn thiện không, kể cả khi họ không nói "thông thủy" hay không nhắc tên skill. Cũng dùng cho MẶT BẰNG TẦNG nhiều căn (xref căn hộ đã bind, mã căn CHxx đặt ngoài cửa vào): tự gom phòng theo căn, nhận lô gia, phòng thiếu tên, vách kính mặt ngoài, đo DTCH từng căn.'
+description: 'Dien tich CH – Tự dựng polyline đóng kín bo diện tích thông thủy từng phòng VÀ đường bo thông thủy cả căn hộ (layer "Dien tich thong thuy", loại trừ hộp kỹ thuật/cột, nhãn "DTCH: xx.x m2" ở giữa phòng khách) từ mặt bằng căn hộ AutoCAD (.dwg/.dxf), kể cả bản vẽ dùng đối tượng AutoCAD Architecture (Tường, Cửa đi, Cửa sổ); bám tường Wall, polyline bo cột, nét vữa hoàn thiện và nét bao khung cửa sổ/cửa đi (không bám cánh mở), không tự lùi lớp trát khi bản vẽ không vẽ lớp trát, đóng ô cửa ≤ 1,2 m, ghi nhãn m² theo style tên phòng, nhãn là FIELD liên kết polyline (sửa tay đường bo thì nhãn tự cập nhật), xuất Excel, lưu vào BẢN SAO DWG. Dùng skill này bất cứ khi nào người dùng đưa mặt bằng căn hộ và nhờ bo/vẽ/tạo polyline phòng hoặc đường bo căn hộ, đo diện tích từng phòng hay cả căn, "bo thông thủy", "DTCH", tạo polyline lớp "A- Dien tich phong" hoặc "Dien tich thong thuy", hoặc soát xem polyline nhân viên đã bo có đúng nét hoàn thiện không, kể cả khi họ không nói "thông thủy" hay không nhắc tên skill. Cũng dùng cho MẶT BẰNG TẦNG nhiều căn (xref căn hộ đã bind, mã căn CHxx đặt ngoài cửa vào): tự gom phòng theo căn, nhận lô gia, phòng thiếu tên, vách kính mặt ngoài, đo DTCH từng căn.'
 ---
 
 # Dien tich CH – Đo diện tích thông thủy phòng và căn hộ (Archivina)
@@ -17,7 +17,7 @@ Mục tiêu: từ một mặt bằng căn hộ, (1) dựng polyline đóng kín 
 
 ## Nguyên tắc
 - **Không sửa DWG gốc.** Chỉ đọc bản sao; polyline chỉ được vẽ vào một bản sao mới. Lý do: file gốc là bản nhân viên nộp, cần giữ nguyên để kiểm soát.
-- **Không đụng các tab AutoCAD đang mở của người dùng** (có thể chưa lưu). Mọi việc chạy bằng AutoCAD Core Console ngầm.
+- **Không đụng các tab AutoCAD đang mở của người dùng** (có thể chưa lưu). Mọi việc chạy bằng AutoCAD Core Console ngầm; riêng bước gắn Field mở **bản sao kết quả** thành một tab mới trong AutoCAD qua COM rồi lưu, đóng (Core Console không tạo được Field).
 - **Không tự đoán đường đóng ranh** khi khe hở > 1,2 m hoặc cạnh không có nét. Dừng, báo tọa độ kèm hình, hỏi người dùng. Đề xuất được, nhưng chỉ vẽ sau khi người dùng đồng ý.
 - Layer polyline phòng là **`A- Dien tich phong`** (giữ dấu cách), màu 222. Nhãn diện tích **1 chữ số thập phân**.
 
@@ -87,12 +87,24 @@ Rồi vẽ vào bản sao: chạy `ve_polyline_vao_dwg.ps1` với `-Dwg` là **b
 
 **Nhãn `DTCH: xx.x m2`:** đặt **ở giữa phòng khách** (vị trí trống gần chữ tên phòng khách nhất), **không đè tường, cửa, nội thất, chữ tên phòng, nhãn phòng**; cùng **style, layer, màu, kiểu đối tượng** với nhãn diện tích phòng (tức theo Text tên phòng); **chiều cao = 1,5 lần chiều cao chữ tên phòng**. Vị trí tìm trên lưới 50 mm, nhãn cách mọi vật cản ≥ 80 mm (`--le`). Không tìm được chỗ thì báo Cảnh báo, không đặt bừa. Phòng khách nhận qua regex không dấu `kh[a]ch` (`--phong-khach`); đổi tiêu đề bằng `--tieu-de`.
 
+## Gắn Field cho nhãn diện tích (bắt buộc, chốt 07/10/2026)
+Người dùng cần **sửa tay đường bo và nhãn tự cập nhật**, nên sau bước vẽ cuối cùng (đã có cả polyline phòng và đường bo căn), đổi mọi nhãn `xx.x m2` / `DTCH: xx.x m2` thành **Field** liên kết polyline:
+```powershell
+& "<python>" "<skill>\scripts\gan_field_dien_tich.py" --mo-file "<ban_sao_ket_qua.dwg>"      # mở bản sao trong AutoCAD, gắn, lưu, đóng
+& "<python>" "<skill>\scripts\gan_field_dien_tich.py" --ban-ve "<tên tab đang mở.dwg>"       # tab đang mở (bản sao kết quả): 1 nhóm UNDO, không lưu
+```
+- Ghép nhãn ↔ vùng như `kiem_tra_nhan.py` (polyline ngoài cùng trên layer phòng/căn, polyline cùng layer nằm trong là loại trừ; điểm nhãn = tâm khung chữ). **Chỉ gắn khi số trên nhãn bằng diện tích vùng**; lệch thì báo Lỗi, giữ nguyên nhãn. Chữ khác có "m2" trong vùng (ghi chú cũ của bản vẽ) bỏ qua khi vùng đã có nhãn đúng.
+- Vùng không có loại trừ: `%<\AcObjProp Object(%<\_ObjId …>%).Area \f "%lu2%pr1%ps[DTCH: , m2]%ds46%ct8[1E-06]">%`. Vùng có cột/HKT: Field công thức `%<\AcExpr (Area ngoài − Area lỗ …) \f "…">%`, sửa lỗ cũng tự cập nhật. Tiền tố/hậu tố, số chữ số thập phân, dấu thập phân lấy theo chữ nhãn đang có.
+- Cần AutoCAD bản GUI đang chạy hoặc khởi động được (COM). AutoCAD Core Console **không có** hàm `vla-`/ActiveX nên không tạo được Field; không cố viết Field bằng `entmake`.
+- Nhãn cập nhật khi REGEN / mở / lưu / in (biến `FIELDEVAL`, mặc định 31). Lưu ý khi báo người dùng: copy cả polyline lẫn nhãn sang chỗ khác thì nhãn mới vẫn trỏ polyline cũ; nhãn của phòng mới phải gắn lại (chạy lại script, an toàn khi chạy nhiều lần).
+- JSON kết quả: `da_gan`, `gan_phong`, `gan_can`, `co_cong_thuc`, `loi`, `canh_bao`, `chu_khac_bo_qua`, `lech_sau_regen` (phải rỗng), `vung_khong_nhan`.
+
 ## Kiểm tra nhãn sau khi vẽ (bắt buộc)
 Sau mỗi lần vẽ vào bản sao, chuyển bản sao sang DXF (`dwg_to_dxf_aec.ps1`) rồi chạy:
 ```powershell
 & "<python>" "<skill>\scripts\kiem_tra_nhan.py" "<ban_sao.dxf>" [--layer-phong "A- Dien tich phong"] [--layer-can "Dien tich thong thuy"]
 ```
-Script ghép mỗi polyline phòng/căn với các polyline loại trừ cùng layer nằm trong nó, tìm nhãn `xx.x m2` (phòng) hoặc `DTCH: xx.x m2` (căn) nằm trong vùng, và báo Lỗi khi: nhãn ghi khác diện tích polyline đã làm tròn, vùng không có nhãn, một vùng có nhiều nhãn, polyline chưa Closed. Mã thoát 0 = đạt. Polyline có sẵn của người dùng sai layer (ví dụ đường bo căn nằm trên layer phòng) sẽ hiện thành "phòng không có nhãn": báo đúng nguyên nhân là sai layer. Ngoài ra kiểm tra bằng mắt nhãn DTCH không giao với tường, nội thất, chữ.
+Script ghép mỗi polyline phòng/căn với các polyline loại trừ cùng layer nằm trong nó, tìm nhãn (TEXT căn lề lấy điểm căn `align_point`, không lấy góc trái-dưới; Field được đọc theo giá trị đang hiển thị) `xx.x m2` (phòng) hoặc `DTCH: xx.x m2` (căn) nằm trong vùng, và báo Lỗi khi: nhãn ghi khác diện tích polyline đã làm tròn, vùng không có nhãn, một vùng có nhiều nhãn, polyline chưa Closed. Mã thoát 0 = đạt. Polyline có sẵn của người dùng sai layer (ví dụ đường bo căn nằm trên layer phòng) sẽ hiện thành "phòng không có nhãn": báo đúng nguyên nhân là sai layer. Ngoài ra kiểm tra bằng mắt nhãn DTCH không giao với tường, nội thất, chữ.
 Báo cho người dùng số vùng đạt / tổng số vùng và từng lỗi (handle, giá trị ghi, giá trị đúng).
 
 ## Mặt bằng tầng nhiều căn (xref căn hộ đã bind, mã căn ngoài cửa vào)
@@ -114,7 +126,10 @@ Dấu hiệu: một file chứa cả tầng, mỗi căn là một xref đã bind
    & "<python>" "<skill>\scripts\mat_bang_tang.py" xuat "<file.dxf>" --out-dir "<thư mục>" --du-an CT1 --tang T5A-10 [--doi "#76=ngoai;#48=Phòng ngủ;#41=loai-tru"]
    ```
    `--doi`: `ngoai`, `loai-tru`, `hanh-lang` hoặc tên phòng bất kỳ. Sinh `ve_dien_tich_tang.scr`, `<ngày>_<dự án>_<tầng>_BaoCaoDienTich.xlsx` (Tóm tắt / Diện tích / Vấn đề / Vùng chưa tên), `tong_dien_tich.png`, `ket_qua_dien_tich.json`.
-5. Vẽ vào bản sao (`ve_polyline_vao_dwg.ps1` hoặc MCP `ve_vao_ban_sao`), xuất DXF bản sao **không nổ ACA**, chạy `kiem_tra_nhan.py` (bắt buộc, phải đạt hết).
+5. Vẽ vào bản sao (`ve_polyline_vao_dwg.ps1` hoặc MCP `ve_vao_ban_sao`; file tầng lớn cần `-TimeoutSec 900`), xuất DXF bản sao **không nổ ACA**, chạy `kiem_tra_nhan.py` (bắt buộc, phải đạt hết). Gắn Field trước khi kiểm tra (mục "Gắn Field cho nhãn diện tích").
+   - **Sửa trực tiếp trên bản vẽ đang mở** (chỉ khi người dùng yêu cầu VÀ tab đó là bản sao kết quả, không phải bản gốc): dùng `scripts/ve_com_tab_mo.py --ban-ve <tên tab> --json ve_dien_tich_tang.json --xoa-handle <handle cũ> --luu-handle <handle mới>`. Script vẽ bằng API COM, tự gắn Field cho nhãn (`--khong-field` để bỏ), gom một nhóm UNDO, không lưu (`--luu` chỉ khi đó là bản sao kết quả Claude tạo và người dùng muốn lưu).
+   - **Không** dùng lệnh `SCRIPT` gửi qua `SendCommand` vào tab đang mở. Ngày 07/10/2026, chữ "Phòng (chưa tên)" có dấu "(" bị AutoCAD hiểu là biểu thức LISP; script chạy lệch, giữ AutoCAD bận hơn 45 phút và làm kẹt cả AutoCAD Core Console chạy ngầm.
+   - Chữ ghi vào `.scr` không được chứa dấu ngoặc.
 
 Kết quả mẫu CT1 tầng 5A-10 (06/10/2026): 19 căn, 168 phòng + lô gia, 187/187 vùng đạt kiểm tra nhãn; DTCH 83,6–171,0 m². Ranh tại cửa chính **chưa chốt** khi bản vẽ không vẽ cửa: đường bo theo mặt tường trong, script báo Cảnh báo kèm danh sách căn thiếu cửa; hỏi người dùng.
 

@@ -537,10 +537,10 @@ def phan_tich(a, doc, msp):
             loai, ten = "lo gia", "Lô gia"
         elif tong_nt >= 3 and g.area >= 2.5e6:
             loai = "phong thieu ten"
-            ten = "Wc" if nt["wc"] >= 8 else "Lô gia" if (may_giat or nt["may"] >= 5) else "Phòng ngủ" if g.area >= 6e6 else "Phòng (chưa tên)"
+            ten = "Wc" if nt["wc"] >= 8 else "Lô gia" if (may_giat or nt["may"] >= 5) else "Phòng ngủ" if g.area >= 6e6 else "Phòng chưa tên"
         elif co_cua:
             # khong gian co cua di = phong (nguoi dung chot 07/10/2026); HKT phai xay kin, khong cua
-            loai, ten = "phong thieu ten", ("Wc" if nt["wc"] >= 8 else "Phòng (chưa tên)")
+            loai, ten = "phong thieu ten", ("Wc" if nt["wc"] >= 8 else "Phòng chưa tên")
         elif mo >= 1 and g.area < 6e6:
             loai, ten = "hanh lang", None
         else:
@@ -723,7 +723,7 @@ def xuat(a, doc, msp, st):
         for v in st["vung"]:
             if v["xref"] != xref:
                 continue
-            loai, ten = v["loai"], v["ten"]
+            loai, ten = v["loai"], (v["ten"] or "").replace("Phòng (chưa tên)", "Phòng chưa tên") or None
             if v["id"] in doi:
                 kd, tn = doi[v["id"]]
                 loai, ten = ("ten", tn) if kd == "ten" else ({"ngoai": "ngoai", "loai-tru": "loai tru", "hanh-lang": "hanh lang"}[kd], None)
@@ -753,6 +753,14 @@ def xuat(a, doc, msp, st):
          "_.-LAYER", "_M", f'"{LAYER_PHONG}"', "_C", "222", "", "",
          "_.-LAYER", "_M", f'"{LAYER_CAN}"', "_C", "6", "", ""]
     ghi_chu_nhan = []
+    VE = []          # cung noi dung voi .scr, dang du lieu cho ve_com_tab_mo.py (ve thang vao tab AutoCAD dang mo qua COM)
+
+    def ve_pl(layer, r_):
+        VE.append(dict(loai="pline", layer=layer, pts=[[round(x, 4), round(y, 4)] for x, y in ring(r_)]))
+
+    def ve_chu(n_, text):
+        VE.append(dict(loai=n_["kind"].lower(), layer=n_["layer"], style=n_["style"], h=n_["h"], color=n_["color"],
+                       rot=n_.get("rot", 0.0) or 0.0, x=round(n_["x"], 2), y=round(n_["y"], 2), text=text))
     for c in cans:
         c["dt"] = c["dt_bo"] - c["dt_lt"]
         ref = next((p["info"] for p in c["phong"] if p["info"]), None)
@@ -763,8 +771,10 @@ def xuat(a, doc, msp, st):
             p["dt"] = g.area / 1e6
             p["ho"] = sum(Polygon(h).area for h in g.interiors) / 1e6
             L += ["_.-LAYER", "_S", f'"{LAYER_PHONG}"', "", "_.PLINE " + " ".join(f"{x:.4f},{y:.4f}" for x, y in ring(g.exterior)) + " _C"]
+            ve_pl(LAYER_PHONG, g.exterior)
             for h in g.interiors:
                 L.append("_.PLINE " + " ".join(f"{x:.4f},{y:.4f}" for x, y in ring(h)) + " _C")
+                ve_pl(LAYER_PHONG, h)
             nhan = f"{r1(p['dt']):.1f} m2"
             if p["info"]:
                 i = p["info"]
@@ -783,8 +793,10 @@ def xuat(a, doc, msp, st):
                             pl = polylabel(g, tolerance=20); ch_ = (pl.x, pl.y)
                         nx, ny = ch_
                     ghi_chu_nhan.append(f"{c['ma']} – {p['ten']}")
-                L += tpp.lenh_nhan(dict(kind=i["kind"], layer=i["layer"], style=i["style"], h=i["h"], style_h=i["style_h"],
-                                        color=i["color"], rot=i["rot"], x=nx, y=ny), nhan)
+                n_ = dict(kind=i["kind"], layer=i["layer"], style=i["style"], h=i["h"], style_h=i["style_h"],
+                          color=i["color"], rot=i["rot"], x=nx, y=ny)
+                L += tpp.lenh_nhan(n_, nhan)
+                ve_chu(n_, nhan)
                 dat.append(box(nx - wl / 2, ny - hl_ / 2, nx + wl / 2, ny + hl_ / 2))
             else:
                 i = ref or dict(kind="TEXT", layer=a.label_layer, style="Standard", h=a.label_h, style_h=0.0, color=256, rot=0.0)
@@ -794,15 +806,21 @@ def xuat(a, doc, msp, st):
                 pl = polylabel(g, tolerance=20)
                 cho = tim_cho(g, (pl.x, pl.y), w2, h2, dat) or tim_cho(g, (pl.x, pl.y), w2, h2, dat, chi_tuong=True) or (pl.x, pl.y)
                 b0 = dict(kind=i["kind"], layer=i["layer"], style=i["style"], h=i["h"], style_h=i["style_h"], color=i["color"], rot=0.0)
-                L += tpp.lenh_nhan(dict(b0, x=cho[0], y=cho[1] + h2 / 2 - ht / 2), acad(p["ten"]))
+                # chu trong .scr: dau "(" o dau nhac nhap chu bi AutoCAD hieu la bieu thuc LISP -> lenh TEXT treo; bo ngoac
+                ten_ = re.sub(r"[()]", "", p["ten"]).strip()
+                L += tpp.lenh_nhan(dict(b0, x=cho[0], y=cho[1] + h2 / 2 - ht / 2), acad(ten_))
                 L += tpp.lenh_nhan(dict(b0, x=cho[0], y=cho[1] - h2 / 2 + hl_ / 2), nhan)
+                ve_chu(dict(b0, x=cho[0], y=cho[1] + h2 / 2 - ht / 2), ten_)
+                ve_chu(dict(b0, x=cho[0], y=cho[1] - h2 / 2 + hl_ / 2), nhan)
                 dat.append(box(cho[0] - w2 / 2, cho[1] - h2 / 2, cho[0] + w2 / 2, cho[1] + h2 / 2))
         c["dat"] = dat
     re_pk = re.compile(a.phong_khach, re.I)
     for c in cans:
         L += ["_.-LAYER", "_S", f'"{LAYER_CAN}"', "", "_.PLINE " + " ".join(f"{x:.4f},{y:.4f}" for x, y in ring(c["ext"].exterior)) + " _C"]
+        ve_pl(LAYER_CAN, c["ext"].exterior)
         for h in c["ho"]:
             L.append("_.PLINE " + " ".join(f"{x:.4f},{y:.4f}" for x, y in ring(h.exterior)) + " _C")
+            ve_pl(LAYER_CAN, h.exterior)
         nhan = f"{a.tieu_de}: {r1(c['dt']):.1f} m2"
         pk = [p for p in c["phong"] if p["info"] and re_pk.search(bo_dau(p["ten"]))]
         i = pk[0]["info"] if pk else c["ref"]
@@ -821,12 +839,16 @@ def xuat(a, doc, msp, st):
         if cho is None:
             cho = (i["x"], i["y"] - i["h"] - 0.5 * h) if pk else anchor; c["nhan_muc"] = "khong cho trong"
         c["nhan"] = dict(text=nhan, x=cho[0], y=cho[1], h=h, layer=i["layer"], style=i["style"])
-        L += tpp.lenh_nhan(dict(kind=i["kind"], layer=i["layer"], style=i["style"], h=h, style_h=i["style_h"], color=i["color"],
-                                rot=i.get("rot", 0.0), x=cho[0], y=cho[1]), nhan)
+        n_ = dict(kind=i["kind"], layer=i["layer"], style=i["style"], h=h, style_h=i["style_h"], color=i["color"],
+                  rot=i.get("rot", 0.0), x=cho[0], y=cho[1])
+        L += tpp.lenh_nhan(n_, nhan)
+        ve_chu(n_, nhan)
     L += ["_.-LAYER", "_S", f'"{acad(doc.header.get("$CLAYER", "0"))}"', "", "_.QSAVE", "_.QUIT _Y"]
     os.makedirs(a.out_dir, exist_ok=True)
     scr = os.path.join(a.out_dir, "ve_dien_tich_tang.scr")
     open(scr, "w", encoding="ascii", newline="\n").write("\n".join(L) + "\n")
+    json.dump(dict(layer={LAYER_PHONG: 222, LAYER_CAN: 6}, doi_tuong=VE),
+              open(os.path.join(a.out_dir, "ve_dien_tich_tang.json"), "w", encoding="utf-8"), ensure_ascii=False)
 
     # cua chinh: chi ghi nhan co/khong co phan tu cua gan ma can
     cd = st["cua_diem"]

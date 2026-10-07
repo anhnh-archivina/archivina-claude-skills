@@ -10,7 +10,7 @@ param(
     [Parameter(Mandatory = $true)][string]$Dwg,
     [Parameter(Mandatory = $true)][string]$Scr,
     [Parameter(Mandatory = $true)][string]$OutDwg,
-    [int]$TimeoutSec = 180
+    [int]$TimeoutSec = 900
 )
 $ErrorActionPreference = 'Stop'
 

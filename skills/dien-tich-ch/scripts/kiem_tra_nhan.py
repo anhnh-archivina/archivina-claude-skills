@@ -69,9 +69,13 @@ def main():
             t = e.plain_text() if e.dxftype() == "MTEXT" else e.dxf.text
             m = RE_SO.search(t or "")
             if m:
+                # TEXT can le (giua, phai...): diem neo la align_point; insert chi la goc trai-duoi tinh lai,
+                # voi phong hep (lo gia 500 mm) goc nay co the roi ra ngoai polyline
+                q = e.dxf.insert
+                if e.dxftype() == "TEXT" and (e.dxf.get("halign", 0) or e.dxf.get("valign", 0)) and e.dxf.get("align_point"):
+                    q = e.dxf.align_point
                 nhan.append(dict(handle=e.dxf.handle, text=t.strip(), so=float(m.group(1).replace(",", ".")),
-                                 can=t.strip().upper().startswith(a.tieu_de.upper()),
-                                 p=Point(e.dxf.insert.x, e.dxf.insert.y)))
+                                 can=t.strip().upper().startswith(a.tieu_de.upper()), p=Point(q.x, q.y)))
     loi, ket_qua, da_dung = [], [], set()
     for loai, layer in (("phong", a.layer_phong), ("can", a.layer_can)):
         for v in vung_tren_layer(msp, layer):

@@ -88,3 +88,16 @@ Không tự đoán đường đóng ranh; chỉ đưa ra đề xuất kèm hình
 ## 7. Mặt bằng tầng nhiều căn, nét layer 0 trong block (06/10/2026)
 - `walk()` (dùng chung mọi script) nay cho **đối tượng layer 0 trong block lấy layer của INSERT chứa nó**, theo quy ước AutoCAD. Ví dụ lan can vẽ ở layer 0 trong block chèn trên `A-Lancan`. Chạy lại Cần Thơ, Test AI, Test đo dt: kết quả không đổi.
 - Mặt bằng tầng (xref căn hộ đã bind, mã căn `CHxx` ngoài cửa, hành lang chung): dùng `scripts/mat_bang_tang.py`; quy tắc ở `references/quy-uoc-mat-bang-tang.md` (vách kính đo mặt trong, ô mở ≤ 2,6 m đóng theo mặt trát, bếp mở gộp, lô gia và phòng thiếu tên đặt theo nội thất, gom căn theo tiền tố xref).
+
+## 8. Nhãn diện tích là Field liên kết polyline (07/10/2026)
+- Người dùng chốt: nhãn `xx.x m2` và `DTCH: xx.x m2` phải là **Field** gắn với polyline đã bo, để sửa tay đường bo thì nhãn tự cập nhật.
+- Script `scripts/gan_field_dien_tich.py` (`--mo-file <bản sao>` hoặc `--ban-ve <tab đang mở>`) chạy sau bước vẽ cuối. Nó ghép nhãn với vùng như `kiem_tra_nhan.py` và chỉ gắn khi số trên nhãn khớp diện tích vùng.
+- Mã Field:
+  - Vùng không có lỗ: `%<\AcObjProp Object(%<\_ObjId id>%).Area \f "%lu2%pr1%ps[, m2]%ds46%ct8[1E-06]">%`.
+  - Vùng có cột/HKT: `%<\AcExpr (Area ngoài-Area lỗ…) \f "…">%`.
+- Đã thử (07/10/2026, AutoCAD 2027):
+  - Kéo một đỉnh rồi REGEN thì nhãn đổi: CH01 DTCH 170,8 → 166,8 (có công thức trừ HKT); phòng 61,1 → 58,4.
+  - Trả tọa độ cũ thì nhãn về đúng số.
+- Core Console không có `vla-`/ActiveX, nên phải dùng AutoCAD GUI qua COM. Mở bản sao thành tab mới, gắn, lưu, đóng; không đụng tab của người dùng.
+- `kiem_tra_nhan.py`: TEXT căn lề lấy `align_point`. Với lô gia hẹp 500 mm, góc trái-dưới của nhãn rơi ra ngoài polyline và trước đây bị báo nhầm.
+
