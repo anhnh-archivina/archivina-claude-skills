@@ -60,6 +60,44 @@ NT_WC = {"a-interior wc", "a_interior wc", "a-ga thu wc"}
 NT_DO = {"a-nội thất", "a-noi that", "boho-i-furniture"}
 NT_MAY = {"av-m-hvac-thiet bi"}
 TUONG_NHAN = None   # tap layer vat can (tuong, cua, kinh) - gan trong main
+VACH_BTCT = ["S-Wall"]   # vach/cot BTCT: khoi kin tren layer nay KHONG tinh vao DTCH (nguoi dung chot 07/10/2026, CT1 CH03)
+PHU_VACH = 0.6           # vung co >= 60% dien tich nam trong khoi vach -> la vach BTCT, khong phai hanh lang/lo gia
+
+
+def doc_vach(msp, layers):
+    """Da giac khoi vach BTCT: polyline kin / hatch tren layer vach (ke ca trong xref da bind)."""
+    ten = {layer_goc(x).lower() for x in layers}
+    out = []
+    for e, names in duyet(msp):
+        if layer_goc(e.dxf.layer).lower() not in ten:
+            continue
+        rings = []
+        if e.dxftype() == "HATCH":
+            try:
+                rings = [[(v.x, v.y) for v in pa.flattening(5)] for pa in ezpath.from_hatch(e)]
+            except Exception:
+                rings = []
+        elif e.dxftype() in ("LWPOLYLINE", "POLYLINE"):
+            try:
+                pts, closed = diem(e, 5.0)
+            except Exception:
+                continue
+            if pts and closed:
+                rings = [pts]
+        for r_ in rings:
+            if len(r_) >= 3:
+                g = Polygon(r_)
+                g = g if g.is_valid else g.buffer(0)
+                if g.area > 0.01e6:
+                    out.append(g)
+    return out
+
+
+def ty_le_vach(g, vach, vtree):
+    if vtree is None:
+        return 0.0
+    hit = [vach[k] for k in vtree.query(g)]
+    return unary_union(hit).intersection(g).area / g.area if hit else 0.0
 
 
 def bo_dau(s):
@@ -348,6 +386,8 @@ def phan_tich(a, doc, msp):
     khung, tk_cua = tpp.doc_khung_cua(msp, chains, [x.strip() for x in a.layer_cua.split(",") if x.strip()])
     re_mo = re.compile(a.khong_gian_mo, re.I)
     mat_ngoai = R["lan_can"] + R["nhom"] + [LineString(p) for p in R["kinh"]]
+    vach = doc_vach(msp, [x.strip() for x in a.layer_vach.split(",") if x.strip()])
+    vtree = shapely.STRtree(vach) if vach else None
 
     # lan 1: tim phong chua dong -> dung duong mat trong kinh
     print("dung mat lan 1...", file=sys.stderr, flush=True)
@@ -528,7 +568,9 @@ def phan_tich(a, doc, msp):
                         if node[rn].distance(m) < 250:
                             thong[rn] += br_long[k].length
                             cau[rn].append(list(br_long[k].coords))
-        if fr < 0.6:
+        if ty_le_vach(g, vach, vtree) >= PHU_VACH:
+            loai, ten = "vach btct", None          # khoi vach S-Wall day > 300 mm: khong phai hanh lang/lo gia, khong tinh
+        elif fr < 0.6:
             loai, ten = "ngoai", None
         elif co_cua and not cua_tu_can:
             loai, ten = "ngoai", None              # phong co cua mo ra hanh lang chung (phong ky thuat/sinh hoat chung)
@@ -559,7 +601,7 @@ def phan_tich(a, doc, msp):
     for i, v in enumerate(vung, 1):
         v["id"] = i
     return dict(problems=problems, faces=[f.wkb for f in faces], par=par, rooms=rooms, can=dict(can), gan=gan,
-                vung=vung, ma_can=[(t, xy) for t, xy, i in ma_can], so_le=so_le, con_ho=con_ho, tk=dict(tk), tk1=dict(tk1),
+                vung=vung, vach=[x.wkb for x in vach], ma_can=[(t, xy) for t, xy, i in ma_can], so_le=so_le, con_ho=con_ho, tk=dict(tk), tk1=dict(tk1),
                 so_kinh=len(kinh), so_phong_ho_lan1=len(opens), khung=tk_cua, file=os.path.basename(a.dxf),
                 vat_can=[(l.wkb, w) for l, w in R["vat_can"]], cua_diem=R["cua_diem"], cung_cua=[l.wkb for l in R["cung_cua"]],
                 ve_nen=[list(l.coords) for l in R["lan_can"]] + [p + ([p[0]] if c else []) for c, p in R["chains"]])
@@ -606,10 +648,11 @@ def anh_phan_tich(st, out_dir):
     ax.set_title("Đề xuất ranh phòng và gán căn (màu theo căn). Đỏ X = phòng chưa đóng kín", fontsize=14)
     p1 = os.path.join(out_dir, "de_xuat_ranh_phong.png"); fig.savefig(p1); plt.close(fig)
     # 2) phan loai vung chua ten
-    col = {"lo gia": "#40c057", "phong thieu ten": "#7950f2", "hanh lang": "#fab005", "ngoai": "#adb5bd", "loai tru": "#fa5252"}
+    col = {"lo gia": "#40c057", "phong thieu ten": "#7950f2", "hanh lang": "#fab005", "ngoai": "#adb5bd", "loai tru": "#fa5252",
+           "vach btct": "#343a40"}
     nhan = {"lo gia": "lô gia (tính, tên 'Lô gia')", "phong thieu ten": "phòng thiếu tên (đặt tên theo nội thất)",
             "hanh lang": "hành lang/ô cửa trong căn (tính vào DTCH)", "ngoai": "ngoài căn (không tính)",
-            "loai tru": "loại trừ (HKT/khoảng trống, không tính)"}
+            "loai tru": "loại trừ (HKT/khoảng trống, không tính)", "vach btct": "vách BTCT S-Wall (không tính)"}
     fig = plt.figure(figsize=(W_, H_), dpi=80)
     ax = fig.add_axes([0.01, 0.01, 0.98, 0.96])
     ax.add_collection(LC(st["ve_nen"], colors="#999", lw=.3))
@@ -656,6 +699,8 @@ def xuat(a, doc, msp, st):
     node = nhom_mat(faces, st["par"])
     doi = doc_doi(a.doi)
     problems = list(st["problems"])
+    vach = [wkb.loads(x) for x in st["vach"]] if "vach" in st else doc_vach(msp, [x.strip() for x in a.layer_vach.split(",") if x.strip()])
+    vtree = shapely.STRtree(vach) if vach else None
 
     def don_gian(poly):
         p = poly.simplify(a.don_gian, preserve_topology=True)
@@ -724,6 +769,8 @@ def xuat(a, doc, msp, st):
             if v["xref"] != xref:
                 continue
             loai, ten = v["loai"], (v["ten"] or "").replace("Phòng (chưa tên)", "Phòng chưa tên") or None
+            if v["id"] not in doi and loai != "vach btct" and ty_le_vach(node[v["n"]], vach, vtree) >= PHU_VACH:
+                loai, ten = "vach btct", None      # trang thai phan tich cu chua co loai nay
             if v["id"] in doi:
                 kd, tn = doi[v["id"]]
                 loai, ten = ("ten", tn) if kd == "ten" else ({"ngoai": "ngoai", "loai-tru": "loai tru", "hanh-lang": "hanh lang"}[kd], None)
@@ -735,9 +782,22 @@ def xuat(a, doc, msp, st):
                 problems.append((CB, "Vùng chưa rõ", f"{ma}: vùng #{v['id']} ({v['dt']:.1f} m²) có nội thất nhưng không đoán được tên; tạm tính vào DTCH, không vẽ polyline phòng. Đặt tên bằng --doi \"#{v['id']}=<tên>\"."))
             elif loai == "hanh lang" and v["id"] not in da_gop:
                 hl.append(dict(id=v["id"], geom=g))
+            elif loai == "vach btct":
+                problems.append((GY, "Vách BTCT", f"{ma}: vùng #{v['id']} ({v['dt']:.2f} m², tâm {v['c'][0]:.0f}, {v['c'][1]:.0f}) "
+                                 "là khối vách S-Wall, không tính vào DTCH."))
         u = unary_union([p["geom"] for p in phong + them] + [h["geom"] for h in hl])
         g_ = a.day_tuong_max / 2
         u = u.buffer(g_, join_style=2, mitre_limit=5).buffer(-g_, join_style=2, mitre_limit=5)
+        # khoi vach BTCT (S-Wall) khong tinh vao DTCH: nam giua can -> lo loai tru; nam o bien -> duong bo di vong
+        vb = [vach[k] for k in vtree.query(u)] if vtree is not None else []
+        vb = [x for x in vb if x.intersection(u).area > 0.05e6]
+        dt_vach = 0.0
+        if vb:
+            V_ = unary_union(vb)
+            dt_vach = V_.intersection(u).area / 1e6
+            u = u.difference(V_)
+            problems.append((GY, "Vách BTCT", f"{ma}: trừ {len(vb)} khối vách S-Wall, {dt_vach:.2f} m² khỏi DTCH "
+                             + "; ".join(f"({x.centroid.x:.0f}, {x.centroid.y:.0f})" for x in vb) + "."))
         pieces = sorted(getattr(u, "geoms", [u]), key=lambda q: q.area, reverse=True)
         main = don_gian(pieces[0])
         for q in pieces[1:]:
@@ -746,7 +806,7 @@ def xuat(a, doc, msp, st):
         ext = Polygon(main.exterior)
         ho = [Polygon(h) for h in main.interiors]
         cans.append(dict(ma=ma, xref=xref, phong=phong, them=them, hl=hl, ext=ext, ho=ho,
-                         dt_bo=ext.area / 1e6, dt_lt=sum(h.area for h in ho) / 1e6))
+                         dt_bo=ext.area / 1e6, dt_lt=sum(h.area for h in ho) / 1e6, dt_vach=dt_vach))
     cans.sort(key=lambda c: c["ma"])
 
     L = ["CMDECHO", "0", "OSMODE", "0",
@@ -1021,6 +1081,7 @@ def main():
     ap.add_argument("--ma-can", default=r"CH\s*\.?\s*\d+[A-Z]?", help="regex text ma can dat ngoai cua vao")
     ap.add_argument("--ma-can-xa", type=float, default=4000.0, help="khoang cach toi da tu can den text ma can (mm)")
     ap.add_argument("--xref-can", default=r"CH\d+[A-Z]?", help="regex lay ma xref can ho tu tien to layer")
+    ap.add_argument("--layer-vach", default=",".join(VACH_BTCT), help="layer vach/cot BTCT: khoi kin tren layer nay khong tinh vao DTCH")
     ap.add_argument("--doi", default="", help="chinh phan loai vung: '#76=ngoai;#25=Phong ngu;#41=loai-tru;#6=hanh-lang'")
     ap.add_argument("--day-tuong-max", type=float, default=300.0)
     ap.add_argument("--don-gian", type=float, default=10.0, help="lam gon polyline (mm), bo dinh lech < gia tri (rang cua do kinh)")

@@ -22,10 +22,16 @@ Nguồn: bản vẽ `CT1-Mat Bang Tang 5A-10 (test DT).dwg` (19 căn CH01–CH19
    - cửa mở từ hành lang chung → phòng chung (phòng kỹ thuật/sinh hoạt chung), ngoài căn.
    Lỗi đã gặp: CH07 kho 1,26 m² có cửa bị coi là HKT.
 7. **(07/10/2026) Hốc sảnh trước cửa phòng ngủ/WC** (không gian thông với phòng khách qua ô mở, không có cửa) **gộp vào phòng nó thông ra**, ưu tiên phòng khách/sinh hoạt chung. Không tách thành vùng riêng. Lỗi đã gặp: CH08, CH10 (và cùng loại CH06, CH11, CH12, CH14, CH17, CH19).
-   - Chỉ gộp hốc rộng ≥ 600 mm. Dải hẹp hơn là tường/bậu (ví dụ khối `S-Wall` 2850×360 mm): vẫn tính vào DTCH như tường ngăn, không gộp vào phòng.
+   - Chỉ gộp hốc rộng ≥ 600 mm. Dải hẹp hơn là tường/bậu, không gộp vào phòng; nếu là khối `S-Wall` thì không tính vào DTCH (quyết định 10).
    - Giữa hốc và phòng thường có khe 60–120 mm (các dải vữa trát): lấp bằng dải chữ nhật dọc theo đoạn đóng ô mở, rộng bằng khe.
 8. **(07/10/2026) Góc đặt cục nóng / máy giặt cạnh lô gia** (giáp lan can/lam nhôm, hoặc có cục nóng/máy giặt) là **lô gia**, kể cả khi nhỏ hơn 2 m². Không phải HKT. Lỗi đã gặp: CH01 góc 1,5 m² bị loại, DTCH thiếu 2,0 m². Yêu cầu bề rộng ≥ 400 mm để loại dải tường/bậu sát lan can.
-9. **(07/10/2026) Nhãn diện tích phòng và `DTCH` là Field** liên kết polyline (căn có HKT/cột dùng Field công thức trừ lỗ), để người dùng sửa tay đường bo. Gắn bằng `gan_field_dien_tich.py` sau khi vẽ (hoặc `ve_com_tab_mo.py` tự gắn). CT1 5A-10: 197/197 nhãn (178 phòng + 19 căn, 13 công thức).
+9. **(07/10/2026) Nhãn diện tích phòng và `DTCH` là Field** liên kết polyline (căn có HKT/cột dùng Field công thức trừ lỗ), để người dùng sửa tay đường bo. Gắn bằng `gan_field_dien_tich.py` sau khi vẽ (hoặc `ve_com_tab_mo.py` tự gắn). CT1 5A-10: 196/196 nhãn (177 phòng + 19 căn).
+10. **(07/10/2026, vòng tròn CH03) Khối vách BTCT (`S-Wall`) không tính vào DTCH**, kể cả khi nằm giữa phòng và lô gia hay giữa hai phòng trong căn. Cách tính giống cột, hộp kỹ thuật và giống bản vẽ mẫu HGC (vách S-Wall nằm ngoài đường bo).
+    - Vùng có ≥ 60% diện tích nằm trong polyline kín/hatch `S-Wall` (`--layer-vach`) được xếp loại **"vách BTCT"**. Loại này được xét trước mọi loại khác: không phải hành lang, không phải lô gia.
+    - Khi dựng đường bo căn: trừ mọi khối S-Wall giao với căn > 0,05 m². Khối nằm giữa căn thành polyline loại trừ; khối ở biên thì đường bo đi vòng.
+    - Báo cáo ghi Gợi ý "Vách BTCT" cho từng khối.
+    - Lỗi đã gặp ở CT1: 12 khối S-Wall dày 350–500 mm bị xếp "hành lang" (lấp vào DTCH) ở CH01, CH02, CH03, CH05, CH16, CH18. Khối 500 mm ở CH02 còn bị nhận nhầm là "Lô gia 1,3 m²" (giáp lan can).
+    - Dấu hiệu để rà: hai căn đối xứng lệch DTCH (CH01 170,8 so với CH02 172,3).
 
 ## 2. Đặc điểm bản vẽ tầng và cách script xử lý
 - **Căn hộ là xref đã bind** (layer `CH15$0$A-Wall`, `CT1-T0-CH05$0$A-Vua trat`); có xref phụ `CT1-T(3-10)-CH12` (phần sửa cho tầng 3–10), `Tuong PCCC`, `Loi Thang`. DXF xuất có nổ ACA: 26 block chứa 719 tường, 208 cửa, 36 cửa sổ ACA.
@@ -53,9 +59,10 @@ Nguồn: bản vẽ `CT1-Mat Bang Tang 5A-10 (test DT).dwg` (19 căn CH01–CH19
 | lô gia | giáp lan can/lam nhôm hoặc có cục nóng/máy giặt, không có cửa, rộng ≥ 400 mm (kể cả góc máy < 2 m²) | polyline "Lô gia", tính 100% |
 | phòng thiếu tên | nét nội thất ≥ 3 m và ≥ 2,5 m², **hoặc có cửa mở từ trong căn** | tên theo nội thất: TB vệ sinh ≥ 8 m → Wc; máy giặt/cục nóng → Lô gia; ≥ 6 m² → Phòng ngủ; còn lại "Phòng chưa tên"; vẽ polyline, báo Lỗi thiếu tên |
 | hốc sảnh/hành lang | có ô mở (không cửa) sang phòng cùng căn, < 6 m² | rộng ≥ 600 mm: **gộp vào phòng thông ra** (ưu tiên sinh hoạt chung); hẹp hơn (tường/bậu): chỉ tính vào DTCH |
+| vách BTCT | ≥ 60% diện tích nằm trong khối `S-Wall` (xét trước mọi loại khác) | không tính; khối S-Wall giao căn bị trừ khỏi đường bo |
 | loại trừ | **xây kín, không cửa**, không nội thất, không giáp lan can (HKT, khoảng trống) | không tính; nằm trong căn thì thành polyline loại trừ; script báo Lỗi nếu phần loại trừ có cửa |
 
-CT1: #23 (18,8 m²) và #84 (17,3 m²) có cửa đôi mở từ hành lang chung → phòng chung, ngoài căn. Hai căn đối xứng phân loại khác nhau (CT1: #38/#76) → chỉnh cho thống nhất bằng `--doi` sau khi hỏi.
+CT1: #23 (18,8 m²) và #84 (17,3 m²) có cửa đôi mở từ hành lang chung → phòng chung, ngoài căn. Hai căn đối xứng phân loại khác nhau → chỉnh cho thống nhất bằng `--doi` sau khi hỏi (CT1 #38/#76 trước phải đổi tay, nay tự nhận là vách BTCT).
 
 ## 4. Gom căn và ghép mã căn
 - Không gom được theo khoảng cách: tường chung giữa hai căn dày ≤ 200 mm, bằng tường ngăn trong căn, nên khép hình 100–250 mm vẫn gộp 19 căn thành 9–11 khối. Cũng không gom được theo cửa: cửa chính thiếu, kính mặt ngoài nối nhầm các căn.
@@ -76,3 +83,7 @@ CT1: #23 (18,8 m²) và #84 (17,3 m²) có cửa đôi mở từ hành lang chun
 
 ## 7. Kết quả kiểm chứng CT1 tầng 5A-10
 Lần 1 (06/10/2026): người dùng soát và khoanh 5 vị trí sai (hốc sảnh CH08, CH10; kho có cửa CH07; góc máy cạnh lô gia CH01; một vị trí ở CH03 chưa rõ). Lần 2 (07/10/2026) theo quy tắc 6–8, DTCH (m²): CH01 170,8 · CH02 172,3 · CH03 122,9 · CH04 83,6 · CH05 122,8 · CH06 84,1 · CH07 131,2 · CH08 105,7 · CH09 118,7 · CH10 85,5 · CH11 88,6 · CH12 85,2 · CH13 118,8 · CH14 105,7 · CH15 130,9 · CH16 123,2 · CH17 84,3 · CH18 135,6 · CH19 109,6. Sinh hoạt chung tăng 1,3–2,4 m² ở 8 căn do gộp hốc sảnh; 8 kho/phòng có cửa thành phòng.
+Lần 3 (07/10/2026), theo quyết định 10 (vách S-Wall), DTCH (m²):
+- Đổi: CH01 168,3 · CH02 168,4 · CH03 121,3 · CH05 121,2 · CH16 121,6 · CH18 134,1.
+- Còn lại như lần 2.
+- 177 phòng + lô gia (bỏ lô gia giả ở CH02). Nhãn Field 196/196; `kiem_tra_nhan` đạt 196/196; không còn khối S-Wall nào nằm trong DTCH.
