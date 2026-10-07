@@ -1,0 +1,38 @@
+{
+  "_ghi_chu": "Thư viện ký hiệu mặt bằng cấp điện ổ cắm Archivina, tách từ 'E Mat bang cap dien o cam can ho.dwg' (07/10/2026). Block 1:1 mm, chèn tỷ lệ 1. Ổ cắm / hộp chờ / tủ điện / công tắc: điểm chèn tại MẶT TƯỜNG HOÀN THIỆN, ký hiệu nhô theo +Y cục bộ (xoay = hướng pháp tuyến vào phòng - 90°). Mã thiết bị phân biệt bằng giá trị thuộc tính (tag) của block. 'cao_do' lấy theo bảng ký hiệu mẫu (E-BANG-KY-HIEU.dwg).",
+  "thiet_bi": [
+    {"ma": "O-DOI", "ten": "Ổ cắm đôi 3 chấu 16A-220V âm tường", "block": "AV-E-O cam doi 3 chau", "file": "E-O-DOI.dwg", "layer": "thiet_bi", "tag": "1", "gia_tri": "", "cao_do": "H:+0.4", "rong": 200, "sau": 165},
+    {"ma": "O-TV", "ten": "Ổ cắm đôi 3 chấu - Tivi", "block": "AV-E-O cam doi 3 chau", "file": "E-O-DOI.dwg", "layer": "thiet_bi", "tag": "1", "gia_tri": "TV", "cao_do": "H:+1.2", "rong": 200, "sau": 165},
+    {"ma": "O-B", "ten": "Ổ cắm đôi 3 chấu - Khu bếp", "block": "AV-E-O cam doi 3 chau", "file": "E-O-DOI.dwg", "layer": "thiet_bi", "tag": "1", "gia_tri": "B", "cao_do": "H:+1.2", "rong": 200, "sau": 165},
+    {"ma": "O-G", "ten": "Ổ cắm đôi 3 chấu - Đầu giường", "block": "AV-E-O cam doi 3 chau", "file": "E-O-DOI.dwg", "layer": "thiet_bi", "tag": "1", "gia_tri": "G", "cao_do": "H:+0.6", "rong": 200, "sau": 165},
+    {"ma": "O-TL", "ten": "Ổ cắm đôi 3 chấu - Tủ lạnh", "block": "AV-E-O cam doi 3 chau", "file": "E-O-DOI.dwg", "layer": "thiet_bi", "tag": "1", "gia_tri": "TL", "cao_do": "H:+0.4", "rong": 200, "sau": 165},
+    {"ma": "O-DN", "ten": "Ổ cắm đôi 3 chấu - Điện nhẹ", "block": "AV-E-O cam doi 3 chau", "file": "E-O-DOI.dwg", "layer": "thiet_bi", "tag": "1", "gia_tri": "ĐN", "cao_do": "H:+1.2", "rong": 200, "sau": 165},
+    {"ma": "O-W", "ten": "Ổ cắm 3 chấu chống ẩm (W)", "block": "AV-E-O cam don 3 chau chong am", "file": "E-O-CHONG-AM.dwg", "layer": "thiet_bi", "tag": "W", "gia_tri": "W", "cao_do": "H:+1.2", "rong": 200, "sau": 178},
+    {"ma": "O-X", "ten": "Ổ cắm 3 chấu chống ẩm (X)", "block": "AV-E-O cam don 3 chau chong am", "file": "E-O-CHONG-AM.dwg", "layer": "thiet_bi", "tag": "W", "gia_tri": "X", "cao_do": "H:+0.5", "rong": 200, "sau": 178},
+    {"ma": "HOP-BT", "ten": "Box chờ bếp từ 80x80x60", "block": "AV-E-Hop dau noi am tuong 80x80x50", "file": "E-HOP-CHO.dwg", "layer": "thiet_bi", "tag": "1", "gia_tri": "BT", "cao_do": "H:+0.6", "rong": 200, "sau": 200},
+    {"ma": "HOP-HM", "ten": "Box chờ hút mùi 80x80x60", "block": "AV-E-Hop dau noi am tuong 80x80x50", "file": "E-HOP-CHO.dwg", "layer": "thiet_bi", "tag": "1", "gia_tri": "HM", "cao_do": "H:+2.0", "rong": 200, "sau": 200},
+    {"ma": "HOP-AC", "ten": "Box chờ điều hòa 80x80x60", "block": "AV-E-Hop dau noi am tuong 80x80x50", "file": "E-HOP-CHO.dwg", "layer": "thiet_bi", "tag": "1", "gia_tri": "AC", "cao_do": "H:+2.2", "rong": 200, "sau": 200},
+    {"ma": "HOP-BNL", "ten": "Box chờ bình nóng lạnh 80x80x60", "block": "AV-E-Hop dau noi am tuong 80x80x50", "file": "E-HOP-CHO.dwg", "layer": "thiet_bi", "tag": "1", "gia_tri": "BNL", "cao_do": "H:+2.6", "rong": 200, "sau": 200},
+    {"ma": "TU-DIEN", "ten": "Tủ điện âm tường dạng module", "block": "AV-E-Tu dien phong", "file": "E-TU-DIEN.dwg", "layer": "tu_dien", "tag": "1", "gia_tri": "TĐ-CH", "cao_do": "H:+1.5", "rong": 500, "sau": 250},
+    {"ma": "VDP", "ten": "Dây chờ cấp nguồn video doorphone", "block": "BNN", "file": "E-VDP.dwg", "layer": "thiet_bi", "tag": null, "gia_tri": null, "cao_do": "H:+1.4", "rong": 250, "sau": 240, "nhan": "VDP"},
+    {"ma": "CT-20A", "ten": "Công tắc 20A/220V (bình nóng lạnh)", "block": "AV-E-Cong tac 20A", "file": "E-CT-20A.dwg", "layer": "thiet_bi", "tag": null, "gia_tri": null, "cao_do": "H:+1.2", "rong": 50, "sau": 75, "ty_le": 1.6},
+    {"ma": "CT-BA", "ten": "Công tắc ba 1 chiều 10A (đèn / gương / quạt hút WC)", "block": "AV-E-Cong tac ba - 1 chieu", "file": "E-CT-BA.dwg", "layer": "cong_tac", "tag": null, "gia_tri": null, "cao_do": "H:+1.2", "rong": 130, "sau": 218},
+    {"ma": "QUAT-HUT", "ten": "Quạt hút mùi âm trần (WC)", "block": "AV_HutMuiWC1", "file": "E-QUAT-HUT.dwg", "layer": "quat", "tag": null, "gia_tri": null, "cao_do": "trần", "rong": 200, "sau": 200, "chi_nhan_dien": true},
+    {"ma": "MUI-TEN", "ten": "Mũi tên dây về tủ điện", "block": "AV-E-Mui ten ve tu", "file": "E-MUI-TEN.dwg", "layer": "cap", "tag": null, "gia_tri": null, "ty_le": 0.7},
+    {"ma": "MAY-CHO", "ten": "Vị trí cần đặt chờ khi đổ cột vách", "block": "AV-E-Cho cot vach", "file": "E-MAY-CHO-VACH.dwg", "layer": "text", "tag": null, "gia_tri": null}
+  ],
+  "bi_danh_block": {
+    "_ghi_chu": "Tên block khác (dự án khác / bản vẽ nhân viên) được coi là cùng ký hiệu khi SOÁT. So khớp như noi_that (bỏ tiền tố xref, bỏ dấu, * ?).",
+    "AV-E-O cam doi 3 chau": ["av-e-o cam doi 3 chau*", "*o cam doi*"],
+    "AV-E-O cam don 3 chau chong am": ["av-e-o cam don 3 chau chong am*", "*chong am*"],
+    "AV-E-Hop dau noi am tuong 80x80x50": ["av-e-hop dau noi*", "*hop dau noi*", "*box cho*"],
+    "AV-E-Tu dien phong": ["av-e-tu dien*", "*tu dien*"],
+    "BNN": ["bnn", "*doorphone*", "*vdp*"],
+    "AV-E-Cong tac 20A": ["av-e-cong tac 20a*"],
+    "AV-E-Cong tac ba - 1 chieu": ["av-e-cong tac ba*"],
+    "AV_HutMuiWC1": ["av_hutmuiwc*", "*hut mui wc*"],
+    "AV-E-Cho cot vach": ["av-e-cho cot vach*"],
+    "AV-E-Mui ten ve tu": ["av-e-mui ten ve tu*"]
+  },
+  "bang_ky_hieu": {"file": "E-BANG-KY-HIEU.dwg", "block": "AV-E-Bang ky hieu o cam", "rong": 10300, "cao": 4600}
+}

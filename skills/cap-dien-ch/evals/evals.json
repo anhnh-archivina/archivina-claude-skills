@@ -1,0 +1,23 @@
+{
+  "skill_name": "cap-dien-ch",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Vẽ mặt bằng cấp điện ổ cắm cho 2 căn trong H:\\@Archivina 2026\\@bản vẽ mẫu căn hộ\\Test Layout noi that CH.dwg theo nguyên tắc ổ cắm Archivina.",
+      "expected_output": "Xuất DXF bản sao (nổ ACA); chạy cap_dien.py bo-tri lần đầu, xem ảnh; HỎI số ổ mặt bếp, đế ổ vuông/chữ nhật, block chưa nhận diện (86786, CT3-Tn-MEP), cửa chính CH02 không có cung mở, sofa không sát tường, PN không có kệ TV, phòng đa năng – không tự suy đoán; chạy lại với --so-o-bep; G hai bên đầu giường cách mép đệm 200, TV theo tâm kệ, TV+ĐN cách 150, W/X trong WC, W máy giặt, AC tại dàn nóng, TĐ-CH cách khuôn cửa 500; thiết bị trên vách BTCT có mây; lộ S1 khách+WC chung, S2 bếp, S3 PN, AC/BT riêng; dim từ mép tường; chỉ vẽ vào bản sao sau khi người dùng đồng ý; kiểm tra lại bằng xuat_dxf + soat.",
+      "files": []
+    },
+    {
+      "id": 2,
+      "prompt": "Soát mặt bằng ổ cắm căn hộ nhân viên vừa vẽ trong file <ban ve E nhan vien>.dwg, báo lỗi ra Excel.",
+      "expected_output": "cap_dien.py soat trên DXF bản sao: đọc ký hiệu AV-E-* theo bí danh + thuộc tính; Lỗi vị trí (cách khuôn < 200, sau cửa, sau tủ áo), Thiếu thiết bị bắt buộc; Cảnh báo lệch > 300 kèm tọa độ đề xuất, BTCT chưa có mây, lộ riêng AC/BNL/BT thiếu nhãn; Gợi ý thiếu dim; nói rõ phần chưa kiểm tra được; nền không có tên phòng / nội thất đã nổ (như file mẫu E xuất Revit) thì báo không dựng được phòng và hỏi nền phù hợp.",
+      "files": []
+    },
+    {
+      "id": 3,
+      "prompt": "Cho tôi block ổ cắm đôi đầu giường và box chờ bình nóng lạnh chuẩn Archivina.",
+      "expected_output": "Chỉ ra assets/thu-vien/E-O-DOI.dwg (block AV-E-O cam doi 3 chau, thuộc tính 1 = G, H:+0.6) và E-HOP-CHO.dwg (AV-E-Hop dau noi am tuong 80x80x50, thuộc tính 1 = BNL, H:+2.6), layer AV-E-PW-Thiết bị điện động lực, điểm chèn tại mặt tường, +Y vào phòng, chèn tỷ lệ 1; không sửa bản vẽ người dùng.",
+      "files": []
+    }
+  ]
+}
