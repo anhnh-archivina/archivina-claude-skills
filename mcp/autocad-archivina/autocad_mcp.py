@@ -10,7 +10,8 @@ Nguyen tac (quy tac Archivina):
   - File ket qua chi duoc tao moi, khong ghi de file da co, khong trung file nguon.
 Cach dung: dang ky voi Claude Code (stdio):
     claude mcp add --scope user autocad-archivina -- "<python.exe>" "<duong dan>\autocad_mcp.py"
-Bien moi truong (tuy chon): DIEN_TICH_CH_SCRIPTS = thu muc scripts cua skill dien-tich-ch;
+Bien moi truong (tuy chon): DIEN_TICH_CH_SCRIPTS / TRAN_CH_SCRIPTS / CAP_DIEN_CH_SCRIPTS = thu muc scripts cua skill
+                            dien-tich-ch / thiet-ke-tran-ch / cap-dien-ch;
                             ACCORECONSOLE = duong dan accoreconsole.exe; AUTOCAD_MCP_TIMEOUT = giay (mac dinh 240).
 """
 import glob
@@ -37,7 +38,10 @@ mcp = MCPServer(
     instructions=(
         "Cong cu AutoCAD/AutoCAD Architecture chay ngam tren BAN SAO (accoreconsole). Khong sua file goc, khong dung "
         "AutoCAD dang mo. Quy trinh do dien tich: xuat_dxf -> dung_polyline_phong -> (nguoi dung dong y) ve_vao_ban_sao "
-        "-> dung_duong_bo_can_ho -> ve_vao_ban_sao -> xuat_dxf ban sao -> kiem_tra_nhan. Don vi ban ve Archivina: mm."
+        "-> dung_duong_bo_can_ho -> ve_vao_ban_sao -> xuat_dxf ban sao -> kiem_tra_nhan. Tran: soat_tran / bo_tri_tran. "
+        "O cam (cap dien): xuat_dxf -> HOI nguoi dung so o mat bep, may rua bat, lo nuong -> bo_tri_o_cam (can_hoi / "
+        "thieu noi that -> hoi, chay lai) -> (nguoi dung dong y) ve_vao_ban_sao voi ve_o_cam.scr; soat ban ve da co: "
+        "soat_o_cam. Don vi ban ve Archivina: mm."
     ),
 )
 
@@ -328,9 +332,10 @@ def soat_tran(duong_dan_dxf: str, thu_muc_ra: str = "", du_an: str = "", tuy_cho
     return dict(ma_thoat=r.returncode, ket_qua=data, loi=err[-3000:] or None)
 
 
-def _tran_py(script, args, timeout=3600):
-    r = subprocess.run([PY, os.path.join(TRAN_SCRIPTS, script), *args], capture_output=True, timeout=timeout,
-                       env=dict(os.environ, PYTHONUTF8="1", DIEN_TICH_CH_SCRIPTS=SKILL_SCRIPTS))
+def _tran_py(script, args, timeout=3600, thu_muc=None):
+    r = subprocess.run([PY, os.path.join(thu_muc or TRAN_SCRIPTS, script), *args], capture_output=True, timeout=timeout,
+                       env=dict(os.environ, PYTHONUTF8="1", DIEN_TICH_CH_SCRIPTS=SKILL_SCRIPTS,
+                                THIET_KE_TRAN_CH_SCRIPTS=TRAN_SCRIPTS))
     out = r.stdout.decode("utf-8", "ignore").strip()
     err = "\n".join(l for l in r.stderr.decode("utf-8", "ignore").splitlines() if "copy process ignored" not in l)
     try:
@@ -354,6 +359,57 @@ def bo_tri_tran(duong_dan_dxf: str, truc_khach_mm: float, truc_ngu_mm: float, tr
             "--truc-wc", str(truc_wc_mm)] + (["--du-an", du_an] if du_an else []) + \
         (["--layer-ten", layer_ten_phong] if layer_ten_phong else [])
     return _tran_py("bo_tri_tran.py", args)
+
+
+CAP_DIEN_SCRIPTS = os.environ.get("CAP_DIEN_CH_SCRIPTS",
+                                  os.path.join(os.path.expanduser("~"), ".claude", "skills", "cap-dien-ch", "scripts"))
+
+
+def _cap_dien(che_do, duong_dan_dxf, thu_muc_ra, du_an, so_o_bep, de_o, can, may_rua_bat, lo_nuong,
+              tv_pn_theo_truc_giuong, nhan_dien_bo_sung, layer_ten_phong):
+    dxf = _can_file(duong_dan_dxf, ".dxf")
+    if de_o not in ("chu_nhat", "vuong"):
+        raise ValueError("de_o phải là 'chu_nhat' hoặc 'vuong'.")
+    args = [che_do, dxf, "--out-dir", _thu_muc_ra(thu_muc_ra), "--de-o", de_o]
+    for k, v in (("--du-an", du_an), ("--so-o-bep", str(so_o_bep).strip()), ("--can", can),
+                 ("--nhan-dien-bo-sung", nhan_dien_bo_sung), ("--layer-ten", layer_ten_phong)):
+        if v:
+            args += [k, v]
+    for k, v in (("--may-rua-bat", may_rua_bat), ("--lo-nuong", lo_nuong),
+                 ("--tv-pn-theo-truc-giuong", tv_pn_theo_truc_giuong)):
+        if v:
+            args.append(k)
+    return _tran_py("cap_dien.py", args, thu_muc=CAP_DIEN_SCRIPTS)
+
+
+@mcp.tool()
+def bo_tri_o_cam(duong_dan_dxf: str, thu_muc_ra: str = "", du_an: str = "", so_o_bep: str = "",
+                 de_o: str = "chu_nhat", can: str = "", may_rua_bat: bool = False, lo_nuong: bool = False,
+                 tv_pn_theo_truc_giuong: bool = False, nhan_dien_bo_sung: str = "", layer_ten_phong: str = "") -> dict:
+    """BỐ TRÍ MỚI mặt bằng cấp điện ổ cắm căn hộ theo nội thất (skill cap-dien-ch, cap_dien.py bo-tri) từ DXF đã xuất
+    bằng xuat_dxf: ổ G / TV / ĐN / B / TL / thường, chống ẩm W / X, box BT / HM / AC / BNL, TĐ-CH, VDP, công tắc;
+    chia lộ, dây, dim. Không vẽ gì vào DWG.
+    BẮT BUỘC trước khi gọi: HỎI người dùng số ổ mặt bếp (so_o_bep: "2" hoặc "CH01=2,CH02=3") và có máy rửa bát /
+    lò nướng không – không tự đặt. Kết quả có can_hoi (thiếu nội thất, phòng không dựng được, thiếu tên phòng) hoặc
+    block_chua_nhan_dien → hỏi người dùng rồi chạy lại (nhan_dien_bo_sung: JSON {"tên block": "loại nội thất"}).
+    de_o: "chu_nhat" (TV-ĐN cách 150) / "vuong" (100). can: chỉ xử lý các căn, ví dụ "CH01,CH02".
+    Trả về JSON (can_ho, thiet_bi, can_hoi, xlsx, anh, scr, json). Chỉ vẽ khi người dùng đồng ý: ve_vao_ban_sao với
+    file ve_o_cam.scr (bản sao DWG, file kết quả mới)."""
+    return _cap_dien("bo-tri", duong_dan_dxf, thu_muc_ra, du_an, so_o_bep, de_o, can, may_rua_bat, lo_nuong,
+                     tv_pn_theo_truc_giuong, nhan_dien_bo_sung, layer_ten_phong)
+
+
+@mcp.tool()
+def soat_o_cam(duong_dan_dxf: str, thu_muc_ra: str = "", du_an: str = "", so_o_bep: str = "",
+               de_o: str = "chu_nhat", can: str = "", may_rua_bat: bool = False, lo_nuong: bool = False,
+               tv_pn_theo_truc_giuong: bool = False, nhan_dien_bo_sung: str = "", layer_ten_phong: str = "") -> dict:
+    """SOÁT mặt bằng cấp điện ổ cắm căn hộ đã vẽ (skill cap-dien-ch, cap_dien.py soat) từ DXF đã xuất bằng xuat_dxf:
+    đối chiếu ổ cắm / hộp chờ có sẵn với phương án theo nguyên tắc (thiếu / thừa / lệch vị trí, sau cửa / tủ áo, cách
+    khuôn cửa, lộ riêng AC / BNL / BT, dim). Tham số như bo_tri_o_cam (so_o_bep, máy rửa bát, lò nướng: hỏi người
+    dùng nếu chưa biết; nội thất thiếu → hỏi). Trả về JSON (muc_do, can_hoi, thiet_bi_co_san, xlsx BaoCao…OCam.xlsx,
+    anh, json). Không vẽ gì vào DWG."""
+    return _cap_dien("soat", duong_dan_dxf, thu_muc_ra, du_an, so_o_bep, de_o, can, may_rua_bat, lo_nuong,
+                     tv_pn_theo_truc_giuong, nhan_dien_bo_sung, layer_ten_phong)
 
 
 @mcp.tool()
