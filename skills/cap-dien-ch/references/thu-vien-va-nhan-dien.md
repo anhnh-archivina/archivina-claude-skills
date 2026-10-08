@@ -22,9 +22,11 @@ Block 1:1 mm, `INSUNITS=4` (file `E-TU-DIEN.dwg` gốc là block động mang đ
 → góc xoay = hướng pháp tuyến vào phòng − 90°. VDP: +X cục bộ hướng ra không gian đặt. `catalog.json` ghi mã, block, file,
 layer, tag, giá trị, cao độ, kích thước ký hiệu; `bi_danh_block` là tên block tương đương khi SOÁT bản vẽ nhân viên.
 
-**Chèn trong script:** `(command "_.-INSERT" (if (tblsearch "BLOCK" ten) ten "ten=file") "_S" k "_R" goc pt "giá trị")`
+**Chèn trong script:** `(command "_.-INSERT" (if (tblsearch "BLOCK" ten) ten "ten=file") "_S" (/ k (hsdv ten)) "_R" goc pt "giá trị")`
 với `ATTREQ=1`, `ATTDIA=0`. Không dùng kiểu `-INSERT ten=file` rồi `(command)` để hủy – Core Console thoát ngang.
-Block đã có trong bản vẽ thì dùng định nghĩa sẵn có (không định nghĩa lại).
+Block đã có trong bản vẽ thì dùng định nghĩa sẵn có (không định nghĩa lại). **Định nghĩa sẵn có có thể mang đơn vị chèn khác mm**
+(vd `AV-E-Tu dien phong` trong `E Mat bang cap dien o cam can ho test.dwg` là block động đơn vị inch → AutoCAD tự nhân 25,4, tủ
+điện thành 10×13 m): hàm `hsdv` đọc đơn vị của BLOCK_RECORD (mã 70) so với `INSUNITS` bản vẽ và chia tỷ lệ chèn tương ứng.
 
 ## Layer (theo mẫu, tạo nếu thiếu)
 `AV-E-PW-Thiết bị điện động lực` (50) · `AV-E-PW-Tủ điện` (50) · `AV-E-PW-Cáp điện` (10, CENTER2) ·
@@ -52,9 +54,37 @@ Tên có dấu tiếng Việt → trong `.scr` viết `\U+XXXX` (hàm `acad_str`
 - **Vách BTCT:** nét trên `layer_btct` (A-Column, S-Wall, A_Wall BT…) cách mặt tường ≤ 40 mm. Lan can / vách kính:
   `layer_lan_can` (cấm đặt).
 
+## Nền xuất từ Revit (`--nen-revit co`, `scripts/nen_revit.py`, cấu hình `nen_revit`)
+Mặt bằng tầng Revit đã bind (tường / cửa / nội thất nổ thành LINE/ARC, không có Text tên phòng, mã căn đặt ngoài căn trong khung
+có đường dẫn). Kiểm chứng 08/10/2026: `E Mat bang cap dien o cam can ho test.dwg` (24 căn P5-(05-18).01…24).
+- **Phòng:** mặt kín của nét `A-NETTUONG` + `A-NETCAT` + LINE `A-CUA`, đóng ô cửa ≤ 1200 bằng tia (`tpp.build_faces`). Mặt
+  ≥ 0,5 m², rộng ≥ 500. Mặt tủ bếp hẹp (nét cắt tủ bếp tạo mặt riêng, chứa bếp / chậu / máy rửa bát / tủ lạnh) gộp vào phòng kề.
+- **Căn:** điểm cuối đường dẫn mã căn (`ma_can`, khung chữ nhật quanh text, nét có một đầu trên khung) → mặt phòng chứa nó →
+  loang đồng thời mọi căn qua: (a) cạnh chung không phải nét tường ≥ 300 (đoạn đóng ô cửa, nét kính), (b) chuỗi mặt mỏng
+  < 400 (ô cửa trong bề dày tường, khung cửa trượt), (c) cung cửa: phòng chứa cung ↔ phòng bên kia ô cửa (ô cửa WC có nét
+  ngưỡng trên layer tường nên (a) không đủ). Hành lang chung = mặt > 30 m² không nội thất → chặn; mặt không nội thất giáp căn khác
+  → bỏ (sảnh tầng). Không có mã căn / đường dẫn → căn bị bỏ, ghi `van_de`.
+- **Cung cửa:** `A-CUA` + `layer_cung_cua_them` (`A-KHUAT`: cửa 2 cánh căn DUAL KEY vẽ cung bằng nét khuất). Đầu "mở" của cung =
+  đầu có **cánh cửa: ≥ 2 nét song song lệch nhau** (dày cánh ~40) chạy dọc từ bản lề (`dem_canh_cua`, dùng cả trong `doc_cua`);
+  khung / ngưỡng dọc tường là các nét trùng một đường → không nhầm.
+- **Nội thất theo hình dạng cụm nét** (cụm = nét chung đầu mút ≤ 1 mm, cùng layer):
+  giường = cụm gối (≥ 3 cung, 380–820 × 280–560) gom ≤ 1100 không qua tường + 2 nét cạnh giường dài 1500–2500; trục theo cạnh dài
+  gối lớn nhất; vùng gối 700 ở đầu có gối · tivi = hình chữ nhật mảnh 800–2200 × 15–120 (bỏ nẹp cửa tủ lạnh, cánh tủ trượt nối
+  tiếp) · bếp nấu = khung 500–950 × 380–620 chứa ≥ 2 vòng tròn lệch tâm · máy giặt = ô vuông 520–720 chứa vòng r 130–260 · máy
+  rửa bát = ô vuông 550–650 gạch chéo, cách bếp ≤ 1500 · chậu bếp = khung chứa hốc có cung · tủ lạnh = chữ nhật 650–1050 ×
+  480–820 có nẹp cửa song song phía trước · sofa = 1500–3600 × 650–1800 có ≥ 2 cung hoặc ≥ 8 nét và sâu ≥ 720 · tủ áo = chữ nhật
+  sâu 500–700, dài 900–3600, chỉ giữ trong phòng ngủ · bồn cầu (`A-NETTHAY`) = ≥ 6 cung 400–600 × 300–450 · lavabo = cụm có
+  cung / polyline 330–700 × 280–560 · dàn nóng (`A-NETMANH`) = cụm ≥ 8 ELLIPSE 450–1300 × 150–600.
+  Mọi đối tượng ghi "suy" (dấu ? trên ảnh). Loại phòng theo nội thất: giường → PN, bồn cầu → WC, sofa → khách, bếp nấu → bếp,
+  máy giặt / dàn nóng → lô gia, không nội thất < 8 m² → sảnh / hành lang.
+- **Không nhận được:** bình nóng lạnh (nền không vẽ) → hỏi hoặc `--bnl-mac-dinh`; quạt hút WC (không vẽ) → không có lộ F;
+  vách BTCT (Revit không tách layer) → không đánh dấu mây – nói rõ khi báo cáo.
+- DXF xuất trực tiếp bản vẽ có block khung tên lỗi bị cụt (`missing ENDSEC`): `-WBLOCK` toàn bộ Model ra file mới rồi `xuat_dxf`.
+- Chạy ~4 phút / tầng 24 căn (đọc nét ~1,5 phút).
+
 ## Giới hạn đã biết
-- Bản vẽ xuất từ Revit nổ hết (nội thất là LINE/ARC, không có tên phòng) – ví dụ chính file mẫu E: không dựng được phòng →
-  cần nền có Text tên phòng và nội thất dạng block.
+- Bản vẽ mẫu E (xuất Revit nhưng **không có mã căn / đường dẫn**, chỉ 1 căn): chưa thử chế độ `--nen-revit` – cần ít nhất mã căn
+  có đường dẫn chỉ vào căn.
 - Kệ TV / sofa dạng cụm lớn: mép lấy theo hộp bao cụm – có Gợi ý kiểm tra.
 - Không tính tải, tiết diện dây, CB: chỉ đếm thiết bị theo lộ.
 - Soát lộ riêng (AC / BT / HW) dựa trên nhãn `<lộ>/TĐ.CH` trên bản vẽ – không lần theo nét dây.

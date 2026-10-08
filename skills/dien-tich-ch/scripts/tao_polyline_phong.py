@@ -160,6 +160,12 @@ def pair_rays(rays, gap_max, barrier=None):
     cay = shapely.STRtree(goc_tia)
     if barrier is not None:
         shapely.prepare(barrier)
+    # barrier: cay STRtree cac phan tu (intersects tren hinh gop lon rat cham: mat bang ca tang ~0,6 ms/lan)
+    cay_bar = shapely.STRtree(shapely.get_parts(barrier)) if barrier is not None else None
+
+    def cat_net(g):
+        return len(cay_bar.query(g, predicate="intersects")) > 0
+
     cands = []
     for i, (p, d, _) in enumerate(rays):
         for j in sorted(int(k) for k in cay.query(goc_tia[i], predicate="dwithin", distance=gap_max) if k > i):
@@ -174,7 +180,7 @@ def pair_rays(rays, gap_max, barrier=None):
                     # chi tinh phan giua cua doan, bo 3 mm moi dau de khong bi tinh cham vao chinh net ranh
                     ln = LineString([p, q])
                     inner = LineString([ln.interpolate(3.0), ln.interpolate(dist - 3.0)]) if dist > 8 else ln
-                    if inner.intersects(barrier):
+                    if cat_net(inner):
                         continue
                 cands.append((dist, i, j))
     cands.sort()
@@ -202,7 +208,7 @@ def pair_rays(rays, gap_max, barrier=None):
             if (vx * d[0] + vy * d[1]) > 0 and abs(-vx * d[1] + vy * d[0]) <= TOL_THANG:
                 if barrier is not None and dist > 8:
                     ln = LineString([p, q])
-                    if LineString([ln.interpolate(3.0), ln.interpolate(dist - 3.0)]).intersects(barrier):
+                    if cat_net(LineString([ln.interpolate(3.0), ln.interpolate(dist - 3.0)])):
                         continue
                 if best is None or dist < best[0]:
                     best = (dist, j)

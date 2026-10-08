@@ -39,6 +39,8 @@ là giá trị tạm của skill – nói rõ cho người dùng, không coi là
 ### Phòng ngủ
 - **G** (đầu giường) ×2 hai bên đầu giường, **tâm cách mép giường 200–250** (skill dùng 200 – `g_cach_mep_giuong`). Mép giường =
   mép đệm (giữa hai tab đầu giường); giường không có tab → theo hộp bao block (Gợi ý kiểm tra).
+  Phía ngoài mép giường vướng cửa sổ / thiết bị → đặt **vào trong mép giường 200** (sau đầu giường), ghi Gợi ý *(theo căn mẫu
+  P5-(05-18).03 người dùng vẽ 08/10/2026 – chưa chốt thành quy tắc)*.
 - **TV**: thẳng **tâm tivi / kệ TV**, bám tường. Không có kệ TV → hỏi (đặt theo trục giường `--tv-pn-theo-truc-giuong` hay bỏ).
 - **1 ổ đôi thường** (H+0.4) gần cửa phòng, phía tay nắm, cách khuôn 300 (≥ 200). Phía tay nắm vướng → phía bản lề ngoài vùng
   cánh quét → tường kề (≤ 1,5 m). *(Vị trí 300 lấy từ bản vẽ mẫu)*.
@@ -47,7 +49,8 @@ là giá trị tạm của skill – nói rõ cho người dùng, không coi là
 ### Phòng khách
 - **TV + ĐN** cạnh nhau theo tâm tivi: **đế vuông cách 100, đế chữ nhật cách 150** (`--de-o`).
 - **2 ổ hai đầu sofa**, tâm cách mép sofa 200 *(khoảng cách chưa chốt, theo cách đo ổ G)*; sofa cách tường > 500 → hỏi.
-- **Tủ điện TĐ-CH**: trong căn, cạnh cửa chính phía tay nắm, **tâm tủ cách khuôn cửa 500**.
+- **Tủ điện TĐ-CH**: trong căn, cạnh cửa chính phía tay nắm, **tâm tủ cách khuôn cửa 500**. Sảnh trước cửa chật (căn DUAL KEY)
+  → phía bản lề → tường kề gần cửa.
 - **VDP**: ngoài cửa chính = chuông / camera (phía tay nắm, cách khuôn 200, mặt ngoài tường hành lang); trong căn = màn hình,
   cùng tường TĐ-CH cách tâm tủ 600 *(chưa chốt)*.
 ### Bếp
@@ -61,7 +64,11 @@ là giá trị tạm của skill – nói rõ cho người dùng, không coi là
 - **W** (chống ẩm) cạnh lavabo, tâm cách tâm lavabo ~300, chọn phía xa vùng tắm.
 - **X** (chống ẩm, bồn cầu điện tử) cạnh bồn cầu, tâm cách mép bồn cầu 150, trên tường sau bồn cầu, phía xa lavabo.
 - **BNL** (box chờ bình nóng lạnh) trong WC theo vị trí bình; **công tắc 20A + công tắc 3 phím** (đèn / gương / quạt hút)
-  **ngoài cửa WC, phía tay nắm** (công tắc 3 phím cách khuôn 200, 20A cách tiếp 150).
+  **ngoài cửa WC, phía tay nắm** (công tắc 3 phím cách khuôn 200, 20A cách tiếp 150). Phía tay nắm vướng (cửa khác, ô kính) →
+  phía bản lề (cửa WC mở vào trong) → tường kề.
+- Nền **không vẽ bình nóng lạnh** (nền Revit): mặc định hỏi; `--bnl-mac-dinh` → box BNL trên tường vuông góc tường cửa, tại góc
+  phía **bản lề** cửa WC, cách góc 200 (box cao +2.6, trên cửa) *(theo căn mẫu P5-(05-18).03 – chưa chốt)*. Chế độ soát vẫn báo
+  "cửa / sau cánh cửa" cho box này vì chưa xét cao độ – chờ người dùng quyết định có miễn cho box cao (BNL, AC) không.
 ### Lô gia
 - **W** chống ẩm cho **máy giặt** (theo tâm máy, tường sau máy).
 - **Hộp AC** tại dàn nóng (phương án kiến trúc), **cách trần 300**; mỗi dàn nóng một hộp.

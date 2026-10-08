@@ -1,103 +1,599 @@
 {
-  "_ghi_chu": "Cấu hình bố trí / soát mặt bằng cấp điện ổ cắm căn hộ Archivina (skill cap-dien-ch). Sửa ở đây khi dự án dùng tên block/layer khác. Tên block so khớp sau khi bỏ tiền tố xref đã bind (phần sau '$0$' cuối cùng), bỏ dấu, không phân biệt hoa thường; dùng ký tự đại diện * ?. Block chưa nhận diện: thêm tên vào 'noi_that' hoặc file --nhan-dien-bo-sung, không sửa code.",
-  "nguong": {
-    "dong_ranh_gan_dung": 250,
-    "dong_ranh_gan_dung_cac_buoc": [250, 500, 800, 1300],
-    "dt_phong_gan_dung_toi_da": 60,
-    "vung_goi_sau": 700
-  },
-  "bo_tri": {
-    "_nguon": "Câu trả lời của người dùng trong 'Skill vẽ MB ổ cắm.docx' + AskUserQuestion (chốt 07/10/2026) và bản vẽ mẫu 'E Mat bang cap dien o cam can ho.dwg'.",
-    "o_cach_khuon_cua_toi_thieu": 200,
-    "g_cach_mep_giuong": 200,
-    "g_cach_mep_giuong_khoang": [200, 250],
-    "tv_dn_khoang_cach": {"vuong": 100, "chu_nhat": 150},
-    "sofa_cach_mep": 200,
-    "o_thuong_pn_cach_khuon_cua": 300,
-    "w_cach_tam_lavabo": 300,
-    "x_cach_mep_bon_cau": 150,
-    "td_ch_cach_khuon_cua_tam": 500,
-    "bt_lech_vao_phong": 200,
-    "b_cach_mep_bep_nau": 150,
-    "b_cach_mep_chau_rua": 200,
-    "b_khoang_cach_goi_y": 1000,
-    "ct_wc_cach_khuon_cua": 200,
-    "ct_wc_khoang_cach": 150,
-    "vdp_ngoai_cach_khuon_cua": 200,
-    "vdp_trong_cach_td_ch": 600,
-    "pn_tach_lo_khi_so_pn_lon_hon": 3,
-    "tranh_btct_dich_toi_da": 400,
-    "dim_cach_tuong": 600,
-    "ket_noi_cap_cach_ky_hieu": 170,
-    "mui_ten_dai": 400,
-    "cach_nhau_toi_thieu": 100,
-    "tuong_day_mac_dinh": 200,
-    "dan_nong_ac_cao_do": "cách trần 300",
-    "phong_khong_co_quy_tac": ["da_nang"]
-  },
-  "_chua_chot": [
-    "Ổ cắm bàn làm việc: dùng ổ đôi 3 chấu thường (H:+0.4 theo bảng ký hiệu) đặt theo tâm bàn chiếu lên tường – cao độ chưa chốt.",
-    "Ổ cắm máy rửa bát / lò nướng: ổ đôi 3 chấu thường theo tâm thiết bị – ký hiệu và cao độ chưa chốt; chỉ bố trí khi người dùng xác nhận (--may-rua-bat / --lo-nuong).",
-    "VDP màn hình trong căn: cùng tường với TĐ-CH, cách tâm TĐ-CH 600 về phía xa cửa – khoảng cách chưa chốt.",
-    "X (bồn cầu điện tử): tâm ổ cách mép bồn cầu 150 trên tường sau bồn cầu; W: tâm ổ cách tâm lavabo 300 dọc tường lavabo.",
-    "Ổ bếp (B): tránh mép bếp nấu 150, mép chậu rửa 200 – chưa chốt; số lượng PHẢI hỏi người dùng trước khi làm.",
-    "Hộp AC: tại vị trí dàn nóng theo phương án kiến trúc, cách trần 300 (bảng ký hiệu mẫu ghi H:+2.2); một hộp / một lộ cho mỗi dàn nóng.",
-    "Giới hạn số ổ / tải mỗi lộ: chưa có ngưỡng – báo số ổ từng lộ để kỹ sư điện kiểm tra theo CB và tiết diện dây."
+ "_ghi_chu": "Cấu hình bố trí / soát mặt bằng cấp điện ổ cắm căn hộ Archivina (skill cap-dien-ch). Sửa ở đây khi dự án dùng tên block/layer khác. Tên block so khớp sau khi bỏ tiền tố xref đã bind (phần sau '$0$' cuối cùng), bỏ dấu, không phân biệt hoa thường; dùng ký tự đại diện * ?. Block chưa nhận diện: thêm tên vào 'noi_that' hoặc file --nhan-dien-bo-sung, không sửa code.",
+ "nguong": {
+  "dong_ranh_gan_dung": 250,
+  "dong_ranh_gan_dung_cac_buoc": [
+   250,
+   500,
+   800,
+   1300
   ],
-  "layer_ranh": ["A-Vua trat", "A-Wall", "A-Column", "A-Line", "A-Lancan", "S-Wall", "A_Wall BT", "A-NETTUONG", "A-NETCAT"],
-  "layer_cua": ["A-Door", "A-Window", "A-Glaz", "A-Cửa", "A-Cua", "A-Opening", "A-Window-G", "A-Wall-G"],
-  "layer_lan_can": ["A-Lancan", "A-Lan can", "A-Railing", "A-Glaz", "A-Wall-G"],
-  "layer_btct": ["A-Column", "S-Wall", "S-Column", "A_Wall BT", "A-Cot", "A-Vach BTCT", "S-Col"],
-  "layer_ten_phong": "A-Text",
-  "loai_phong": [
-    ["wc", "\\b(wc|ve sinh|tam|toilet|bath)\\b"],
-    ["ngu", "phong ngu|\\bngu\\b|bedroom|master"],
-    ["bep", "\\bbep\\b|kitchen"],
-    ["an", "phong an|\\ban\\b|dining"],
-    ["khach", "khach|living"],
-    ["da_nang", "da nang|multi"],
-    ["logia", "lo ?gia|ban cong|loggia|balcony"],
-    ["hanh_lang", "hanh lang|sanh|loi vao|corridor|entrance"]
+  "dt_phong_gan_dung_toi_da": 60,
+  "vung_goi_sau": 700
+ },
+ "bo_tri": {
+  "_nguon": "Câu trả lời của người dùng trong 'Skill vẽ MB ổ cắm.docx' + AskUserQuestion (chốt 07/10/2026) và bản vẽ mẫu 'E Mat bang cap dien o cam can ho.dwg'.",
+  "o_cach_khuon_cua_toi_thieu": 200,
+  "g_cach_mep_giuong": 200,
+  "g_cach_mep_giuong_khoang": [
+   200,
+   250
   ],
-  "nhan_can_ho": "^ch\\s*\\d+[a-z]?$",
-  "noi_that": {
-    "tu_ao": {"ten": ["*tu ao*", "*wardrobe*", "*closet*", "*-dyg", "*-ymj*"], "con_moc_ao": ["*衣架*", "*hanger*", "*moc ao*", "*mac ao*"], "so_moc_ao_toi_thieu": 6},
-    "giuong": {"ten": ["*giuong*", "*bed*", "*床*"], "con_tab_dau_giuong": ["don *", "*tab dau giuong*", "*nightstand*", "*床头柜*"]},
-    "may_giat": {"ten": ["*may giat*", "*maygiat*", "*washer*", "*washing*", "*洗衣机*"]},
-    "tu_lanh": {"ten": ["*tu lanh*", "*tulanh*", "*fridge*", "*refrigerator*", "*冰箱*", "sbs", "*side by side*"]},
-    "may_rua_bat": {"ten": ["*may rua bat*", "*dishwasher*", "*洗碗机*"]},
-    "lo_nuong": {"ten": ["*lo nuong*", "*oven*", "*lo vi song*", "*microwave*", "*烤箱*"]},
-    "binh_nong_lanh": {"ten": ["*binh nong lanh*", "*binh nong*", "*bnl*", "*water heater*", "*热水器*"]},
-    "dan_nong": {"ten": ["*dan nong*", "*outdoor unit*", "*cuc nong*", "*vrf*", "*vrv*", "*condensing*", "*室外机*"]},
-    "dan_lanh": {"ten": ["*dan lanh*", "*indoor unit*", "*fcu*", "*treo tuong*", "*室内机*", "*split*"]},
-    "ke_tv": {"ten": ["*ke tv*", "*ke tivi*", "*tivi*", "*tv*", "*television*", "*电视*"]},
-    "ban_lam_viec": {"ten": ["*ban lam viec*", "*ban hoc*", "*desk*", "*书桌*"]},
-    "sofa": {"ten": ["*sofa*", "*沙发*", "*sopha*"]},
-    "ban_an": {"ten": ["*ban an*", "*餐桌*", "*dining*", "*taothem*"]},
-    "bon_cau": {"ten": ["*马桶*", "*bon cau*", "*boncau*", "*toilet*", "*xi bet*", "*bet *"]},
-    "chau_rua": {"ten": ["*chaurua*", "*chau rua*", "*bonrua*", "*bon rua*", "*lavabo*", "*basin*", "*台盆*", "*洗手*", "*sink*"]},
-    "guong": {"ten": ["*tuguong*", "*tu guong*", "*guong*", "*mirror*"]},
-    "sen_tam": {"ten": ["sen*", "*sentam*", "*sen tam*", "tam vuong*", "tamvuong*", "*cabin tam*", "*shower*", "*淋浴*"]},
-    "vach_tam": {"ten": ["vk wc*", "*vach kinh*", "*vachkinh*", "*shower screen*"]},
-    "bep_nau": {"ten": ["*bep gas*", "*3d gas*", "*hob*", "*灶*", "*bep tu*", "*ho nau*", "*bep dien*"]},
-    "quat_hut": {"ten": ["*hutmuiwc*", "*quat hut*", "*exhaust fan*", "eag*", "hv-exg*"]}
+  "tv_dn_khoang_cach": {
+   "vuong": 100,
+   "chu_nhat": 150
   },
-  "ke_tv_suy_theo_hinh": {"_ghi_chu": "Block nội thất không tên rõ, mỏng, áp sát tường đối diện đầu giường / sofa: coi là kệ TV (ghi 'suy theo hình dạng' trong báo cáo để người dùng xác nhận).", "dai": [900, 2800], "sau": [150, 500], "sat_tuong": 150},
-  "layer_noi_that_suy": ["A-Nội thất", "A-Noi that", "A-Interior", "A-Furniture", "A-THIETBI", "I-Furn"],
-  "ve": {
-    "layer": {
-      "thiet_bi": ["AV-E-PW-Thiết bị điện động lực", 50, "Continuous"],
-      "tu_dien": ["AV-E-PW-Tủ điện", 50, "Continuous"],
-      "cap": ["AV-E-PW-Cáp điện", 10, "CENTER2"],
-      "cong_tac": ["AV-E-LT-Thiết bị chiếu sáng", 50, "Continuous"],
-      "dim": ["AV-E-Dim", 8, "Continuous"],
-      "text": ["AV-ME-Text", 3, "Continuous"],
-      "quat": ["M-EQPM", 50, "Continuous"]
-    },
-    "text_style": "AV-ME-Text",
-    "text_font": "arial.ttf",
-    "text_cao": 100,
-    "dim_style": "A 1-50",
-    "dim_bien": {"DIMSCALE": 50, "DIMTXT": 2.0, "DIMASZ": 1.0, "DIMBLK": "_ArchTick", "DIMEXO": 0.0, "DIMEXE": 1.0, "DIMTAD": 1, "DIMGAP": 0.8, "DIMDEC": 0, "DIMCLRT": 2, "DIMTIH": 0, "DIMTOH": 0, "DIMLUNIT": 2, "DIMZIN": 8}
+  "sofa_cach_mep": 200,
+  "o_thuong_pn_cach_khuon_cua": 300,
+  "w_cach_tam_lavabo": 300,
+  "x_cach_mep_bon_cau": 150,
+  "td_ch_cach_khuon_cua_tam": 500,
+  "bt_lech_vao_phong": 200,
+  "b_cach_mep_bep_nau": 150,
+  "b_cach_mep_chau_rua": 200,
+  "b_khoang_cach_goi_y": 1000,
+  "ct_wc_cach_khuon_cua": 200,
+  "ct_wc_khoang_cach": 150,
+  "vdp_ngoai_cach_khuon_cua": 200,
+  "vdp_trong_cach_td_ch": 600,
+  "pn_tach_lo_khi_so_pn_lon_hon": 3,
+  "tranh_btct_dich_toi_da": 400,
+  "dim_cach_tuong": 600,
+  "ket_noi_cap_cach_ky_hieu": 170,
+  "mui_ten_dai": 400,
+  "cach_nhau_toi_thieu": 100,
+  "tuong_day_mac_dinh": 200,
+  "dan_nong_ac_cao_do": "cách trần 300",
+  "phong_khong_co_quy_tac": [
+   "da_nang"
+  ],
+  "bnl_mac_dinh_cach_goc": 200
+ },
+ "_chua_chot": [
+  "Ổ cắm bàn làm việc: dùng ổ đôi 3 chấu thường (H:+0.4 theo bảng ký hiệu) đặt theo tâm bàn chiếu lên tường – cao độ chưa chốt.",
+  "Ổ cắm máy rửa bát / lò nướng: ổ đôi 3 chấu thường theo tâm thiết bị – ký hiệu và cao độ chưa chốt; chỉ bố trí khi người dùng xác nhận (--may-rua-bat / --lo-nuong).",
+  "VDP màn hình trong căn: cùng tường với TĐ-CH, cách tâm TĐ-CH 600 về phía xa cửa – khoảng cách chưa chốt.",
+  "X (bồn cầu điện tử): tâm ổ cách mép bồn cầu 150 trên tường sau bồn cầu; W: tâm ổ cách tâm lavabo 300 dọc tường lavabo.",
+  "Ổ bếp (B): tránh mép bếp nấu 150, mép chậu rửa 200 – chưa chốt; số lượng PHẢI hỏi người dùng trước khi làm.",
+  "Hộp AC: tại vị trí dàn nóng theo phương án kiến trúc, cách trần 300 (bảng ký hiệu mẫu ghi H:+2.2); một hộp / một lộ cho mỗi dàn nóng.",
+  "Giới hạn số ổ / tải mỗi lộ: chưa có ngưỡng – báo số ổ từng lộ để kỹ sư điện kiểm tra theo CB và tiết diện dây."
+ ],
+ "layer_ranh": [
+  "A-Vua trat",
+  "A-Wall",
+  "A-Column",
+  "A-Line",
+  "A-Lancan",
+  "S-Wall",
+  "A_Wall BT",
+  "A-NETTUONG",
+  "A-NETCAT"
+ ],
+ "layer_cua": [
+  "A-Door",
+  "A-Window",
+  "A-Glaz",
+  "A-Cửa",
+  "A-Cua",
+  "A-Opening",
+  "A-Window-G",
+  "A-Wall-G"
+ ],
+ "layer_lan_can": [
+  "A-Lancan",
+  "A-Lan can",
+  "A-Railing",
+  "A-Glaz",
+  "A-Wall-G"
+ ],
+ "layer_btct": [
+  "A-Column",
+  "S-Wall",
+  "S-Column",
+  "A_Wall BT",
+  "A-Cot",
+  "A-Vach BTCT",
+  "S-Col"
+ ],
+ "layer_ten_phong": "A-Text",
+ "loai_phong": [
+  [
+   "wc",
+   "\\b(wc|ve sinh|tam|toilet|bath)\\b"
+  ],
+  [
+   "ngu",
+   "phong ngu|\\bngu\\b|bedroom|master"
+  ],
+  [
+   "bep",
+   "\\bbep\\b|kitchen"
+  ],
+  [
+   "an",
+   "phong an|\\ban\\b|dining"
+  ],
+  [
+   "khach",
+   "khach|living"
+  ],
+  [
+   "da_nang",
+   "da nang|multi"
+  ],
+  [
+   "logia",
+   "lo ?gia|ban cong|loggia|balcony"
+  ],
+  [
+   "hanh_lang",
+   "hanh lang|sanh|loi vao|corridor|entrance"
+  ]
+ ],
+ "nhan_can_ho": "^ch\\s*\\d+[a-z]?$",
+ "noi_that": {
+  "tu_ao": {
+   "ten": [
+    "*tu ao*",
+    "*wardrobe*",
+    "*closet*",
+    "*-dyg",
+    "*-ymj*"
+   ],
+   "con_moc_ao": [
+    "*衣架*",
+    "*hanger*",
+    "*moc ao*",
+    "*mac ao*"
+   ],
+   "so_moc_ao_toi_thieu": 6
+  },
+  "giuong": {
+   "ten": [
+    "*giuong*",
+    "*bed*",
+    "*床*"
+   ],
+   "con_tab_dau_giuong": [
+    "don *",
+    "*tab dau giuong*",
+    "*nightstand*",
+    "*床头柜*"
+   ]
+  },
+  "may_giat": {
+   "ten": [
+    "*may giat*",
+    "*maygiat*",
+    "*washer*",
+    "*washing*",
+    "*洗衣机*"
+   ]
+  },
+  "tu_lanh": {
+   "ten": [
+    "*tu lanh*",
+    "*tulanh*",
+    "*fridge*",
+    "*refrigerator*",
+    "*冰箱*",
+    "sbs",
+    "*side by side*"
+   ]
+  },
+  "may_rua_bat": {
+   "ten": [
+    "*may rua bat*",
+    "*dishwasher*",
+    "*洗碗机*"
+   ]
+  },
+  "lo_nuong": {
+   "ten": [
+    "*lo nuong*",
+    "*oven*",
+    "*lo vi song*",
+    "*microwave*",
+    "*烤箱*"
+   ]
+  },
+  "binh_nong_lanh": {
+   "ten": [
+    "*binh nong lanh*",
+    "*binh nong*",
+    "*bnl*",
+    "*water heater*",
+    "*热水器*"
+   ]
+  },
+  "dan_nong": {
+   "ten": [
+    "*dan nong*",
+    "*outdoor unit*",
+    "*cuc nong*",
+    "*vrf*",
+    "*vrv*",
+    "*condensing*",
+    "*室外机*"
+   ]
+  },
+  "dan_lanh": {
+   "ten": [
+    "*dan lanh*",
+    "*indoor unit*",
+    "*fcu*",
+    "*treo tuong*",
+    "*室内机*",
+    "*split*"
+   ]
+  },
+  "ke_tv": {
+   "ten": [
+    "*ke tv*",
+    "*ke tivi*",
+    "*tivi*",
+    "*tv*",
+    "*television*",
+    "*电视*"
+   ]
+  },
+  "ban_lam_viec": {
+   "ten": [
+    "*ban lam viec*",
+    "*ban hoc*",
+    "*desk*",
+    "*书桌*"
+   ]
+  },
+  "sofa": {
+   "ten": [
+    "*sofa*",
+    "*沙发*",
+    "*sopha*"
+   ]
+  },
+  "ban_an": {
+   "ten": [
+    "*ban an*",
+    "*餐桌*",
+    "*dining*",
+    "*taothem*"
+   ]
+  },
+  "bon_cau": {
+   "ten": [
+    "*马桶*",
+    "*bon cau*",
+    "*boncau*",
+    "*toilet*",
+    "*xi bet*",
+    "*bet *"
+   ]
+  },
+  "chau_rua": {
+   "ten": [
+    "*chaurua*",
+    "*chau rua*",
+    "*bonrua*",
+    "*bon rua*",
+    "*lavabo*",
+    "*basin*",
+    "*台盆*",
+    "*洗手*",
+    "*sink*"
+   ]
+  },
+  "guong": {
+   "ten": [
+    "*tuguong*",
+    "*tu guong*",
+    "*guong*",
+    "*mirror*"
+   ]
+  },
+  "sen_tam": {
+   "ten": [
+    "sen*",
+    "*sentam*",
+    "*sen tam*",
+    "tam vuong*",
+    "tamvuong*",
+    "*cabin tam*",
+    "*shower*",
+    "*淋浴*"
+   ]
+  },
+  "vach_tam": {
+   "ten": [
+    "vk wc*",
+    "*vach kinh*",
+    "*vachkinh*",
+    "*shower screen*"
+   ]
+  },
+  "bep_nau": {
+   "ten": [
+    "*bep gas*",
+    "*3d gas*",
+    "*hob*",
+    "*灶*",
+    "*bep tu*",
+    "*ho nau*",
+    "*bep dien*"
+   ]
+  },
+  "quat_hut": {
+   "ten": [
+    "*hutmuiwc*",
+    "*quat hut*",
+    "*exhaust fan*",
+    "eag*",
+    "hv-exg*"
+   ]
   }
+ },
+ "ke_tv_suy_theo_hinh": {
+  "_ghi_chu": "Block nội thất không tên rõ, mỏng, áp sát tường đối diện đầu giường / sofa: coi là kệ TV (ghi 'suy theo hình dạng' trong báo cáo để người dùng xác nhận).",
+  "dai": [
+   900,
+   2800
+  ],
+  "sau": [
+   150,
+   500
+  ],
+  "sat_tuong": 150
+ },
+ "layer_noi_that_suy": [
+  "A-Nội thất",
+  "A-Noi that",
+  "A-Interior",
+  "A-Furniture",
+  "A-THIETBI",
+  "I-Furn"
+ ],
+ "ve": {
+  "layer": {
+   "thiet_bi": [
+    "AV-E-PW-Thiết bị điện động lực",
+    50,
+    "Continuous"
+   ],
+   "tu_dien": [
+    "AV-E-PW-Tủ điện",
+    50,
+    "Continuous"
+   ],
+   "cap": [
+    "AV-E-PW-Cáp điện",
+    10,
+    "CENTER2"
+   ],
+   "cong_tac": [
+    "AV-E-LT-Thiết bị chiếu sáng",
+    50,
+    "Continuous"
+   ],
+   "dim": [
+    "AV-E-Dim",
+    8,
+    "Continuous"
+   ],
+   "text": [
+    "AV-ME-Text",
+    3,
+    "Continuous"
+   ],
+   "quat": [
+    "M-EQPM",
+    50,
+    "Continuous"
+   ]
+  },
+  "text_style": "AV-ME-Text",
+  "text_font": "arial.ttf",
+  "text_cao": 100,
+  "dim_style": "A 1-50",
+  "dim_bien": {
+   "DIMSCALE": 50,
+   "DIMTXT": 2.0,
+   "DIMASZ": 1.0,
+   "DIMBLK": "_ArchTick",
+   "DIMEXO": 0.0,
+   "DIMEXE": 1.0,
+   "DIMTAD": 1,
+   "DIMGAP": 0.8,
+   "DIMDEC": 0,
+   "DIMCLRT": 2,
+   "DIMTIH": 0,
+   "DIMTOH": 0,
+   "DIMLUNIT": 2,
+   "DIMZIN": 8
+  }
+ },
+ "nen_revit": {
+  "_ghi_chu": "Nền mặt bằng xuất từ Revit (tường / cửa / nội thất đã nổ thành LINE/ARC, không có Text tên phòng, mã căn đặt ngoài căn có đường dẫn). Dùng khi --nen-revit co (hoặc auto mà không dựng được phòng theo tên). Tên layer viết thường, đã bỏ tiền tố xref. Nội thất nhận theo HÌNH DẠNG cụm nét (ghi 'suy' – người dùng xác nhận).",
+  "layer_tuong": [
+   "a-nettuong",
+   "a-netcat"
+  ],
+  "layer_cua": [
+   "a-cua"
+  ],
+  "layer_noi_that": [
+   "a-thietbi"
+  ],
+  "layer_thiet_bi_ve_sinh": [
+   "a-netthay"
+  ],
+  "layer_dan_nong": [
+   "a-netmanh"
+  ],
+  "layer_ma_can": [
+   "tencanho",
+   "a-netthay",
+   "a-text"
+  ],
+  "ma_can": "^[A-Z]*\\d*-?\\(?[0-9\\-]*\\)?\\.\\d+[A-Z]?$",
+  "dong_o_cua_max": 1200,
+  "dt_phong_min": 0.5,
+  "be_rong_phong_min": 500,
+  "mat_tu_bep_dt_max": 4.0,
+  "mat_tu_bep_rong_max": 800,
+  "hanh_lang_chung_dt_min": 30,
+  "hanh_lang_dt_max": 8,
+  "giuong": {
+   "goi_so_cung_min": 3,
+   "goi_dai": [
+    380,
+    820
+   ],
+   "goi_rong": [
+    280,
+    560
+   ],
+   "goi_cach_nhau_max": 1100,
+   "canh_dai": [
+    1500,
+    2500
+   ],
+   "canh_cach_goi_max": 500,
+   "vung_goi_sau": 700
+  },
+  "tivi": {
+   "dai": [
+    800,
+    2200
+   ],
+   "day": [
+    15,
+    120
+   ]
+  },
+  "bep_nau": {
+   "dai": [
+    500,
+    950
+   ],
+   "rong": [
+    380,
+    620
+   ],
+   "r_vong": [
+    40,
+    160
+   ]
+  },
+  "may_giat": {
+   "canh": [
+    520,
+    720
+   ],
+   "r_vong": [
+    130,
+    260
+   ]
+  },
+  "may_rua_bat": {
+   "canh": [
+    550,
+    650
+   ],
+   "cach_bep_max": 1500
+  },
+  "chau_rua_bep": {
+   "dai": [
+    550,
+    1300
+   ],
+   "rong": [
+    380,
+    620
+   ]
+  },
+  "sofa": {
+   "so_cung_min": 2,
+   "dai": [
+    1500,
+    3600
+   ],
+   "rong": [
+    650,
+    1800
+   ],
+   "sau_khong_cung_min": 720
+  },
+  "ban_an": {
+   "dai": [
+    1000,
+    2600
+   ],
+   "rong": [
+    700,
+    1200
+   ],
+   "ghe_dai": [
+    350,
+    600
+   ],
+   "ghe_rong_max": 450
+  },
+  "tu_lanh": {
+   "dai": [
+    650,
+    1050
+   ],
+   "rong": [
+    480,
+    820
+   ]
+  },
+  "tu_ao": {
+   "dai": [
+    900,
+    3600
+   ],
+   "sau": [
+    500,
+    700
+   ]
+  },
+  "bon_cau": {
+   "so_cung_min": 6,
+   "dai": [
+    400,
+    600
+   ],
+   "rong": [
+    300,
+    450
+   ]
+  },
+  "lavabo": {
+   "dai": [
+    330,
+    700
+   ],
+   "rong": [
+    280,
+    560
+   ]
+  },
+  "dan_nong": {
+   "so_ellipse_min": 8,
+   "dai": [
+    450,
+    1300
+   ],
+   "rong": [
+    150,
+    600
+   ]
+  },
+  "mat_noi_dt_max": 3.0,
+  "mat_noi_rong_max": 400,
+  "layer_cung_cua_them": [
+   "a-khuat"
+  ]
+ }
 }

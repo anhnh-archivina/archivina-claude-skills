@@ -18,6 +18,12 @@
       "prompt": "Cho tôi block ổ cắm đôi đầu giường và box chờ bình nóng lạnh chuẩn Archivina.",
       "expected_output": "Chỉ ra assets/thu-vien/E-O-DOI.dwg (block AV-E-O cam doi 3 chau, thuộc tính 1 = G, H:+0.6) và E-HOP-CHO.dwg (AV-E-Hop dau noi am tuong 80x80x50, thuộc tính 1 = BNL, H:+2.6), layer AV-E-PW-Thiết bị điện động lực, điểm chèn tại mặt tường, +Y vào phòng, chèn tỷ lệ 1; không sửa bản vẽ người dùng.",
       "files": []
+    },
+    {
+      "id": 4,
+      "prompt": "Áp dụng skill mặt bằng cấp điện căn hộ để vẽ cho các căn hộ trong H:\\@Archivina 2026\\@bản vẽ mẫu căn hộ\\E Mat bang cap dien o cam can ho test.dwg, chỉ vẽ trong căn hộ.",
+      "expected_output": "Nhận ra nền Revit (block bind, nét nổ, không tên phòng, mã căn P5-(05-18).xx có đường dẫn); DXF cụt → WBLOCK Model rồi xuat_dxf; cap_dien.py bo-tri --nen-revit co; căn .03 đã vẽ sẵn → --bo-can, dùng làm mẫu đối chiếu (soat); số ổ bếp / máy rửa bát lấy theo căn mẫu hoặc hỏi; không có bình nóng lạnh → hỏi hoặc --bnl-mac-dinh; xem ảnh từng căn; vẽ vào bản sao bản vẽ gốc (block tủ điện có sẵn mang đơn vị inch → không được phóng 25,4); kiểm tra lại bằng WBLOCK + xuat_dxf + soat; không đặt thiết bị ở sảnh, lõi thang, phòng ngoài căn; báo phần chưa nhận được (BNL, quạt hút, vách BTCT).",
+      "files": []
     }
   ]
 }

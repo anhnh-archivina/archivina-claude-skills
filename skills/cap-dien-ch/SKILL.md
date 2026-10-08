@@ -1,6 +1,6 @@
 ---
 name: cap-dien-ch
-description: 'Cap dien CH – Vẽ (bố trí mới) và soát MẶT BẰNG CẤP ĐIỆN Ổ CẮM căn hộ Archivina từ mặt bằng căn hộ / tầng AutoCAD (.dwg/.dxf, kể cả ACA): ổ đôi G đầu giường, TV, ĐN, B mặt bếp, TL, ổ thường; ổ chống ẩm W/X (lavabo, bồn cầu, máy giặt); box chờ BT / HM / AC (dàn nóng) / BNL; tủ điện TĐ-CH, VDP, công tắc 20A và 3 phím ngoài cửa WC – theo NỘI THẤT và nguyên tắc vị trí đã chốt (cách khuôn cửa ≥ 200, không sau cửa / tủ áo, tránh vách BTCT); chia lộ (khách + WC chung, bếp, phòng ngủ, AC / BT / từng BNL riêng, F quạt hút), dây + mũi tên S1/TĐ.CH, dim từ mép tường tới tâm thiết bị; block, layer, bảng ký hiệu mẫu Archivina; vẽ vào BẢN SAO DWG, xuất Excel. Dùng khi người dùng nhờ vẽ, bố trí, soát, kiểm tra ổ cắm, hộp chờ, tủ điện căn hộ, mặt bằng cấp điện / điện động lực, chia lộ ổ cắm, hoặc cần block ổ cắm chuẩn – kể cả khi không nhắc tên skill. Không dùng cho chiếu sáng / thiết bị trần (thiet-ke-tran-ch).'
+description: 'Cap dien CH – Vẽ (bố trí mới) và soát MẶT BẰNG CẤP ĐIỆN Ổ CẮM căn hộ Archivina từ mặt bằng căn hộ / tầng AutoCAD (.dwg/.dxf, kể cả ACA và nền Revit nét nổ không tên phòng): ổ đôi G đầu giường, TV, ĐN, B mặt bếp, TL, ổ thường; ổ chống ẩm W/X (lavabo, bồn cầu, máy giặt); box chờ BT / HM / AC (dàn nóng) / BNL; tủ điện TĐ-CH, VDP, công tắc 20A và 3 phím ngoài cửa WC – theo NỘI THẤT và nguyên tắc vị trí đã chốt (cách khuôn cửa ≥ 200, không sau cửa / tủ áo, tránh vách BTCT); chia lộ (khách + WC chung, bếp, phòng ngủ, AC / BT / từng BNL riêng, F quạt hút), dây + mũi tên S1/TĐ.CH, dim từ mép tường tới tâm thiết bị; block, layer, bảng ký hiệu mẫu Archivina; vẽ vào BẢN SAO DWG, xuất Excel. Dùng khi người dùng nhờ vẽ, bố trí, soát, kiểm tra ổ cắm, hộp chờ, tủ điện căn hộ, mặt bằng cấp điện / điện động lực, chia lộ ổ cắm, hoặc cần block ổ cắm chuẩn – kể cả khi không nhắc tên skill. Không dùng cho chiếu sáng / thiết bị trần (thiet-ke-tran-ch).'
 ---
 
 # Cap dien CH – Mặt bằng cấp điện ổ cắm căn hộ (Archivina)
@@ -50,6 +50,19 @@ Có MCP `autocad-archivina` thì dùng `xuat_dxf`, `ve_vao_ban_sao`, `chay_scrip
 7. **Báo cáo:** đường dẫn DWG bản sao, Excel, ảnh; phần đã kiểm tra thực tế / chưa kiểm tra được (phòng không dựng được ranh,
    cửa không có cung, block chưa nhận diện); lưu kết quả dự án vào `05-Soat-Loi\` (hoặc `03-Ban-Sao-Lam-Viec\` cho bản vẽ).
 
+### Nền mặt bằng tầng xuất từ Revit (nét nổ, không tên phòng)
+Dấu hiệu: `thong_tin_dwg` cho thấy nền là một block bind (layer `…$0$A-NETTUONG / A-NETCAT / A-CUA / A-THIETBI / A-NETTHAY`),
+không có Text tên phòng, mã căn (vd `P5-(05-18).03`) nằm ngoài căn trong khung có đường dẫn. Cách làm (xem
+`references/thu-vien-va-nhan-dien.md` → "Nền xuất từ Revit"):
+1. `xuat_dxf` báo DXF cụt / ezdxf lỗi `missing ENDSEC` (block khung tên lỗi) → `chay_script_tren_ban_sao` với
+   `(command "_.-WBLOCK" "<thư mục>/model.dwg" "" "0,0,0" (ssget "X" '((410 . "Model"))) "")` rồi `xuat_dxf` file đó (tọa độ
+   giữ nguyên, vẽ vẫn vào bản sao của bản vẽ gốc).
+2. `cap_dien.py bo-tri … --nen-revit co` (MCP: `tuy_chon=["--nen-revit","co"]`). Căn đã có người vẽ sẵn → `--bo-can`.
+   Nền không vẽ bình nóng lạnh → hỏi; người dùng đồng ý vị trí mặc định → `--bnl-mac-dinh`.
+3. Xem ảnh **từng căn** (nội thất nhận theo hình dạng có dấu "?"; phòng / căn dựng sai → báo, không vẽ). Có căn mẫu người dùng
+   đã vẽ → chạy `soat` trên DXF để so quy tắc với cách người dùng vẽ, báo khác biệt.
+4. Vẽ `ve_vao_ban_sao` vào bản sao bản vẽ GỐC; kiểm tra lại bằng WBLOCK + `xuat_dxf` + `soat` (không còn "Lệch").
+
 ## Quy trình SOÁT bản vẽ nhân viên
 ```powershell
 $env:PYTHONUTF8=1; & "<python>" "<skill>\scripts\cap_dien.py" soat "<file.dxf>" --out-dir "<thư mục>" --du-an "<tên>" [cùng tham số như bố trí]
@@ -68,3 +81,8 @@ $env:PYTHONUTF8=1; & "<python>" "<skill>\scripts\cap_dien.py" soat "<file.dxf>" 
 `--so-o-bep 2`): CH01 34 thiết bị (TĐ-CH, VDP ×2, G ×6, TV ×4, ĐN, B ×2, BT, HM, W ×5, X ×3, CT 3 phím ×2, AC), lộ S1–S3, AC1,
 BT; CH02 27 thiết bị; ~19 câu hỏi (block bếp nấu `86786`, bình nóng lạnh `CT3-Tn-MEP` chưa nhận, cửa chính CH02 không có cung
 mở…). Chạy ~20 s; vẽ bản sao bằng MCP `ve_vao_ban_sao` ~1 phút.
+
+`H:\@AI Claude Test\03-Cong-Cu\05-Skill-Test\ket-qua-OCam-test\` (08/10/2026) – mặt bằng tầng Revit `E Mat bang cap dien o cam
+can ho test.dwg`, 24 căn, căn .03 người dùng vẽ sẵn (bỏ qua, dùng làm mẫu đối chiếu): `--nen-revit co --so-o-bep 2
+--may-rua-bat --bnl-mac-dinh --bo-can "P5-(05-18).03"` → 23 căn, 728 thiết bị, 598 dim; ~4 phút. Soát lại bản vẽ: không còn
+"Lệch"; ổ G phòng ngủ 1 căn .03 trùng tọa độ người dùng vẽ.
