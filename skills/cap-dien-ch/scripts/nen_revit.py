@@ -262,6 +262,28 @@ def nhan_dien_noi_that(net, cfg):
         da_dung.add(id(c))
     hobs = [f["fp"] for f in out if f["loai"] == "bep_nau"]
 
+    # ---------------------------------------------------------------- mat bep: net mep truoc tu bep (song song mot truc bep
+    # nau, cach tam bep 150-500, dai >= 1200, phu qua tam bep) -> hai dau mat bep (o B cach dau mat bep 200)
+    MB = k["mat_bep"]
+    doan_dai = [it["pts"] for L in L_nt for it in net.get(L, []) if it["t"] == "LINE" and math.dist(*it["pts"]) >= MB["dai_min"]]
+    cay_dd = shapely.STRtree([LineString(p) for p in doan_dai]) if doan_dai else None
+    for h in hobs:
+        c = h.centroid
+        best = None
+        for i in (cay_dd.query(c.buffer(MB["cach_tam_bep"][1])) if cay_dd is not None else []):
+            a, b_ = doan_dai[i]
+            d_ = math.dist(a, b_)
+            w = ((b_[0] - a[0]) / d_, (b_[1] - a[1]) / d_)
+            t = (c.x - a[0]) * w[0] + (c.y - a[1]) * w[1]
+            lech = abs((c.x - a[0]) * -w[1] + (c.y - a[1]) * w[0])
+            if not (MB["cach_tam_bep"][0] <= lech <= MB["cach_tam_bep"][1]) or not (0 < t < d_):
+                continue
+            if best is None or d_ > best[0]:
+                best = (d_, a, b_)
+        if best is not None:
+            g = LineString([best[1], best[2]])
+            out.append(_rec("mat_bep", g.buffer(10, cap_style="flat"), "mặt bếp – mép trước (nét Revit)", p0=best[1], p1=best[2]))
+
     # ---------------------------------------------------------------- may giat: o vuong + vong tron lon
     M_ = k["may_giat"]
     for c in cum_nt:

@@ -4,7 +4,7 @@
     {
       "id": 1,
       "prompt": "Vẽ mặt bằng cấp điện ổ cắm cho 2 căn trong H:\\@Archivina 2026\\@bản vẽ mẫu căn hộ\\Test Layout noi that CH.dwg theo nguyên tắc ổ cắm Archivina.",
-      "expected_output": "Xuất DXF bản sao (nổ ACA); chạy cap_dien.py bo-tri lần đầu, xem ảnh; HỎI số ổ mặt bếp, đế ổ vuông/chữ nhật, block chưa nhận diện (86786, CT3-Tn-MEP), cửa chính CH02 không có cung mở, sofa không sát tường, PN không có kệ TV, phòng đa năng – không tự suy đoán; chạy lại với --so-o-bep; G hai bên đầu giường cách mép đệm 200, TV theo tâm kệ, TV+ĐN cách 150, W/X trong WC, W máy giặt, AC tại dàn nóng, TĐ-CH cách khuôn cửa 500; thiết bị trên vách BTCT có mây; lộ S1 khách+WC chung, S2 bếp, S3 PN, AC/BT riêng; dim từ mép tường; chỉ vẽ vào bản sao sau khi người dùng đồng ý; kiểm tra lại bằng xuat_dxf + soat.",
+      "expected_output": "Xuất DXF bản sao (nổ ACA); chạy cap_dien.py bo-tri lần đầu, xem ảnh; HỎI số ổ mặt bếp, đế ổ vuông/chữ nhật, block chưa nhận diện (86786, CT3-Tn-MEP), cửa chính CH02 không có cung mở, sofa không sát tường, PN không có kệ TV, phòng đa năng – không tự suy đoán; chạy lại với --so-o-bep; G hai bên đầu giường cách mép giường 250 H+650 (khe < 500 cân giữa), TV + ổ mạng tâm cách 100 theo trục tivi H+1100, W/X trong WC, W máy giặt, AC tại dàn nóng, màn hình chuông cửa cách góc 200 phía tay nắm, TĐ-CH phía bản lề sát góc (đoạn < 600 cân giữa); thiết bị trên vách BTCT có mây; lộ ghi Excel, KHÔNG vẽ dây / mũi tên / nhãn lộ; dim từ mép tường; chỉ vẽ vào bản sao sau khi người dùng đồng ý; kiểm tra lại bằng xuat_dxf + soat.",
       "files": []
     },
     {
@@ -23,6 +23,12 @@
       "id": 4,
       "prompt": "Áp dụng skill mặt bằng cấp điện căn hộ để vẽ cho các căn hộ trong H:\\@Archivina 2026\\@bản vẽ mẫu căn hộ\\E Mat bang cap dien o cam can ho test.dwg, chỉ vẽ trong căn hộ.",
       "expected_output": "Nhận ra nền Revit (block bind, nét nổ, không tên phòng, mã căn P5-(05-18).xx có đường dẫn); DXF cụt → WBLOCK Model rồi xuat_dxf; cap_dien.py bo-tri --nen-revit co; căn .03 đã vẽ sẵn → --bo-can, dùng làm mẫu đối chiếu (soat); số ổ bếp / máy rửa bát lấy theo căn mẫu hoặc hỏi; không có bình nóng lạnh → hỏi hoặc --bnl-mac-dinh; xem ảnh từng căn; vẽ vào bản sao bản vẽ gốc (block tủ điện có sẵn mang đơn vị inch → không được phóng 25,4); kiểm tra lại bằng WBLOCK + xuat_dxf + soat; không đặt thiết bị ở sảnh, lõi thang, phòng ngoài căn; báo phần chưa nhận được (BNL, quạt hút, vách BTCT).",
+      "files": []
+    },
+    {
+      "id": 5,
+      "prompt": "Cập nhật skill theo bản vẽ CHI TIẾT LẮP ĐẶT THIẾT BỊ ĐIỆN CĂN HỘ ĐIỂN HÌNH.dwg (vị trí, cao độ, khoảng cách tới nội thất), bỏ nét dây, vẽ lại mặt bằng.",
+      "expected_output": "Đọc mặt đứng (FFL, CL, dim, ghi chú) → quy tắc: chuông 1400 cách lỗ mở 200; công tắc 1300 cách lỗ mở ≥200 (min 80), WC: 20A gần lỗ mở + công tắc đèn cách 100, đoạn < 400 cân giữa, không đủ → chồng 1300/1200; màn hình chuông 1300 + ổ 400 cách góc 200; TĐ 1300, đoạn < 600 cân giữa; G 650 cách mép giường 250, khe < 500 cân giữa; TV + ổ mạng 1100 (khách thêm bộ 400); B 1300 cách đầu mặt bếp 200; TL 1300 cân giữa tủ; HM 1900; lò vi sóng + đầu chờ bếp 500; lavabo 1300 cách mép 300 (hốc → mảng tường cạnh ngắn); bồn cầu 400 cách trục 300; máy giặt 1300 cách mép 200. Hỏi ghi chú mơ hồ (tường vuông góc, TV 2 bộ, lavabo, công tắc đèn). Cập nhật bảng ký hiệu, catalog, cấu hình; không vẽ dây; vẽ lại bản sao, soát lại không còn 'Lệch'.",
       "files": []
     }
   ]

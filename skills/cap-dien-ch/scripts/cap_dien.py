@@ -302,7 +302,7 @@ class Bien:
         self.pts = [self.ring.interpolate(s) for s in self.s]
         self.cam = [None] * n          # ly do cam (chuoi) hoac None
         self.btct = [False] * n
-        self.chiem = []                # s da dat thiet bi
+        self.chiem = []                # doan (s_dau, s_cuoi) da dat thiet bi (thiet bi nho: s_dau = s_cuoi)
 
     def canh_tai(self, s):
         s %= self.L
@@ -352,9 +352,13 @@ class Bien:
         return self.btct[self.idx(s)]
 
     def trong(self, s, kc):
-        return all(min(abs(s - t), self.L - abs(s - t)) >= kc for t in self.chiem)
+        def kc_doan(a, b):
+            if a <= s <= b:
+                return 0.0
+            return min(min(abs(s - t), self.L - abs(s - t)) for t in (a, b))
+        return all(kc_doan(a, b) >= kc for a, b in self.chiem)
 
-    def tim(self, s0, dich_max, kc, tranh_btct=400, cung_canh=True):
+    def tim(self, s0, dich_max, kc, tranh_btct=400, cung_canh=True, bo_qua=()):
         """Vi tri hop le gan s0 nhat (khong cam, cach thiet bi da dat >= kc); uu tien tuong xay trong pham vi tranh_btct.
         Tra ve (s, ghi_chu) hoac (None, ly do)."""
         k0 = self.canh_tai(s0)
@@ -366,7 +370,7 @@ class Bien:
                 s = (s0 + sg * j * buoc) % self.L
                 if cung_canh and self.canh_tai(s) is not k0 and j * buoc > 50:
                     continue
-                if self.ly_do_cam(s) is None and self.trong(s, kc):
+                if (self.ly_do_cam(s) is None or self.ly_do_cam(s) in bo_qua) and self.trong(s, kc):
                     ung.append((j * buoc, s))
             if ung and not tranh_btct:
                 break
@@ -392,8 +396,6 @@ class BoTri:
         self.ds = []            # thiet bi
         self.dims = []          # (p1, p2, p3)
         self.texts = []         # (x, y, chuoi, cao)
-        self.cap = []           # (lo, [pts])
-        self.mui_ten = []       # (x, y, rot, lo)
         self.may = []           # (x, y)
 
     def dat(self, ma, r, bien, s, ly_do, lech_vao=0.0, ghi_chu=""):
@@ -405,7 +407,10 @@ class BoTri:
         d = dict(ma=ma, cat=c, x=x + n[0] * lech_vao, y=y + n[1] * lech_vao, rot=rot, n=n, s=s, bien=bien, canh=k,
                  can=r["can"], phong=r["ten"], loai_phong=r["loai"], ly_do=ly_do, ghi_chu=ghi_chu, lo=None,
                  btct=bien.la_btct(s), co_dim=lech_vao == 0)
-        bien.chiem.append(s)
+        # giu cho theo be rong ky hieu (tu dien ~500, man hinh VDP 250): thiet bi khac khong chen vao ky hieu
+        nua = (c["rong"] / 2 - 60) if (c.get("rong") or 0) > 220 else 0.0
+        d["_chiem"] = (s - nua, s + nua)
+        bien.chiem.append(d["_chiem"])
         self.ds.append(d)
         if d["btct"]:
             self.may.append((x + n[0] * 120, y + n[1] * 120))
@@ -413,11 +418,11 @@ class BoTri:
                          f"{c['ten']} không dời được sang tường xây trong phạm vi {self.b['tranh_btct_dich_toi_da']} mm: đặt chờ khi đổ cột vách (đã đánh dấu mây).", tb=d)
         return d
 
-    def dat_gan(self, ma, r, bien, p_muc, ly_do, dich_max=600, kc=None, lech_vao=0.0, cung_canh=True, im_lang=False):
+    def dat_gan(self, ma, r, bien, p_muc, ly_do, dich_max=600, kc=None, lech_vao=0.0, cung_canh=True, im_lang=False, bo_qua=()):
         """Dat thiet bi tai diem tuong gan p_muc nhat thoa rang buoc. im_lang: khong ghi chu khi that bai (con phuong an khac)."""
         kc = self.b["cach_nhau_toi_thieu"] if kc is None else kc
         s0 = bien.chieu(p_muc)
-        s, gc = bien.tim(s0, dich_max, kc, self.b["tranh_btct_dich_toi_da"], cung_canh)
+        s, gc = bien.tim(s0, dich_max, kc, self.b["tranh_btct_dich_toi_da"], cung_canh, bo_qua)
         if s is None and im_lang:
             return None
         if s is None:
@@ -495,35 +500,7 @@ def bo_tri_can(bt, can_ten, rooms, nt, cuas, can_poly, args, ke_tv_suy):
         so.them(can_ten, "", CB, "Không xác định được cửa chính", "Không thấy cửa đi có cung mở nối căn với bên ngoài: chưa bố trí TĐ-CH, VDP. Cần chỉ vị trí cửa chính.", hoi=True)
     else:
         c, r_in, _ = cua_chinh
-        bien = r_in["bien"]
-        sH, sE = bien.chieu(c["H"]), bien.chieu(c["E"])
-        huong = 1 if ((sE - sH) % bien.L) < bien.L / 2 else -1        # phia tay nam = phia E (xa ban le)
-        s_khuon = sE
-        s_td = s_khuon + huong * b["td_ch_cach_khuon_cua_tam"]
-        p_td = bien.diem(s_td)[0]
-        h_td = huong
-        d_td = bt.dat_gan("TU-DIEN", r_in, bien, p_td, f"Tủ điện căn hộ: tâm cách khuôn cửa chính {b['td_ch_cach_khuon_cua_tam']} mm, phía tay nắm", kc=300, im_lang=True)
-        if d_td is None:            # sanh truoc cua chat (can DUAL KEY...): phia ban le, roi tuong ke
-            d_td = bt.dat_gan("TU-DIEN", r_in, bien, bien.diem(sH - huong * b["td_ch_cach_khuon_cua_tam"])[0],
-                              "Tủ điện căn hộ: phía bản lề cửa chính (phía tay nắm vướng)", kc=300, im_lang=True)
-            if d_td is not None:
-                h_td = -huong
-        if d_td is None:
-            d_td = bt.dat_gan("TU-DIEN", r_in, bien, p_td, "Tủ điện căn hộ: gần cửa chính, dời sang tường kề (cạnh cửa vướng)", kc=300,
-                              dich_max=2000, cung_canh=False)
-        if d_td is not None:
-            p_v = bien.diem(d_td["s"] + h_td * b["vdp_trong_cach_td_ch"])[0]
-            bt.dat_gan("VDP", r_in, bien, p_v, "Màn hình VDP trong căn: cùng tường TĐ-CH, cách tâm TĐ-CH 600 (chưa chốt)", kc=200)
-        # VDP ngoai cua: mat ngoai tuong hanh lang, phia tay nam, cach khuon 200
-        (px, py), n, _ = bien.diem(s_khuon + huong * b["vdp_ngoai_cach_khuon_cua"])
-        t = b["tuong_day_mac_dinh"]
-        dd = _day_tuong(bt.tuong_net, (px, py), (-n[0], -n[1]))
-        if dd:
-            t = dd
-        vx, vy = px - n[0] * t, py - n[1] * t
-        bt.ds.append(dict(ma="VDP", cat=bt.cat["VDP"], x=vx, y=vy, rot=deg((-n[0], -n[1])) % 360, n=(-n[0], -n[1]), s=None, bien=None,
-                          canh=None, can=can_ten, phong="Ngoài cửa chính", loai_phong=["ngoai"], lo=None, btct=False, co_dim=False,
-                          ly_do="Chuông / camera VDP ngoài cửa chính, phía tay nắm, cách khuôn 200", ghi_chu=f"tường dày {t:.0f}"))
+        _cum_cua_vao(bt, can_ten, c, r_in)
     # ------------------------------------------------------------------ tung phong (WC truoc: cong tac ngoai cua WC gan voi
     # vi tri cua, uu tien hon o cam thuong cua phong ben ngoai)
     for r in sorted(rooms, key=lambda r: (0 if "wc" in r["loai"] else 1, r["ten"])):
@@ -548,20 +525,40 @@ def bo_tri_can(bt, can_ten, rooms, nt, cuas, can_poly, args, ke_tv_suy):
                 if g.get("truc") is None:
                     so.them(can_ten, ten, GY, "Giường không có tab đầu giường", "Mép giường lấy theo hộp bao block (có thể gồm tab đầu giường): kiểm tra vị trí ổ G.")
                 gcach = b["g_cach_mep_giuong"]
-                for t, t_trong in ((b0 - gcach, b0 + gcach), (b1 + gcach, b1 - gcach)):
-                    d_g = bt.dat_gan("O-G", r, bien, diem_tren_canh(k, t), f"Ổ đầu giường: tâm cách mép giường {gcach} mm", dich_max=300, im_lang=True)
+                # vat can hai ben dau giuong tren tuong dau giuong: goc phong (dau canh) + noi that sat tuong (tu, ban...)
+                vc_trai, vc_phai = [0.0], [k["L"]]
+                for f in nt:
+                    if f["loai"] in ("giuong", "ke_tv") or not r["poly"].buffer(150).contains(Point(f["x"], f["y"])):
+                        continue
+                    if LineString([k["a"], k["b"]]).distance(f["fp"]) > b["g_noi_that_sat_tuong"]:
+                        continue
+                    _, _, a0, a1, _ = tuong_gan_canh(k, f["fp"])
+                    if a1 <= b0 + 1:
+                        vc_trai.append(a1)
+                    elif a0 >= b1 - 1:
+                        vc_phai.append(a0)
+                for mep, vc, sg in ((b0, max(vc_trai), -1), (b1, min(vc_phai), 1)):
+                    khe = abs(mep - vc)
+                    if khe < b["g_khe_can_giua"]:
+                        t, ly = (mep + vc) / 2, f"Ổ đầu giường: khe cạnh giường – tường / nội thất {khe:.0f} < {b['g_khe_can_giua']}: cân giữa khe, H+650"
+                    else:
+                        t, ly = mep + sg * gcach, f"Ổ đầu giường: tâm cách mép giường {gcach}, H+650"
+                    d_g = bt.dat_gan("O-G", r, bien, diem_tren_canh(k, t), ly, dich_max=150, kc=80, im_lang=True)
                     if d_g is None:
-                        # phia ngoai vuong cua so / tu: dat vao trong mep giuong (sau dau giuong), cach mep {gcach} - nhu can mau .03
-                        d_g = bt.dat_gan("O-G", r, bien, diem_tren_canh(k, t_trong),
-                                         f"Ổ đầu giường: phía ngoài mép giường vướng cửa sổ / thiết bị – đặt vào trong mép giường {gcach} mm (sau đầu giường)", dich_max=150)
+                        # phia ngoai vuong cua so / tu: dat vao trong mep giuong (sau dau giuong) - nhu can mau .03
+                        d_g = bt.dat_gan("O-G", r, bien, diem_tren_canh(k, mep - sg * gcach),
+                                         f"Ổ đầu giường: phía ngoài mép giường vướng cửa sổ / thiết bị – đặt vào trong mép giường {gcach} (sau đầu giường), H+650",
+                                         dich_max=150)
                         if d_g is not None:
-                            so.them(can_ten, ten, GY, "Ổ G đặt trong mép giường", "Phía ngoài mép giường vướng cửa sổ / thiết bị: ổ G đặt vào trong mép giường 200 (sau đầu giường) – kiểm tra.", tb=d_g)
+                            so.them(can_ten, ten, GY, "Ổ G đặt trong mép giường",
+                                    f"Phía ngoài mép giường vướng cửa sổ / thiết bị: ổ G đặt vào trong mép giường {gcach} (sau đầu giường) – kiểm tra.", tb=d_g)
                 # TV
                 tvs = nt_trong(r, "ke_tv") + [f for f in ke_tv_suy if r["poly"].contains(Point(f["x"], f["y"]))]
                 if tvs:
                     tv = tvs[0]
                     _, k2, _, _, tc2 = tuong_gan(bien, tv["fp"])
-                    bt.dat_gan("O-TV", r, bien, diem_tren_canh(k2, tc2), "Ổ tivi: thẳng tâm tivi, bám tường" + (" (kệ TV suy theo hình dạng – xác nhận)" if tv.get("suy") else ""))
+                    _dat_tv(bt, r, bien, k2, tc2, args, "Ổ tivi + ổ mạng phòng ngủ: cặp hộp theo trục tivi, H+1100" +
+                            (" (tivi suy theo hình dạng – xác nhận)" if tv.get("suy") else ""))
                 elif args.tv_pn_theo_truc_giuong:
                     # tuong doi dien dau giuong, theo truc giuong
                     cx, cy = than.centroid.x, than.centroid.y
@@ -599,10 +596,11 @@ def bo_tri_can(bt, can_ten, rooms, nt, cuas, can_poly, args, ke_tv_suy):
             if tvs:
                 tv = max(tvs, key=lambda f: f["fp"].area)
                 _, k2, _, _, tc2 = tuong_gan(bien, tv["fp"])
-                kc_tv = b["tv_dn_khoang_cach"][args.de_o]
-                d1 = bt.dat_gan("O-TV", r, bien, diem_tren_canh(k2, tc2 - kc_tv / 2), "Ổ tivi phòng khách: theo tâm tivi", kc=kc_tv - 1)
+                d1 = _dat_tv(bt, r, bien, k2, tc2, args, "Ổ tivi + ổ mạng phòng khách: 2 bộ theo trục tivi, H+1100 và H+400")
                 if d1 is not None:
-                    bt.dat_gan("O-DN", r, bien, diem_tren_canh(k2, tc2 + kc_tv / 2), f"Ổ điện nhẹ cạnh ổ tivi, cách {kc_tv} mm (đế {args.de_o.replace('_', ' ')})", kc=kc_tv - 1, dich_max=200)
+                    d1["ghi_chu"] = "2 bộ: H+1100 & H+400"
+                    nx, ny = d1["n"]
+                    bt.texts.append((d1["x"] + nx * 450 - ny * 150, d1["y"] + ny * 450 + nx * 150, "2 BỘ H+1100 & H+400", 80))
             else:
                 so.them(can_ten, ten, CB, "Thiếu kệ TV", "Phòng khách không nhận diện được kệ TV / tivi: chưa đặt ổ TV + ĐN. Gán loại block hoặc chỉ vị trí.", hoi=True)
             for sf in sofa[:1]:
@@ -620,39 +618,59 @@ def bo_tri_can(bt, can_ten, rooms, nt, cuas, can_poly, args, ke_tv_suy):
             h = bep[0]
             d, k, t0, t1, tc = tuong_gan(bien, h["fp"])
             q = diem_tren_canh(k, tc)
-            dh = bt.dat_gan("HOP-HM", r, bien, q, "Box chờ hút mùi: theo tâm máy hút mùi (tâm bếp nấu)", dich_max=200)
+            dh = bt.dat_gan("HOP-HM", r, bien, q, "Box chờ hút mùi: theo tâm máy hút mùi / bếp nấu, H+1900", dich_max=200)
             if dh is not None:
                 bt.ds.append(dict(dh, ma="HOP-BT", cat=bt.cat["HOP-BT"], x=dh["x"] + dh["n"][0] * b["bt_lech_vao_phong"],
                                   y=dh["y"] + dh["n"][1] * b["bt_lech_vao_phong"], co_dim=False, lo=None,
-                                  ly_do="Box chờ bếp từ: dưới bếp nấu (ký hiệu lệch 200 vào phòng, H:+0.6 như bản vẽ mẫu)"))
-                bt.texts.append((dh["x"] + dh["n"][0] * 270 + 120, dh["y"] + dh["n"][1] * 270, "H:+0.6", 100))
-            # o B tren mat bep
+                                  ly_do="Đầu chờ bếp + ổ lò vi sóng: dưới bếp nấu, theo tâm bếp, H+500 (ký hiệu lệch 200 vào phòng để không chồng HM)"))
+            # o B tren mat bep: 2 dau mat bep, tam cach dau mat bep 200, H+1300; nhieu hon 2 -> chia deu phan giua
             n_b = so_o_bep(args, can_ten)
             chau = [f for f in nt_trong(r, "chau_rua")]
-            ds_bep = [h] + [f for f in chau + nt_trong(r, "may_rua_bat") + nt_trong(r, "lo_nuong") if tuong_gan(bien, f["fp"])[1] is k and tuong_gan(bien, f["fp"])[0] < 900]
-            ts = []
-            for f in ds_bep:
-                _, _, a0, a1, _ = tuong_gan_canh(k, f["fp"])
-                ts += [a0, a1]
-            lo_, hi_ = max(0.0, min(ts) - 600), min(k["L"], max(ts) + 600)
-            cam_t = [(t0 - b["b_cach_mep_bep_nau"], t1 + b["b_cach_mep_bep_nau"])]
-            for f in chau:
+            mb = []
+            for f in nt_trong(r, "mat_bep"):          # mep truoc mat bep: song song tuong bep nau, cach tuong <= 900
+                if "p0" not in f:
+                    continue
+                (x0, y0), (x1, y1) = f["p0"], f["p1"]
+                dl = math.dist((x0, y0), (x1, y1)) or 1.0
+                if abs((x1 - x0) / dl * k["u"][0] + (y1 - y0) / dl * k["u"][1]) > 0.98 and \
+                        LineString([k["a"], k["b"]]).distance(LineString([f["p0"], f["p1"]])) <= 900:
+                    mb.append(f)
+            if mb:
+                _, _, c0, c1, _ = tuong_gan_canh(k, max(mb, key=lambda f: f["fp"].area)["fp"])
+            else:           # khong nhan duoc mat bep: theo thiet bi bep tren cung tuong +- 600
+                ts = []
+                for f in [h] + [f for f in chau + nt_trong(r, "may_rua_bat") + nt_trong(r, "lo_nuong")
+                                if tuong_gan(bien, f["fp"])[1] is k and tuong_gan(bien, f["fp"])[0] < 900]:
+                    _, _, a0, a1, _ = tuong_gan_canh(k, f["fp"])
+                    ts += [a0, a1]
+                c0, c1 = min(ts) - 600, max(ts) + 600
+                so.them(can_ten, ten, GY, "Không nhận được mặt bếp", "Đầu mặt bếp lấy theo thiết bị bếp ± 600 – kiểm tra vị trí ổ B.")
+            for f in nt_trong(r, "tu_lanh"):         # tu lanh dung canh mat bep cat dai mat bep
                 _, k4, a0, a1, _ = tuong_gan(bien, f["fp"])
                 if k4 is k:
-                    cam_t.append((a0 - b["b_cach_mep_chau_rua"], a1 + b["b_cach_mep_chau_rua"]))
-            for f in nt_trong(r, "tu_lanh"):
-                _, k4, a0, a1, _ = tuong_gan(bien, f["fp"])
-                if k4 is k:
-                    cam_t.append((a0 - 50, a1 + 50))
-            tu_do = _tru_khoang([(lo_, hi_)], cam_t)
+                    if a1 <= tc:
+                        c0 = max(c0, a1)
+                    elif a0 >= tc:
+                        c1 = min(c1, a0)
+            c0, c1 = max(c0, 0.0), min(c1, k["L"])
             if n_b is None:
-                tong = sum(y - x for x, y in tu_do)
                 so.them(can_ten, ten, CB, "Hỏi số ổ cắm mặt bếp",
-                        f"Mặt bếp (tường bếp nấu) còn {tong / 1000:.1f} m dải tự do, gợi ý {max(1, round(tong / b['b_khoang_cach_goi_y']))} ổ B. "
-                        "Theo quy tắc phải hỏi số lượng trước khi bố trí (--so-o-bep).", hoi=True)
+                        f"Mặt bếp dài {(c1 - c0) / 1000:.1f} m (chi tiết lắp đặt: ổ ở 2 đầu mặt bếp). Hỏi số lượng trước khi bố trí (--so-o-bep).", hoi=True)
             else:
-                for t in _chia_deu(tu_do, max(1, n_b)):
-                    bt.dat_gan("O-B", r, bien, diem_tren_canh(k, t), "Ổ cắm mặt bếp (số lượng người dùng xác nhận)", dich_max=300)
+                dc = b["b_cach_dau_mat_bep"]
+                vt = [c0 + dc, c1 - dc]
+                if n_b == 1:
+                    vt = [max(vt, key=lambda t: abs(t - tc))]
+                elif n_b > 2:
+                    cam_t = [(t0 - b["b_cach_mep_bep_nau"], t1 + b["b_cach_mep_bep_nau"])]
+                    for f in chau:
+                        _, k4, a0, a1, _ = tuong_gan(bien, f["fp"])
+                        if k4 is k:
+                            cam_t.append((a0 - b["b_cach_mep_chau_rua"], a1 + b["b_cach_mep_chau_rua"]))
+                    vt += _chia_deu(_tru_khoang([(c0 + dc + 300, c1 - dc - 300)], cam_t), n_b - 2)
+                for t in vt:
+                    bt.dat_gan("O-B", r, bien, diem_tren_canh(k, t), f"Ổ cắm mặt bếp: tâm cách đầu mặt bếp {dc}, H+1300 (số lượng người dùng xác nhận)",
+                               dich_max=300)
             for f in nt_trong(r, "may_rua_bat"):
                 if args.may_rua_bat:
                     _, k5, _, _, tc5 = tuong_gan(bien, f["fp"])
@@ -669,7 +687,7 @@ def bo_tri_can(bt, can_ten, rooms, nt, cuas, can_poly, args, ke_tv_suy):
             so.them(can_ten, ten, LOI, "Thiếu nội thất", "Bếp không nhận diện được bếp nấu: chưa bố trí BT / HM / ổ B. Gán loại block bếp nấu.", hoi=True)
         for f in nt_trong(r, "tu_lanh"):
             _, k6, _, _, tc6 = tuong_gan(bien, f["fp"])
-            bt.dat_gan("O-TL", r, bien, diem_tren_canh(k6, tc6), "Ổ tủ lạnh: sau tủ lạnh, theo tâm")
+            bt.dat_gan("O-TL", r, bien, diem_tren_canh(k6, tc6), "Ổ tủ lạnh: sau tủ lạnh, cân giữa tủ, H+1300")
         if (bep or "bep" in loai) and not nt_trong(r, "tu_lanh"):
             so.them(can_ten, ten, CB, "Thiếu tủ lạnh", "Khu bếp không nhận diện được tủ lạnh: chưa đặt ổ TL. Gán loại block hoặc chỉ vị trí.", hoi=True)
         # ---------------- WC
@@ -680,31 +698,64 @@ def bo_tri_can(bt, can_ten, rooms, nt, cuas, can_poly, args, ke_tv_suy):
             ref_sen = unary_union([f["fp"] for f in sen]) if sen else None
             if lav:
                 _, k7, a0, a1, tc7 = tuong_gan(bien, lav[0]["fp"])
-                cands = [tc7 - b["w_cach_tam_lavabo"], tc7 + b["w_cach_tam_lavabo"]]
+                cw = b["w_cach_mep_lavabo"]
+                cands = [a0 - cw, a1 + cw]
                 if ref_sen is not None:
                     cands.sort(key=lambda t: -Point(diem_tren_canh(k7, t)).distance(ref_sen))
-                ok = None
-                for t in cands:
-                    s0 = bien.chieu(diem_tren_canh(k7, t))
-                    if bien.ly_do_cam(s0) is None and bien.trong(s0, kc):
-                        ok = t
+                d_w = None
+                for t in [t for t in cands if 60 <= t <= k7["L"] - 60]:      # lavabo sat goc: vi tri ngoai doan tuong -> bo
+                    d_w = bt.dat_gan("O-W", r, bien, diem_tren_canh(k7, t), f"Ổ W chống ẩm lavabo: tường sau lavabo, tâm cách mép lavabo {cw}, H+1300",
+                                     dich_max=100, im_lang=True)
+                    if d_w is not None:
                         break
-                bt.dat_gan("O-W", r, bien, diem_tren_canh(k7, ok if ok is not None else cands[0]), f"Ổ W chống ẩm cạnh lavabo, cách tâm lavabo {b['w_cach_tam_lavabo']}", dich_max=300)
+                if d_w is None:
+                    # lavabo trong hoc / sat tuong ben: "mang tuong canh ngan lavabo" = tuong ben, tam cach mep truoc lavabo 300
+                    sau_lav = max(abs((x - k7["a"][0]) * k7["n"][0] + (y - k7["a"][1]) * k7["n"][1]) for x, y in lav[0]["fp"].exterior.coords)
+                    i7 = bien.canh.index(k7)
+                    nk = len(bien.canh)
+                    ben = []
+                    for chieu in (-1, 1):
+                        j = i7
+                        for _ in range(6):          # bo qua doan song song (noi tiep) va khac ngan < 150
+                            j = (j + chieu) % nk
+                            ks = bien.canh[j]
+                            if abs(ks["u"][0] * k7["u"][0] + ks["u"][1] * k7["u"][1]) <= 0.3 and ks["L"] >= 150:
+                                break
+                        else:
+                            continue
+                        if ks["L"] < sau_lav + cw + 60:
+                            continue
+                        goc = ks["b"] if chieu < 0 else ks["a"]          # dau canh tuong ben phia lavabo
+                        hg = (-ks["u"][0], -ks["u"][1]) if chieu < 0 else ks["u"]
+                        ben.append((goc[0] + hg[0] * (sau_lav + cw), goc[1] + hg[1] * (sau_lav + cw)))
+                    if ref_sen is not None:
+                        ben.sort(key=lambda p: -Point(p).distance(ref_sen))
+                    for p in ben:
+                        d_w = bt.dat_gan("O-W", r, bien, p, f"Ổ W chống ẩm lavabo: mảng tường cạnh ngắn lavabo (lavabo trong hốc), tâm cách mép trước lavabo {cw}, H+1300",
+                                         dich_max=150, im_lang=True)
+                        if d_w is not None:
+                            break
+                if d_w is None:
+                    bt.dat_gan("O-W", r, bien, diem_tren_canh(k7, min(max(cands[0], 0.0), k7["L"])),
+                               "Ổ W chống ẩm lavabo: gần lavabo (tường sau và tường bên vướng), H+1300", dich_max=600, cung_canh=False)
             else:
                 so.them(can_ten, ten, CB, "Thiếu lavabo", "WC không nhận diện được lavabo: chưa đặt ổ W.", hoi=True)
             if bc:
-                _, k8, a0, a1, _ = tuong_gan(bien, bc[0]["fp"])
-                cands = [a1 + b["x_cach_mep_bon_cau"], a0 - b["x_cach_mep_bon_cau"]]
+                _, k8, a0, a1, tc8 = tuong_gan(bien, bc[0]["fp"])
+                cx_ = b["x_cach_truc_bon_cau"]
+                cands = [tc8 + cx_, tc8 - cx_]
                 xa = (lav[0]["fp"] if lav else None)
                 if xa is not None:
                     cands.sort(key=lambda t: -Point(diem_tren_canh(k8, t)).distance(xa))
-                ok = None
-                for t in cands:
-                    s0 = bien.chieu(diem_tren_canh(k8, t))
-                    if bien.ly_do_cam(s0) is None and bien.trong(s0, kc):
-                        ok = t
+                d_x = None
+                for t in [t for t in cands if 60 <= t <= k8["L"] - 60]:
+                    d_x = bt.dat_gan("O-X", r, bien, diem_tren_canh(k8, t), f"Ổ X chống ẩm bồn cầu: tường sau bồn cầu, tâm cách trục bồn cầu {cx_}, H+400",
+                                     dich_max=100, im_lang=True)
+                    if d_x is not None:
                         break
-                bt.dat_gan("O-X", r, bien, diem_tren_canh(k8, ok if ok is not None else cands[0]), f"Ổ X chống ẩm cạnh bồn cầu (bồn cầu điện tử), cách mép {b['x_cach_mep_bon_cau']}", dich_max=300)
+                if d_x is None:
+                    bt.dat_gan("O-X", r, bien, diem_tren_canh(k8, min(max(cands[0], 0.0), k8["L"])),
+                               "Ổ X chống ẩm bồn cầu (tường sau không đủ chỗ – dời sang tường kề), H+400", dich_max=500, cung_canh=False)
             else:
                 so.them(can_ten, ten, CB, "Thiếu bồn cầu", "WC không nhận diện được bồn cầu: chưa đặt ổ X.", hoi=True)
             bnl = nt_trong(r, "binh_nong_lanh")
@@ -722,41 +773,16 @@ def bo_tri_can(bt, can_ten, rooms, nt, cuas, can_poly, args, ke_tv_suy):
                 if ngoai is None:
                     so.them(can_ten, ten, CB, "Không xác định được phía ngoài cửa WC", "Chưa đặt công tắc 3 phím / 20A ngoài cửa WC.", hoi=True)
                 else:
-                    b2 = ngoai["bien"]
-                    sH, sE = b2.chieu(c["H"]), b2.chieu(c["E"])
-                    huong = 1 if ((sE - sH) % b2.L) < b2.L / 2 else -1
-                    ly_ct = f"Công tắc 3 phím (đèn / gương / quạt hút) ngoài cửa {ten}, phía tay nắm"
-                    d1 = bt.dat_gan("CT-BA", ngoai, b2, b2.diem(sE + huong * b["ct_wc_cach_khuon_cua"])[0], ly_ct, dich_max=500, kc=120, im_lang=True)
-                    hg = huong
-                    if d1 is None:      # phia tay nam vuong (cua khac / o kinh): phia ban le (cua WC mo vao trong), roi tuong ke
-                        hg = -huong
-                        d1 = bt.dat_gan("CT-BA", ngoai, b2, b2.diem(sH - huong * b["ct_wc_cach_khuon_cua"])[0],
-                                        f"Công tắc 3 phím ngoài cửa {ten}, phía bản lề (phía tay nắm vướng)", dich_max=500, kc=120, im_lang=True)
-                    if d1 is None:
-                        hg = huong
-                        d1 = bt.dat_gan("CT-BA", ngoai, b2, b2.diem(sE + huong * b["ct_wc_cach_khuon_cua"])[0],
-                                        f"Công tắc 3 phím ngoài cửa {ten} (dời sang tường kề, gần cửa vướng)", dich_max=1200, kc=120, cung_canh=False)
-                    if d1 is not None:
-                        d1["wc"] = ten
-                        if bnl:
-                            d2 = None
-                            for sg in (hg, -hg):
-                                d2 = bt.dat_gan("CT-20A", ngoai, b2, b2.diem(d1["s"] + sg * b["ct_wc_khoang_cach"])[0],
-                                                f"Công tắc 20A bình nóng lạnh ngoài cửa {ten}", dich_max=400, kc=120, im_lang=True)
-                                if d2 is not None:
-                                    break
-                            if d2 is None:
-                                d2 = bt.dat_gan("CT-20A", ngoai, b2, b2.diem(d1["s"] + hg * b["ct_wc_khoang_cach"])[0],
-                                                f"Công tắc 20A bình nóng lạnh ngoài cửa {ten} (dời sang tường kề, cạnh cửa vướng)",
-                                                dich_max=1000, kc=120, cung_canh=False)
-                            if d2 is not None:
-                                d2["wc"] = ten
+                    _cong_tac_wc(bt, can_ten, ten, c, ngoai, bool(bnl))
             else:
                 so.them(can_ten, ten, CB, "Không thấy cửa WC", "Chưa đặt công tắc ngoài cửa WC.", hoi=True)
         # ---------------- may giat (lo gia / bat ky)
         for f in nt_trong(r, "may_giat"):
-            _, k10, _, _, tc10 = tuong_gan(bien, f["fp"])
-            bt.dat_gan("O-W", r, bien, diem_tren_canh(k10, tc10), "Ổ W chống ẩm cho máy giặt")
+            _, k10, a0, a1, tc10 = tuong_gan(bien, f["fp"])
+            cm = b["w_may_giat_cach_mep"]
+            # tren may giat, tam cach mep may 200, phia gan dau canh (goc tuong) hon
+            t = a0 + cm if a0 <= k10["L"] - a1 else a1 - cm
+            bt.dat_gan("O-W", r, bien, diem_tren_canh(k10, t), f"Ổ W chống ẩm máy giặt: trên máy giặt, tâm cách mép máy {cm}, H+1300", dich_max=200)
         for f in nt_trong(r, "dan_nong"):
             _, k11, _, _, tc11 = tuong_gan(bien, f["fp"])
             d = bt.dat_gan("HOP-AC", r, bien, diem_tren_canh(k11, tc11), "Box chờ điều hòa tại dàn nóng (phương án kiến trúc), cách trần 300")
@@ -767,6 +793,164 @@ def bo_tri_can(bt, can_ten, rooms, nt, cuas, can_poly, args, ke_tv_suy):
         so.them(can_ten, "", CB, "Thiếu dàn nóng", ("Có %d dàn lạnh nhưng " % len(lanh) if lanh else "") +
                 "không nhận diện được dàn nóng điều hòa: chưa đặt box AC. Chỉ vị trí dàn nóng theo phương án kiến trúc.", hoi=True)
     return so_pn
+
+
+def _don_vi(a, b):
+    L = math.dist(a, b) or 1.0
+    return ((b[0] - a[0]) / L, (b[1] - a[1]) / L)
+
+
+def _doan_toi_goc(bien, s_tu, h, w, toi_da=6000.0):
+    """Tu vi tri s_tu (khuon cua) di theo chieu h (+1 / -1 theo chu vi) doc tuong cua den GOC TUONG THAT: bo qua cac canh
+    song song tuong cua va cac khac ngan < 200 (khung cua, bac tuong); dung o canh dai khong song song. Tra ve (s_goc, dai)
+    voi dai = khoang cach do theo phuong tuong cua."""
+    k0 = bien.canh_tai(s_tu + h * 60)
+    p0, _, _ = bien.diem(s_tu)
+    n = len(bien.canh)
+    i = bien.canh.index(k0)
+    goc = (k0["b"] if h > 0 else k0["a"]) if abs(k0["u"][0] * w[0] + k0["u"][1] * w[1]) > 0.95 else p0
+    di = 0.0
+    for _ in range(n):
+        i = (i + h) % n
+        k = bien.canh[i]
+        if abs(k["u"][0] * w[0] + k["u"][1] * w[1]) > 0.95:
+            goc = k["b"] if h > 0 else k["a"]
+        elif k["L"] >= 200:
+            break
+        di += k["L"]
+        if di > toi_da:
+            break
+    dai = abs((goc[0] - p0[0]) * w[0] + (goc[1] - p0[1]) * w[1])
+    return bien.chieu(goc), dai
+
+
+def _go(bt, ds):
+    for d in ds:
+        bt.ds.remove(d)
+        x = d.get("_chiem", (d["s"], d["s"]))
+        if d.get("bien") is not None and x in d["bien"].chiem:
+            d["bien"].chiem.remove(x)
+
+
+def _cum_cua_vao(bt, can_ten, c, r_in):
+    """Cua chinh (chi tiet lap dat thiet bi dien can ho dien hinh, nguoi dung chot 08/10/2026), mat trong tuong co cua chinh:
+    - phia tay nam: man hinh chuong cua H+1300 + o cam H+400 (cung truc), tam cach goc tuong vuong goc 200;
+    - phia ban le: tu dien TD-CH sat goc tuong (H+1300); doan tuong < 600 -> can giua doan;
+    - ngoai cua: chuong / camera phia tay nam, tam cach lo mo 200, H+1400."""
+    b, so = bt.b, bt.so
+    bien = r_in["bien"]
+    sH, sE = bien.chieu(c["H"]), bien.chieu(c["E"])
+    huong = 1 if ((sE - sH) % bien.L) < bien.L / 2 else -1        # +huong: phia tay nam (xa ban le)
+    # ---- man hinh chuong cua + o cam H400
+    wd = _don_vi(c["H"], c["E"])
+    s_goc_tn, dai_tn = _doan_toi_goc(bien, sE, huong, wd)
+    cg = b["vdp_trong_cach_goc"]
+    if dai_tn >= cg + b["o_cach_khuon_cua_toi_thieu"]:
+        s_v, ly_v = s_goc_tn - huong * cg, f"Màn hình chuông cửa: mặt trong tường cửa chính, phía tay nắm, tâm cách góc tường vuông góc {cg}, H+1300"
+    else:
+        s_v, ly_v = sE + huong * dai_tn / 2, f"Màn hình chuông cửa: đoạn tường phía tay nắm ngắn ({dai_tn:.0f}) – cân giữa, H+1300"
+    d_v = bt.dat_gan("VDP", r_in, bien, bien.diem(s_v)[0], ly_v, dich_max=300, kc=150, im_lang=True)
+    if d_v is None:
+        d_v = bt.dat_gan("VDP", r_in, bien, bien.diem(s_v)[0], "Màn hình chuông cửa: gần cửa chính (dời sang tường kề, tường cửa vướng), H+1300",
+                         dich_max=1500, kc=150, cung_canh=False)
+    if d_v is not None:
+        bt.ds.append(dict(d_v, ma="O-DOI", cat=bt.cat["O-DOI"], rot=(deg(d_v["n"]) - 90.0) % 360.0, co_dim=False, lo=None,
+                          x=d_v["x"] + d_v["n"][0] * b["ky_hieu_chong_lech_vao"], y=d_v["y"] + d_v["n"][1] * b["ky_hieu_chong_lech_vao"],
+                          ly_do="Ổ cắm dưới màn hình chuông cửa, cùng trục, H+400 (ký hiệu lệch vào phòng để không chồng màn hình)", ghi_chu=""))
+    # ---- tu dien: phia ban le, sat goc; doan < 600 can giua
+    s_goc_bl, dai_bl = _doan_toi_goc(bien, sH, -huong, wd)
+    bq = ("sau cánh cửa", "cách khuôn cửa < 200")
+    d_td = None
+    if dai_bl >= b["td_doan_can_giua"]:
+        d_td = bt.dat_gan("TU-DIEN", r_in, bien, bien.diem(s_goc_bl + huong * b["td_cach_goc"])[0],
+                          f"Tủ điện: mặt trong tường cửa chính, phía bản lề, sát góc tường (tâm cách góc {b['td_cach_goc']}), H+1300",
+                          dich_max=200, kc=300, im_lang=True, bo_qua=bq)
+    elif dai_bl >= b["td_doan_toi_thieu"]:
+        d_td = bt.dat_gan("TU-DIEN", r_in, bien, bien.diem(sH - huong * dai_bl / 2)[0],
+                          f"Tủ điện: đoạn tường phía bản lề {dai_bl:.0f} < {b['td_doan_can_giua']} – cân giữa, H+1300",
+                          dich_max=100, kc=300, im_lang=True, bo_qua=bq)
+    if d_td is None:            # phia ban le khong du cho: tuong cua phia tay nam, giua man hinh va khuon cua; roi tuong ke
+        s_td = (d_v["s"] if d_v is not None else s_goc_tn) - huong * 600
+        d_td = bt.dat_gan("TU-DIEN", r_in, bien, bien.diem(s_td)[0], "Tủ điện: phía bản lề không đủ chỗ – đặt phía tay nắm, cạnh màn hình chuông cửa, H+1300",
+                          dich_max=300, kc=300, im_lang=True)
+    if d_td is None:
+        d_td = bt.dat_gan("TU-DIEN", r_in, bien, bien.diem(s_goc_bl)[0], "Tủ điện: gần cửa chính, dời sang tường kề (tường cửa vướng), H+1300",
+                          dich_max=1500, kc=300, cung_canh=False, bo_qua=bq)
+    if d_td is not None and not d_td["ly_do"].startswith("Tủ điện: mặt trong tường cửa chính"):
+        so.them(can_ten, r_in["ten"], GY, "Tủ điện không sát góc phía bản lề", d_td["ly_do"] + " – kiểm tra phối hợp nội thất (tủ giày).", tb=d_td)
+    # ---- chuong / camera ngoai cua: mat ngoai tuong hanh lang, phia tay nam, tam cach lo mo 200, H+1400
+    (px, py), n, _ = bien.diem(sE + huong * b["vdp_ngoai_cach_khuon_cua"])
+    t = b["tuong_day_mac_dinh"]
+    dd = _day_tuong(bt.tuong_net, (px, py), (-n[0], -n[1]))
+    if dd:
+        t = dd
+    vx, vy = px - n[0] * t, py - n[1] * t
+    bt.ds.append(dict(ma="VDP", cat=bt.cat["VDP"], x=vx, y=vy, rot=deg((-n[0], -n[1])) % 360, n=(-n[0], -n[1]), s=None, bien=None,
+                      canh=None, can=can_ten, phong="Ngoài cửa chính", loai_phong=["ngoai"], lo=None, btct=False, co_dim=False,
+                      ly_do="Chuông cửa / camera ngoài cửa chính, phía tay nắm, tâm cách lỗ mở 200, H+1400", ghi_chu=f"tường dày {t:.0f}"))
+
+
+def _dat_tv(bt, r, bien, k2, tc2, args, ly):
+    """Cap o cam tivi + o mang theo truc tivi: hai hop 86x86 sat nhau, tam cach 100 (de vuong), o cam ben trai truc."""
+    kc_tv = bt.b["tv_dn_khoang_cach"][args.de_o]
+    d1 = bt.dat_gan("O-TV", r, bien, diem_tren_canh(k2, tc2 - kc_tv / 2), ly, kc=kc_tv - 5)
+    if d1 is not None:
+        bt.dat_gan("O-DN", r, bien, bien.diem(d1["s"] + kc_tv)[0], f"Ổ mạng cạnh ổ tivi, tâm cách {kc_tv} (hai hộp sát nhau)", kc=kc_tv - 5, dich_max=60)
+    return d1
+
+
+def _cong_tac_wc(bt, can_ten, ten, c, ngoai, co_bnl):
+    """Cong tac ngoai cua WC (chi tiet lap dat): phia khong co ban le (tay nam), H+1300; cong tac may nuoc nong (20A) gan lo
+    mo, tam cach lo mo >= 200 (toi thieu 80), cong tac den / guong / quat hut ke tiep, tam cach 100. Doan tuong tu lo mo den
+    goc < 400 -> can giua; khong du cho 2 mat -> lap mat tren / mat duoi (1300 & 1200) cung vi tri."""
+    b, so = bt.b, bt.so
+    b2 = ngoai["bien"]
+    sH, sE = b2.chieu(c["H"]), b2.chieu(c["E"])
+    huong = 1 if ((sE - sH) % b2.L) < b2.L / 2 else -1
+    dc, kc2 = b["ct_wc_cach_khuon_cua"], b["ct_wc_khoang_cach"]
+    ma_ds = (["CT-20A"] if co_bnl else []) + ["CT-BA"]
+    ten_ct = {"CT-20A": f"Công tắc máy nước nóng 20A ngoài cửa {ten}", "CT-BA": f"Công tắc đèn / gương / quạt hút ngoài cửa {ten}"}
+    bq = ("cách khuôn cửa < 200",)
+
+    def cap_ngang(s_khuon, h, cho_80, ghi):
+        ds = []
+        for i, ma in enumerate(ma_ds):
+            d = bt.dat_gan(ma, ngoai, b2, b2.diem(s_khuon + h * (dc + i * kc2))[0], ten_ct[ma] + ghi + ", H+1300", dich_max=150 if cho_80 else 60,
+                           kc=kc2 - 5, im_lang=True, bo_qua=bq if cho_80 else ())
+            if d is None:
+                _go(bt, ds)
+                return None
+            ds.append(d)
+        return ds
+
+    def chong(s_muc, ghi, **kw):
+        d = bt.dat_gan(ma_ds[0], ngoai, b2, b2.diem(s_muc)[0], ten_ct[ma_ds[0]] + ghi + ", mặt trên H+1300", kc=60, im_lang=True, bo_qua=bq, **kw)
+        if d is None:
+            return None
+        ds = [d]
+        if len(ma_ds) > 1:
+            d2 = bt.dat(ma_ds[1], ngoai, b2, d["s"], ten_ct[ma_ds[1]] + ghi + ", mặt dưới H+1200 (lắp chồng)")
+            ds.append(d2)
+            so.them(can_ten, ten, GY, "Công tắc WC lắp chồng", "Không đủ chỗ cho 2 mặt công tắc cạnh nhau: lắp mặt trên / mặt dưới (1300 & 1200).", tb=d)
+        return ds
+
+    ds = None
+    for h, phia in ((huong, "phía tay nắm"), (-huong, "phía bản lề (phía tay nắm vướng)")):
+        s_khuon = sE if h == huong else sH
+        _, dai = _doan_toi_goc(b2, s_khuon, h, _don_vi(c["H"], c["E"]))
+        if dai < b["ct_wc_doan_can_giua"]:
+            ds = chong(s_khuon + h * dai / 2, f" ({phia}, đoạn tường {dai:.0f} < {b['ct_wc_doan_can_giua']} – cân giữa)", dich_max=100)
+        else:
+            ds = cap_ngang(s_khuon, h, False, f" ({phia})") or cap_ngang(s_khuon, h, True, f" ({phia}, tối thiểu 80 từ lỗ mở)")
+        if ds:
+            break
+    if not ds:
+        ds = chong(sE + huong * dc, " (dời sang tường kề, gần cửa vướng)", dich_max=1200, cung_canh=False)
+    if not ds:
+        so.them(can_ten, ten, CB, "Không đặt được công tắc WC", "Không còn chỗ hợp lệ cho công tắc ngoài cửa WC – cần kiến trúc sư chọn vị trí.", hoi=True)
+        return
+    for d in ds:
+        d["wc"] = ten
 
 
 def _bnl_mac_dinh(bt, r, c):
@@ -953,66 +1137,6 @@ def chia_lo(bt, can_ten, rooms, so_pn):
     return tach
 
 
-def ve_cap(bt, can_ten, can_poly):
-    b = bt.b
-    ds = [d for d in bt.ds if d["can"] == can_ten]
-    td = next((d for d in ds if d["ma"] == "TU-DIEN"), None)
-    if td is None:
-        return
-    T = (td["x"], td["y"])
-
-    def noi(d):
-        o = b["ket_noi_cap_cach_ky_hieu"]
-        return (d["x"] + d["n"][0] * o, d["y"] + d["n"][1] * o)
-
-    nhom = defaultdict(list)
-    for d in ds:
-        if d["lo"]:
-            nhom[d["lo"]].append(d)
-    for lo, mem in nhom.items():
-        mem = sorted(mem, key=lambda d: math.dist(noi(d), T))
-        chuoi = [mem[0]]
-        con = mem[1:]
-        while con:
-            q = min(con, key=lambda d: math.dist(noi(d), noi(chuoi[-1])))
-            chuoi.append(q)
-            con.remove(q)
-        pts = [noi(chuoi[0])]
-        for d in chuoi[1:]:
-            a, c = pts[-1], noi(d)
-            g1, g2 = (c[0], a[1]), (a[0], c[1])
-            sc1 = LineString([a, g1, c]).intersection(can_poly).length
-            sc2 = LineString([a, g2, c]).intersection(can_poly).length
-            g = g1 if sc1 >= sc2 else g2
-            if math.dist(a, g) > 1 and math.dist(g, c) > 1:
-                pts.append(g)
-            pts.append(c)
-        if len(pts) >= 2:
-            bt.cap.append((lo, pts))
-        # mui ten ve tu: tu thiet bi dau chuoi, huong ve tu dien (truc giao)
-        a = pts[0]
-        dx, dy = T[0] - a[0], T[1] - a[1]
-        v = (math.copysign(1, dx), 0.0) if abs(dx) >= abs(dy) else (0.0, math.copysign(1, dy))
-        L = b["mui_ten_dai"]
-        e = (a[0] + v[0] * L, a[1] + v[1] * L)
-        bt.cap.append((lo, [a, e]))
-        bt.mui_ten.append((e[0], e[1], deg(v), lo))
-        bt.texts.append((a[0] + v[0] * 40 + (0 if v[0] else 60), a[1] + v[1] * 40 + (60 if v[0] else 0), f"{lo}/TĐ.CH", 100))
-    # F: quat hut WC noi voi cong tac 3 phim
-    k = 0
-    for d in ds:
-        if d["ma"] != "CT-BA":
-            continue
-        q = next((x for x in bt.quat if x["can"] == can_ten and x["phong"] == d.get("wc")), None)
-        if q is None:
-            continue
-        k += 1
-        a = noi(d)
-        c = (q["x"], q["y"])
-        bt.cap.append((f"F{k}", [a, (c[0], a[1]), c]))
-        bt.texts.append((a[0] + 60, a[1] + 60, f"F{k}", 100))
-
-
 def ve_dim(bt, can_ten):
     """Kich thuoc tu mep tuong (dau canh / mep o cua) den tam thiet bi; thiet bi lien tiep -> chuoi kich thuoc."""
     off = bt.b["dim_cach_tuong"]
@@ -1123,14 +1247,8 @@ def xuat_scr(path, bt, cfg, catalog, chen_bang, vung_bang):
             nx, ny = d["n"]
             out.append(f"(entmake (list (cons 0 \"TEXT\") (cons 8 {s(L_['text'][0])}) (cons 7 {s(v['text_style'])}) "
                        f"{'(list 10 %.1f %.1f 0.0)' % (d['x'] + nx * 300 - 150, d['y'] + ny * 300 + 120)} (cons 40 110.0) (cons 1 {s(c['nhan'])})))")
-    for x, y, rot, lo in bt.mui_ten:
-        out += chen(cat["MUI-TEN"], x, y, rot, None)
     for x, y in bt.may:
         out += chen(cat["MAY-CHO"], x, y, 0.0, None)
-    out.append(f"(setvar \"CLAYER\" {s(L_['cap'][0])})")
-    for lo, pts in bt.cap:
-        out.append("(entmake (list (cons 0 \"LWPOLYLINE\") (cons 100 \"AcDbEntity\") (cons 8 %s) (cons 100 \"AcDbPolyline\") (cons 90 %d) (cons 70 0) %s))"
-                   % (s(L_["cap"][0]), len(pts), " ".join("(list 10 %.1f %.1f)" % p for p in pts)))
     for x, y, t, h in bt.texts:
         out.append(f"(entmake (list (cons 0 \"TEXT\") (cons 8 {s(L_['text'][0])}) (cons 7 {s(v['text_style'])}) (list 10 {x:.1f} {y:.1f} 0.0) "
                    f"(cons 40 {float(h):.1f}) (cons 1 {s(t)})))")
@@ -1190,11 +1308,6 @@ def ve_anh(path, can_poly, rooms, nt, bt, cuas, so, ten_can, chua_ro, co_san=Non
             ax.add_patch(matplotlib.patches.Circle(c["H"], c["R"], fill=False, ec="#ffc9c9", lw=0.5))
     mau = {}
     pal = ["#e03131", "#1971c2", "#2f9e44", "#f08c00", "#9c36b5", "#0c8599", "#5c940d", "#c2255c", "#495057"]
-    for lo, pts in bt.cap:
-        if not can_poly.buffer(1500).intersects(LineString(pts)):
-            continue
-        col = mau.setdefault(lo, pal[len(mau) % len(pal)])
-        ax.plot([p[0] for p in pts], [p[1] for p in pts], color=col, lw=0.9, ls=(0, (6, 2, 1, 2)))
     for x, y, t, hh in bt.texts:
         if can_poly.buffer(1500).contains(Point(x, y)):
             ax.text(x, y, t, fontsize=5, color="#5f3dc4")
@@ -1324,7 +1437,11 @@ def soat_co_san(bt, co_san, rooms, cuas, nt, dims, nhan_lo, so):
             so.them(r["can"], r["ten"], CB, "Thiết bị không bám tường", f"{d['cat']['ten']} cách mặt tường {kc_t:.0f} mm.", tb=d, gia_tri=round(kc_t), nguong=80)
             d["loi_ds"].append("không bám tường")
         ld = bien.ly_do_cam(s0)
-        if ld and d["ma"] not in ("VDP", "MUI-TEN"):
+        # chi tiet lap dat (08/10/2026): cong tac cach lo mo toi thieu 80 (khong ap nguong 200 cua o cam); tu dien dat phia
+        # ban le sat goc (nguoi dung chon) -> khong xet 'sau canh cua' / 'cach khuon < 200'
+        mien = {"CT-20A": ("cách khuôn cửa < 200",), "CT-BA": ("cách khuôn cửa < 200",),
+                "TU-DIEN": ("cách khuôn cửa < 200", "sau cánh cửa")}.get(d["ma"], ())
+        if ld and ld not in mien and not d.get("lech_quy_uoc") and d["ma"] not in ("VDP", "MUI-TEN"):
             so.them(r["can"], r["ten"], LOI, "Vị trí vi phạm", f"{d['cat']['ten']} ({d.get('val') or ''}): {ld}.", tb=d)
             d["loi_ds"].append(ld)
             d["loi"] = True
@@ -1358,21 +1475,7 @@ def soat_co_san(bt, co_san, rooms, cuas, nt, dims, nhan_lo, so):
     for d in co_san:
         if id(d) not in dung and d.get("phong") not in (None, "(ngoài phòng)") and d["ma"] not in ("MUI-TEN", "MAY-CHO", "QUAT-HUT"):
             so.them(d.get("can"), d.get("phong"), GY, "Thiết bị ngoài nguyên tắc", f"{d['cat']['ten']} ({d.get('val') or ''}) không có trong phương án theo nguyên tắc: kiểm tra có cần không.", tb=d)
-    # lo rieng (theo nhan '<lo>/TD.CH')
-    for can in sorted({d.get("can") for d in co_san if d.get("can") not in (None, "?")}):
-        mem = [d for d in co_san if d.get("can") == can]
-        n_ac = sum(1 for d in mem if d["ma"] == "HOP-AC")
-        n_bnl = sum(1 for d in mem if d["ma"] == "HOP-BNL")
-        n_bt = sum(1 for d in mem if d["ma"] == "HOP-BT")
-        ac_l = sum(1 for x in nhan_lo if x.startswith("AC"))
-        hw_l = sum(1 for x in nhan_lo if x.startswith("HW"))
-        bt_l = sum(1 for x in nhan_lo if x.startswith("BT"))
-        if n_ac > ac_l:
-            so.them(can, "", CB, "Lộ riêng điều hòa", f"{n_ac} box AC nhưng chỉ thấy {ac_l} nhãn lộ AC*/TĐ.CH trên bản vẽ (kiểm tra theo nhãn, cả bản vẽ).")
-        if n_bnl > hw_l:
-            so.them(can, "", CB, "Lộ riêng bình nóng lạnh", f"{n_bnl} box BNL nhưng chỉ thấy {hw_l} nhãn lộ HW*/TĐ.CH (mỗi bình một lộ).")
-        if n_bt and not bt_l:
-            so.them(can, "", CB, "Lộ riêng bếp từ", "Có box BT nhưng không thấy nhãn lộ riêng cho bếp từ (vd 'BT/TĐ.CH' hoặc lộ S riêng).")
+    # (08/10/2026) khong ve / khong soat day, nhan lo: lo chi ghi Excel
     return de_xuat
 
 
@@ -1386,7 +1489,8 @@ def main():
     ap.add_argument("--cau-hinh", default=os.path.join(HERE, "cau_hinh_o_cam.json"))
     ap.add_argument("--catalog", default=os.path.join(THU_VIEN, "catalog.json"))
     ap.add_argument("--so-o-bep", default=None, help='so o cam mat bep: "2" hoac "CH01=2,CH02=3" (HOI NGUOI DUNG)')
-    ap.add_argument("--de-o", choices=["chu_nhat", "vuong"], default="chu_nhat", help="de o cam: TV-DN cach 150 (chu nhat) / 100 (vuong)")
+    ap.add_argument("--de-o", choices=["chu_nhat", "vuong"], default="vuong",
+                    help="de o cam: TV-DN tam cach 100 (vuong, hop 86x86 - chi tiet lap dat) / 150 (chu nhat)")
     ap.add_argument("--can", default="", help="chi xu ly cac can (vd CH01,CH02) - can dien hinh")
     ap.add_argument("--may-rua-bat", action="store_true")
     ap.add_argument("--lo-nuong", action="store_true")
@@ -1542,7 +1646,6 @@ def main():
             tach = chia_lo(bt, ten, rr, so_pn.get(ten, 0))
             if tach:
                 so.them(ten, "", GY, "Tách 2 lộ phòng ngủ", f"Căn có {so_pn.get(ten)} phòng ngủ (> 3): ổ cắm phòng ngủ tách 2 lộ.")
-            ve_cap(bt, ten, poly)
             ve_dim(bt, ten)
     os.makedirs(a.out_dir, exist_ok=True)
     tien_to = "BoTri" if a.che_do == "bo-tri" else "Soat"
@@ -1552,7 +1655,8 @@ def main():
         dt = [d for d in co_san if d["ma"] not in ("MUI-TEN", "MAY-CHO")]
         for d in dt:
             # box BT ve lech 200 vao phong truoc box HM (quy uoc ban ve mau): khong xet bam tuong / dim rieng
-            d["lech_quy_uoc"] = d["ma"] == "HOP-BT" and any(x["ma"] == "HOP-HM" and math.dist((x["x"], x["y"]), (d["x"], d["y"])) < 300 for x in dt)
+            # ky hieu ve lech vao phong theo quy uoc: BT truoc HM, o cam H400 duoi man hinh chuong cua
+            d["lech_quy_uoc"] = (d["ma"] == "HOP-BT" and any(x["ma"] == "HOP-HM" and math.dist((x["x"], x["y"]), (d["x"], d["y"])) < 300 for x in dt)) or                 (d["ma"] == "O-DOI" and any(x["ma"] == "VDP" and math.dist((x["x"], x["y"]), (d["x"], d["y"])) < 350 for x in dt))
         if not dt:
             van_de.append("Không tìm thấy ký hiệu ổ cắm / hộp chờ nào theo thư viện (catalog.json → bi_danh_block): kiểm tra tên block.")
         # che do soat: ghi chu cua PHUONG AN THEO NGUYEN TAC (BTCT, dich vi tri...) khong phai loi cua ban ve -> bo;

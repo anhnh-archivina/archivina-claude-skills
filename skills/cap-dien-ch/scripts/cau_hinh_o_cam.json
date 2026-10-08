@@ -12,51 +12,73 @@
   "vung_goi_sau": 700
  },
  "bo_tri": {
-  "_nguon": "Câu trả lời của người dùng trong 'Skill vẽ MB ổ cắm.docx' + AskUserQuestion (chốt 07/10/2026) và bản vẽ mẫu 'E Mat bang cap dien o cam can ho.dwg'.",
+  "_nguon": "Chi tiết 'CHI TIẾT LẮP ĐẶT THIẾT BỊ ĐIỆN CĂN HỘ ĐIỂN HÌNH.dwg' (người dùng gửi 08/10/2026, thay quy tắc vị trí / cao độ cũ) + câu trả lời 'Skill vẽ MB ổ cắm.docx' (07/10/2026) + AskUserQuestion 08/10/2026.",
   "o_cach_khuon_cua_toi_thieu": 200,
-  "g_cach_mep_giuong": 200,
-  "g_cach_mep_giuong_khoang": [
-   200,
-   250
-  ],
+  "g_cach_mep_giuong": 250,
   "tv_dn_khoang_cach": {
    "vuong": 100,
    "chu_nhat": 150
   },
   "sofa_cach_mep": 200,
   "o_thuong_pn_cach_khuon_cua": 300,
-  "w_cach_tam_lavabo": 300,
-  "x_cach_mep_bon_cau": 150,
-  "td_ch_cach_khuon_cua_tam": 500,
   "bt_lech_vao_phong": 200,
   "b_cach_mep_bep_nau": 150,
   "b_cach_mep_chau_rua": 200,
   "b_khoang_cach_goi_y": 1000,
   "ct_wc_cach_khuon_cua": 200,
-  "ct_wc_khoang_cach": 150,
+  "ct_wc_khoang_cach": 100,
   "vdp_ngoai_cach_khuon_cua": 200,
-  "vdp_trong_cach_td_ch": 600,
   "pn_tach_lo_khi_so_pn_lon_hon": 3,
   "tranh_btct_dich_toi_da": 400,
   "dim_cach_tuong": 600,
-  "ket_noi_cap_cach_ky_hieu": 170,
-  "mui_ten_dai": 400,
   "cach_nhau_toi_thieu": 100,
   "tuong_day_mac_dinh": 200,
   "dan_nong_ac_cao_do": "cách trần 300",
   "phong_khong_co_quy_tac": [
    "da_nang"
   ],
-  "bnl_mac_dinh_cach_goc": 200
+  "bnl_mac_dinh_cach_goc": 200,
+  "g_khe_can_giua": 500,
+  "g_noi_that_sat_tuong": 700,
+  "b_cach_dau_mat_bep": 200,
+  "w_cach_mep_lavabo": 300,
+  "x_cach_truc_bon_cau": 300,
+  "w_may_giat_cach_mep": 200,
+  "ct_wc_cach_khuon_toi_thieu": 80,
+  "ct_wc_doan_can_giua": 400,
+  "vdp_trong_cach_goc": 200,
+  "td_cach_goc": 300,
+  "td_doan_can_giua": 600,
+  "td_doan_toi_thieu": 400,
+  "ky_hieu_chong_lech_vao": 250,
+  "cao_do": {
+   "O-G": 650,
+   "O-TV": 1100,
+   "O-DN": 1100,
+   "O-TV-thap (phòng khách)": 400,
+   "O-B": 1300,
+   "O-TL": 1300,
+   "HOP-HM": 1900,
+   "HOP-BT (đầu chờ bếp + lò vi sóng)": 500,
+   "O-W (lavabo, máy giặt)": 1300,
+   "O-X (bồn cầu)": 400,
+   "CT-20A / CT-BA (ngoài cửa WC)": 1300,
+   "TU-DIEN": 1300,
+   "VDP màn hình": 1300,
+   "O-DOI dưới màn hình": 400,
+   "VDP chuông ngoài cửa": 1400,
+   "O-DOI thường": 400,
+   "HOP-AC": 2200,
+   "HOP-BNL": 2600
+  }
  },
  "_chua_chot": [
-  "Ổ cắm bàn làm việc: dùng ổ đôi 3 chấu thường (H:+0.4 theo bảng ký hiệu) đặt theo tâm bàn chiếu lên tường – cao độ chưa chốt.",
-  "Ổ cắm máy rửa bát / lò nướng: ổ đôi 3 chấu thường theo tâm thiết bị – ký hiệu và cao độ chưa chốt; chỉ bố trí khi người dùng xác nhận (--may-rua-bat / --lo-nuong).",
-  "VDP màn hình trong căn: cùng tường với TĐ-CH, cách tâm TĐ-CH 600 về phía xa cửa – khoảng cách chưa chốt.",
-  "X (bồn cầu điện tử): tâm ổ cách mép bồn cầu 150 trên tường sau bồn cầu; W: tâm ổ cách tâm lavabo 300 dọc tường lavabo.",
-  "Ổ bếp (B): tránh mép bếp nấu 150, mép chậu rửa 200 – chưa chốt; số lượng PHẢI hỏi người dùng trước khi làm.",
-  "Hộp AC: tại vị trí dàn nóng theo phương án kiến trúc, cách trần 300 (bảng ký hiệu mẫu ghi H:+2.2); một hộp / một lộ cho mỗi dàn nóng.",
-  "Giới hạn số ổ / tải mỗi lộ: chưa có ngưỡng – báo số ổ từng lộ để kỹ sư điện kiểm tra theo CB và tiết diện dây."
+  "Ổ cắm bàn làm việc, ổ đầu sofa, ổ đôi thường gần cửa phòng ngủ: chi tiết lắp đặt không thể hiện – giữ quy tắc 07/10/2026 (sofa cách mép 200; PN cách khuôn 300; H+400).",
+  "Ổ cắm máy rửa bát / lò nướng: ổ đôi thường theo tâm thiết bị – chỉ bố trí khi người dùng xác nhận (--may-rua-bat / --lo-nuong).",
+  "Tủ điện: chi tiết ghi 'kết hợp nội thất, đoạn tường dưới 600 – cân giữa'; skill đặt tâm cách góc 300 (tủ ~400) – khoảng cách tới góc chưa chốt.",
+  "Ổ máy giặt: tâm cách mép máy 200 – skill chọn phía gần góc tường (chi tiết không ghi phía).",
+  "Hộp AC (không có trong chi tiết): tại dàn nóng, cách trần 300 / bảng ký hiệu H:+2.2. Box BNL (không có trong chi tiết): H+2.6, vị trí theo bình.",
+  "Giới hạn số ổ / tải mỗi lộ: chưa có ngưỡng – Excel báo số ổ từng lộ để kỹ sư điện kiểm tra."
  ],
  "layer_ranh": [
   "A-Vua trat",
@@ -364,11 +386,6 @@
     50,
     "Continuous"
    ],
-   "cap": [
-    "AV-E-PW-Cáp điện",
-    10,
-    "CENTER2"
-   ],
    "cong_tac": [
     "AV-E-LT-Thiết bị chiếu sáng",
     50,
@@ -594,6 +611,13 @@
   "mat_noi_rong_max": 400,
   "layer_cung_cua_them": [
    "a-khuat"
-  ]
+  ],
+  "mat_bep": {
+   "dai_min": 1200,
+   "cach_tam_bep": [
+    150,
+    500
+   ]
+  }
  }
 }

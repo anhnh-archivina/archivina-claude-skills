@@ -14,9 +14,9 @@ Block 1:1 mm, `INSUNITS=4` (file `E-TU-DIEN.dwg` gốc là block động mang đ
 | `E-CT-20A.dwg` | `AV-E-Cong tac 20A` | chèn tỷ lệ 1.6 (như mẫu) |
 | `E-CT-BA.dwg`, `E-CT-DON.dwg`, `E-CT-DOI.dwg` | `AV-E-Cong tac ba / don / doi - 1 chieu` | layer chiếu sáng |
 | `E-QUAT-HUT.dwg` | `AV_HutMuiWC1` | chỉ để nhận diện / nối F |
-| `E-MUI-TEN.dwg` | `AV-E-Mui ten ve tu` | mũi tên dây về tủ, tỷ lệ 0.7, hướng +X |
+| `E-MUI-TEN.dwg` | `AV-E-Mui ten ve tu` | mũi tên dây về tủ – **không vẽ nữa** (08/10/2026), chỉ để nhận diện khi soát |
 | `E-MAY-CHO-VACH.dwg` | `AV-E-Cho cot vach` | mây 250×250 "vị trí cần đặt chờ khi đổ cột vách" |
-| `E-BANG-KY-HIEU.dwg` | `AV-E-Bang ky hieu o cam` | bảng ký hiệu 10300×4600, điểm chèn góc dưới trái; đã sửa lỗi mã hóa "KƯ HIỆU" → "KÝ HIỆU", "ĐIỀU H̉A" → "ĐIỀU HÒA" |
+| `E-BANG-KY-HIEU.dwg` | `AV-E-Bang ky hieu o cam` | bảng ký hiệu 10300×4600, điểm chèn góc dưới trái; đã sửa lỗi mã hóa "KƯ HIỆU" → "KÝ HIỆU", "ĐIỀU H̉A" → "ĐIỀU HÒA"; cao độ cập nhật theo chi tiết lắp đặt 08/10/2026 |
 
 **Quy ước hướng:** ổ cắm, hộp chờ, tủ điện, công tắc có điểm chèn tại **mặt tường hoàn thiện**, ký hiệu nhô theo **+Y cục bộ**
 → góc xoay = hướng pháp tuyến vào phòng − 90°. VDP: +X cục bộ hướng ra không gian đặt. `catalog.json` ghi mã, block, file,
@@ -87,4 +87,4 @@ có đường dẫn). Kiểm chứng 08/10/2026: `E Mat bang cap dien o cam can 
   có đường dẫn chỉ vào căn.
 - Kệ TV / sofa dạng cụm lớn: mép lấy theo hộp bao cụm – có Gợi ý kiểm tra.
 - Không tính tải, tiết diện dây, CB: chỉ đếm thiết bị theo lộ.
-- Soát lộ riêng (AC / BT / HW) dựa trên nhãn `<lộ>/TĐ.CH` trên bản vẽ – không lần theo nét dây.
+- Không vẽ / không soát dây, nhãn lộ (bỏ 08/10/2026): lộ chỉ ghi trong Excel để kỹ sư điện kiểm tra.

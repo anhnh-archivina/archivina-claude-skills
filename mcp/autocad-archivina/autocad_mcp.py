@@ -385,7 +385,7 @@ def _cap_dien(che_do, duong_dan_dxf, thu_muc_ra, du_an, so_o_bep, de_o, can, may
 
 @mcp.tool()
 def bo_tri_o_cam(duong_dan_dxf: str, thu_muc_ra: str = "", du_an: str = "", so_o_bep: str = "",
-                 de_o: str = "chu_nhat", can: str = "", may_rua_bat: bool = False, lo_nuong: bool = False,
+                 de_o: str = "vuong", can: str = "", may_rua_bat: bool = False, lo_nuong: bool = False,
                  tv_pn_theo_truc_giuong: bool = False, nhan_dien_bo_sung: str = "", layer_ten_phong: str = "",
                  tuy_chon: list[str] | None = None) -> dict:
     """BỐ TRÍ MỚI mặt bằng cấp điện ổ cắm căn hộ theo nội thất (skill cap-dien-ch, cap_dien.py bo-tri) từ DXF đã xuất
@@ -394,7 +394,7 @@ def bo_tri_o_cam(duong_dan_dxf: str, thu_muc_ra: str = "", du_an: str = "", so_o
     BẮT BUỘC trước khi gọi: HỎI người dùng số ổ mặt bếp (so_o_bep: "2" hoặc "CH01=2,CH02=3") và có máy rửa bát /
     lò nướng không – không tự đặt. Kết quả có can_hoi (thiếu nội thất, phòng không dựng được, thiếu tên phòng) hoặc
     block_chua_nhan_dien → hỏi người dùng rồi chạy lại (nhan_dien_bo_sung: JSON {"tên block": "loại nội thất"}).
-    de_o: "chu_nhat" (TV-ĐN cách 150) / "vuong" (100). can: chỉ xử lý các căn, ví dụ "CH01,CH02".
+    de_o: "vuong" (mặc định, hộp 86x86 – TV-ĐN tâm cách 100 theo chi tiết lắp đặt) / "chu_nhat" (150). can: chỉ xử lý các căn, ví dụ "CH01,CH02".
     tuy_chon: tham số thêm, ví dụ ["--nen-revit", "co"] (nền xuất từ Revit: nét nổ, không tên phòng, mã căn có đường
     dẫn), ["--bo-can", "CH03"] (bỏ căn đã vẽ), ["--bnl-mac-dinh"] (WC không có block bình: box BNL góc phía bản lề cửa).
     Trả về JSON (can_ho, thiet_bi, can_hoi, xlsx, anh, scr, json). Chỉ vẽ khi người dùng đồng ý: ve_vao_ban_sao với
@@ -405,7 +405,7 @@ def bo_tri_o_cam(duong_dan_dxf: str, thu_muc_ra: str = "", du_an: str = "", so_o
 
 @mcp.tool()
 def soat_o_cam(duong_dan_dxf: str, thu_muc_ra: str = "", du_an: str = "", so_o_bep: str = "",
-               de_o: str = "chu_nhat", can: str = "", may_rua_bat: bool = False, lo_nuong: bool = False,
+               de_o: str = "vuong", can: str = "", may_rua_bat: bool = False, lo_nuong: bool = False,
                tv_pn_theo_truc_giuong: bool = False, nhan_dien_bo_sung: str = "", layer_ten_phong: str = "",
                tuy_chon: list[str] | None = None) -> dict:
     """SOÁT mặt bằng cấp điện ổ cắm căn hộ đã vẽ (skill cap-dien-ch, cap_dien.py soat) từ DXF đã xuất bằng xuat_dxf:
