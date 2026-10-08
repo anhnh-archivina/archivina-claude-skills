@@ -12,7 +12,7 @@ Nguồn: bản vẽ `CT1-Mat Bang Tang 5A-10 (test DT).dwg` (19 căn CH01–CH19
 7. Kết quả kiểm chứng CT1
 
 ## 1. Quyết định đã chốt (06/10/2026)
-1. **Vách kính / cửa sổ góc không có tường:** ranh phòng theo **mặt trong kính/khung** (quy tắc C: vách kính mặt dựng đo từ mặt trong). Không kéo thẳng mặt trát. Đố nhôm lồi vào ~130 mm không trừ.
+1. **Vách kính / cửa sổ góc không có tường:** ranh phòng theo **mặt trong kính/khung** (quy tắc C: vách kính mặt dựng đo từ mặt trong). Không kéo thẳng mặt trát. Đố nhôm lồi vào ~130 mm không trừ. **Sửa 08/10/2026 (quyết định 11):** kính/khung đặt **ngoài** mặt phẳng tường thì đo theo đường kéo dài mặt tường, không theo kính.
 2. **Ô mở chưa vẽ cửa rộng 1,2–2,6 m** (cửa trượt ra lô gia, cửa sổ ra giếng trời): đóng bằng đoạn thẳng nối **mặt trát hai bên**.
 3. **Sinh hoạt chung + Bếp không có vách:** gộp **một polyline** "Sinh hoạt chung + Bếp" (như căn mẫu Cần Thơ).
 4. **Lô gia không có text tên:** tự nhận (giáp lan can `A-Lancan` / lam nhôm `Nhom`, hoặc có máy giặt/cục nóng điều hòa), đặt tên "Lô gia", đo đến mặt trong lan can, tách dòng riêng, tính 100% vào DTCH. Báo Lỗi thiếu tên.
@@ -32,6 +32,16 @@ Nguồn: bản vẽ `CT1-Mat Bang Tang 5A-10 (test DT).dwg` (19 căn CH01–CH19
     - Báo cáo ghi Gợi ý "Vách BTCT" cho từng khối.
     - Lỗi đã gặp ở CT1: 12 khối S-Wall dày 350–500 mm bị xếp "hành lang" (lấp vào DTCH) ở CH01, CH02, CH03, CH05, CH16, CH18. Khối 500 mm ở CH02 còn bị nhận nhầm là "Lô gia 1,3 m²" (giáp lan can).
     - Dấu hiệu để rà: hai căn đối xứng lệch DTCH (CH01 170,8 so với CH02 172,3).
+
+### Lỗi người dùng sửa tay trên CT1 (08/10/2026, file `CT1-T5A-10_dien-tich-thong-thuy sửa lỗi.dwg`, ghi chú 1–7)
+Script `scripts/chinh_hinh.py` xử lý tự động; `mat_bang_tang.py xuat` gọi sau khi dựng phòng (bỏ bằng `--khong-chinh-hinh`). Nét nền phân lớp: trát (`A-Vua trat`), lõi tường (`A-Wall`, `S-Wall`, `A-Column`), bậu (`A_Wall BT`, `A-Line`, `A-Lancan`), kính/khung (`A-Door`, `A-Cửa`, `A-Window`, kính, nhôm, layer đố `4`).
+11. **(lỗi 1, 2) Đo vuông góc theo nét, không đo chéo; vách kính đặt ngoài mặt tường.** Cửa sổ/vách kính (kể cả góc) có khung nằm ngoài mặt phẳng tường (CT1: kính ở y = 136, mặt tường y = 0): ranh theo **đường kéo dài mặt tường qua đầu tường**, hai mặt gặp nhau vuông góc ở góc; phần lồi ra kính (sâu ≤ 400 mm) không tính. Chỉ cắt khi biên phần bị cắt chủ yếu không bám tường và ≥ 30% bám nét kính/khung (không cắt nhầm đoạn đóng ô mở). Không dùng làm gọn Douglas–Peucker 10 mm: nó xóa bậc 10–15 mm trên cạnh dài thành cạnh xiên (đo chéo); cạnh lệch 1,5–40 mm được nắn thành bậc vuông, góc chọn theo nét nền.
+12. **(lỗi 3) Không gấp khúc ở góc tường 90° hoặc chỗ tường vẫn thẳng:** bỏ gai/khấc ≤ 60 mm (đỉnh lệch khi hai đỉnh kề cùng trục), khấc 2 đỉnh ≤ 150 mm, vát chéo ≤ 120 mm ở góc vuông → góc vuông.
+13. **(lỗi 4) WC trừ cả lớp ốp: 10 mm.** Cạnh WC đã nằm trên nét ốp (nét `A-Vua trat` song song cách mặt trát 6–14 mm phía tường) thì giữ; chưa có nét ốp thì lùi 10 mm (`--op-wc`). Người dùng mới sửa cạnh WC giáp tường bao (ảnh hưởng DTCH); script áp cho mọi cạnh tường của WC theo câu "các khu WC phải trừ cả lớp ốp".
+14. **(lỗi 5) Mặt đầu tường gạch chưa vẽ trát cũng trừ trát 15 mm:** cạnh ngắn (≤ 350 mm) nằm trên nét lõi tường, không có nét trát → lùi 15 mm. Mặt tường **dài** không vẽ trát vẫn giữ nguyên (quy tắc 05/10/2026).
+15. **(lỗi 6) Không tính tường bao ngoài:** đường bo căn = hợp phòng + **dải tường giữa hai mặt phòng đối diện** (cách ≤ `--day-tuong-max` + ốp) + lấp lỗ nhỏ < 0,15 m² ở chỗ giao tường (giữ lỗ là cột trong phòng). Không dùng khép hình (buffer +150/−150) vì nó lấp cả góc lõm ngoài nhà (CT1 CH04: tường 165 × 600 mm cạnh lô gia).
+16. **(lỗi 7) Lô gia/ban công đo tới mặt trong bậu BT/lan can:** cạnh lô gia kéo ra nét bậu gần nhất phía ngoài (≤ 80 mm), CT1: −22695 → −22660, 22895 → 22930.
+17. Kiểm chứng: CH02 tự động 167,553 m² so với người dùng sửa tay 167,549; CH04 83,804 so với 83,801 (chênh < 0,01 m², do dải 5–10 mm).
 
 ## 2. Đặc điểm bản vẽ tầng và cách script xử lý
 - **Căn hộ là xref đã bind** (layer `CH15$0$A-Wall`, `CT1-T0-CH05$0$A-Vua trat`); có xref phụ `CT1-T(3-10)-CH12` (phần sửa cho tầng 3–10), `Tuong PCCC`, `Loi Thang`. DXF xuất có nổ ACA: 26 block chứa 719 tường, 208 cửa, 36 cửa sổ ACA.
@@ -87,3 +97,8 @@ Lần 3 (07/10/2026), theo quyết định 10 (vách S-Wall), DTCH (m²):
 - Đổi: CH01 168,3 · CH02 168,4 · CH03 121,3 · CH05 121,2 · CH16 121,6 · CH18 134,1.
 - Còn lại như lần 2.
 - 177 phòng + lô gia (bỏ lô gia giả ở CH02). Nhãn Field 196/196; `kiem_tra_nhan` đạt 196/196; không còn khối S-Wall nào nằm trong DTCH.
+Lần 4 (08/10/2026), theo quyết định 11–16 (bản sửa lỗi 1–7 của người dùng), DTCH (m²):
+- CH01 167,4 · CH02 167,6 · CH03 121,5 · CH04 83,8 · CH05 121,4 · CH06 84,3 · CH07 130,8 · CH08 105,8 · CH09 118,7 · CH10 85,8.
+- CH11 88,9 · CH12 85,4 · CH13 118,8 · CH14 105,8 · CH15 130,4 · CH16 121,8 · CH17 84,5 · CH18 133,6 · CH19 109,1.
+- Nhãn Field 196/196; `kiem_tra_nhan` 196/196.
+- CH01 và CH02 lệch 0,2 m² do nền khác nhau: CH02 có khối S-Wall 2650×500 tại (23430, −13030), CH01 không có khối ở vị trí đối xứng.

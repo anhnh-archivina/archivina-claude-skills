@@ -48,6 +48,9 @@ _spec = importlib.util.spec_from_file_location("tpp", os.path.join(HERE, "tao_po
 tpp = importlib.util.module_from_spec(_spec)
 _spec.loader.exec_module(tpp)
 r1, acad, layer_goc = tpp.r1, tpp.acad_str, tpp.layer_goc
+_spec2 = importlib.util.spec_from_file_location("chinh_hinh", os.path.join(HERE, "chinh_hinh.py"))
+chh = importlib.util.module_from_spec(_spec2)
+_spec2.loader.exec_module(chh)
 LOI, CB, GY, DAT = "Lỗi", "Cảnh báo", "Gợi ý", "Đạt"
 
 LAYER_PHONG, LAYER_CAN = "A- Dien tich phong", "Dien tich thong thuy"
@@ -90,6 +93,29 @@ def doc_vach(msp, layers):
                 g = g if g.is_valid else g.buffer(0)
                 if g.area > 0.01e6:
                     out.append(g)
+    return out
+
+
+def doc_net(msp):
+    """Doan thang nen kien truc phan lop trat / tuong / bau / kinh cho chinh_hinh (loi 1-7, 08/10/2026)."""
+    lop = {l: k for k, v in chh.LOP.items() for l in v}
+    out = []
+    for e, names in duyet(msp):
+        if e.dxftype() not in ("LINE", "LWPOLYLINE", "POLYLINE"):
+            continue
+        k = lop.get(layer_goc(e.dxf.layer).lower())
+        if k is None:
+            continue
+        try:
+            pts, closed = diem(e, 1.0)
+        except Exception:
+            continue
+        if not pts or len(pts) < 2:
+            continue
+        pp = pts + ([pts[0]] if closed else [])
+        for (x1, y1), (x2, y2) in zip(pp, pp[1:]):
+            if math.dist((x1, y1), (x2, y2)) >= 0.5:
+                out.append((x1, y1, x2, y2, k))
     return out
 
 
@@ -703,7 +729,9 @@ def xuat(a, doc, msp, st):
     vtree = shapely.STRtree(vach) if vach else None
 
     def don_gian(poly):
-        p = poly.simplify(a.don_gian, preserve_topology=True)
+        # co chinh hinh: chi bo dinh trung (0,5 mm); lam gon 10 mm (Douglas-Peucker) xoa bac 10-15 mm tren canh dai
+        # -> canh xien, do cheo (loi 1 nguoi dung sua 08/10/2026). Gai/khac do chh.don_dinh xu ly, giu bac vuong goc.
+        p = poly.simplify(0.5 if not a.khong_chinh_hinh else a.don_gian, preserve_topology=True)
         p = p if isinstance(p, Polygon) else max(p.geoms, key=lambda q: q.area)
         return Polygon(p.exterior, [h for h in p.interiors if Polygon(h).area > 0.01e6])
 
@@ -741,6 +769,25 @@ def xuat(a, doc, msp, st):
         return best
 
     ftree_x = shapely.STRtree(faces)
+    net = None if a.khong_chinh_hinh else chh.NetNen(doc_net(msp))
+    re_wc, re_lg = re.compile(a.ten_wc, re.I), re.compile(r"lo gia|ban cong", re.I)
+
+    def chinh(g, ten, lo_gia=False):
+        """Loi 1-7 nguoi dung sua tay CT1 (08/10/2026): gai/khac, loi kinh, op WC, dau tuong, bau lan can."""
+        dem = collections.Counter()
+        if net is None or g is None or g.is_empty:
+            return g, dem
+        g, dem["cheo"] = chh.vuong_goc(g, net)
+        g, dem["gai"] = chh.don_dinh(g, net)
+        g, dem["kinh"] = chh.cat_kinh(g, net)
+        if re_wc.search(bo_dau(ten or "")):
+            g, dem["op"] = chh.op_wc(g, net, a.op_wc)
+        g, dem["dau_tuong"] = chh.dau_tuong(g, net, a.trat_dau_tuong)
+        if lo_gia or re_lg.search(bo_dau(ten or "")):
+            g, dem["bau"] = chh.bau_lo_gia(g, net)
+        g, n_ = chh.don_dinh(g, net)
+        dem["gai"] += n_
+        return g, dem
     cans = []
     for xref, ns in st["can"].items():
         ma = st["gan"][xref][0]
@@ -785,9 +832,27 @@ def xuat(a, doc, msp, st):
             elif loai == "vach btct":
                 problems.append((GY, "Vách BTCT", f"{ma}: vùng #{v['id']} ({v['dt']:.2f} m², tâm {v['c'][0]:.0f}, {v['c'][1]:.0f}) "
                                  "là khối vách S-Wall, không tính vào DTCH."))
-        u = unary_union([p["geom"] for p in phong + them] + [h["geom"] for h in hl])
-        g_ = a.day_tuong_max / 2
-        u = u.buffer(g_, join_style=2, mitre_limit=5).buffer(-g_, join_style=2, mitre_limit=5)
+        tong_ch = collections.Counter()
+        for p in phong + them:
+            p["geom"], d_ = chinh(p["geom"], p["ten"], p.get("loai") == "lo gia")
+            tong_ch.update(d_)
+        for h in hl:
+            h["geom"], d_ = chinh(h["geom"], "")
+            tong_ch.update(d_)
+        regs = [p["geom"] for p in phong + them] + [h["geom"] for h in hl]
+        if net is not None:
+            # chi lap dai tuong giua hai mat phong doi dien (tuong ngan, o cua); khong lap goc lom -> khong an tuong bao ngoai
+            u = unary_union(regs + chh.dai_tuong(regs, a.day_tuong_max + a.op_wc))
+            u = u.buffer(0.5, join_style=2).buffer(-0.5, join_style=2)
+            lo_phong = unary_union([Polygon(h_) for r_ in regs for h_ in r_.interiors]) if any(r_.interiors for r_ in regs) else Polygon()
+
+            def lap(q):
+                giu = [h_ for h_ in q.interiors if Polygon(h_).area > 0.15e6 or Polygon(h_).intersection(lo_phong).area > 0.5 * Polygon(h_).area]
+                return Polygon(q.exterior, giu)
+            u = unary_union([lap(q) for q in getattr(u, "geoms", [u])])
+        else:
+            g_ = a.day_tuong_max / 2
+            u = unary_union(regs).buffer(g_, join_style=2, mitre_limit=5).buffer(-g_, join_style=2, mitre_limit=5)
         # khoi vach BTCT (S-Wall) khong tinh vao DTCH: nam giua can -> lo loai tru; nam o bien -> duong bo di vong
         vb = [vach[k] for k in vtree.query(u)] if vtree is not None else []
         vb = [x for x in vb if x.intersection(u).area > 0.05e6]
@@ -800,6 +865,15 @@ def xuat(a, doc, msp, st):
                              + "; ".join(f"({x.centroid.x:.0f}, {x.centroid.y:.0f})" for x in vb) + "."))
         pieces = sorted(getattr(u, "geoms", [u]), key=lambda q: q.area, reverse=True)
         main = don_gian(pieces[0])
+        if net is not None:
+            # chi lam vuong; KHONG cat kinh tren duong bo (duong bo dung tu phong da cat, cat rieng de lech voi phong)
+            main, n_ = chh.vuong_goc(main, net)
+            tong_ch["cheo"] += n_
+            main, n_ = chh.don_dinh(main, net)
+            tong_ch["gai"] += n_
+        if sum(tong_ch.values()):
+            problems.append((GY, "Chỉnh hình", f"{ma}: nắn {tong_ch['cheo']} cạnh xiên; bỏ {tong_ch['gai']} gai/khấc/vát chéo; cắt {tong_ch['kinh']} phần lồi ra kính ngoài mặt tường; "
+                             f"lùi ốp WC {tong_ch['op']} cạnh; lùi trát đầu tường {tong_ch['dau_tuong']} cạnh; kéo lô gia ra bậu {tong_ch['bau']} cạnh."))
         for q in pieces[1:]:
             if q.area > 0.05e6:
                 problems.append((CB, "Khối rời", f"{ma}: khối {q.area / 1e6:.2f} m² tại ({q.centroid.x:.0f}, {q.centroid.y:.0f}) tách khỏi căn, không tính."))
@@ -1081,6 +1155,10 @@ def main():
     ap.add_argument("--ma-can", default=r"CH\s*\.?\s*\d+[A-Z]?", help="regex text ma can dat ngoai cua vao")
     ap.add_argument("--ma-can-xa", type=float, default=4000.0, help="khoang cach toi da tu can den text ma can (mm)")
     ap.add_argument("--xref-can", default=r"CH\d+[A-Z]?", help="regex lay ma xref can ho tu tien to layer")
+    ap.add_argument("--khong-chinh-hinh", action="store_true", help="bo cac buoc chinh hinh loi 1-7 (08/10/2026)")
+    ap.add_argument("--op-wc", type=float, default=10.0, help="be day lop op tuong WC tru vao (mm)")
+    ap.add_argument("--trat-dau-tuong", type=float, default=15.0, help="lop trat o mat dau tuong chua ve trat (mm)")
+    ap.add_argument("--ten-wc", default=r"\bwc\b|ve sinh|\btam\b", help="regex (khong dau) ten phong ve sinh")
     ap.add_argument("--layer-vach", default=",".join(VACH_BTCT), help="layer vach/cot BTCT: khoi kin tren layer nay khong tinh vao DTCH")
     ap.add_argument("--doi", default="", help="chinh phan loai vung: '#76=ngoai;#25=Phong ngu;#41=loai-tru;#6=hanh-lang'")
     ap.add_argument("--day-tuong-max", type=float, default=300.0)

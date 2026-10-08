@@ -121,6 +121,12 @@ Dấu hiệu: một file chứa cả tầng, mỗi căn là một xref đã bind
    - **Hốc sảnh trước cửa phòng** (thông, không cửa, rộng ≥ 600 mm) gộp vào phòng nó thông ra, ưu tiên sinh hoạt chung.
    - **Góc đặt cục nóng/máy giặt cạnh lô gia** là lô gia, kể cả khi < 2 m².
    - **Khối vách BTCT `S-Wall` không tính vào DTCH** (kể cả giữa phòng và lô gia). Vùng nằm ≥ 60% trong khối S-Wall được xếp loại "vách BTCT"; khối S-Wall giao căn bị trừ khỏi đường bo, khối nằm giữa căn thành polyline loại trừ. Đổi layer bằng `--layer-vach`.
+   - **Chỉnh hình theo bản sửa lỗi 1–7 của người dùng (08/10/2026), `scripts/chinh_hinh.py`, tự chạy trong `xuat`:**
+     - Kính/khung đặt ngoài mặt tường: đo theo đường kéo dài mặt tường. Không đo chéo; không gấp khúc ở góc 90°.
+     - WC trừ lớp ốp 10 mm; mặt đầu tường gạch chưa vẽ trát lùi 15 mm.
+     - Đường bo căn chỉ lấp dải tường giữa hai phòng đối diện, không ăn vào tường bao ngoài.
+     - Lô gia đo tới mặt trong bậu.
+     - Báo cáo ghi Gợi ý "Chỉnh hình" từng căn. Chi tiết: quyết định 11–17 trong `references/quy-uoc-mat-bang-tang.md`.
 3. **Trình người dùng duyệt hai ảnh** (bắt buộc, không tự vẽ): ghép mã căn ↔ xref; phòng còn hở (`phong_ho`); phân loại từng vùng # (lô gia / phòng thiếu tên + tên đề xuất theo nội thất / hành lang trong căn / ngoài căn / loại trừ). Chỉ ra chỗ không đối xứng giữa các căn cùng loại. Người dùng chỉnh bằng số #.
 4. **Xuất** theo phân loại đã duyệt:
    ```powershell
@@ -132,7 +138,7 @@ Dấu hiệu: một file chứa cả tầng, mỗi căn là một xref đã bind
    - **Không** dùng lệnh `SCRIPT` gửi qua `SendCommand` vào tab đang mở. Ngày 07/10/2026, chữ "Phòng (chưa tên)" có dấu "(" bị AutoCAD hiểu là biểu thức LISP; script chạy lệch, giữ AutoCAD bận hơn 45 phút và làm kẹt cả AutoCAD Core Console chạy ngầm.
    - Chữ ghi vào `.scr` không được chứa dấu ngoặc.
 
-Kết quả mẫu CT1 tầng 5A-10 (07/10/2026, lần 3): 19 căn, 177 phòng + lô gia, nhãn Field 196/196, `kiem_tra_nhan` đạt 196/196; DTCH 83,6–168,4 m². Ranh tại cửa chính **chưa chốt** khi bản vẽ không vẽ cửa: đường bo theo mặt tường trong, script báo Cảnh báo kèm danh sách căn thiếu cửa; hỏi người dùng.
+Kết quả mẫu CT1 tầng 5A-10 (08/10/2026, lần 4): 19 căn, 177 phòng + lô gia, nhãn Field 196/196, `kiem_tra_nhan` đạt 196/196; DTCH 83,8–167,6 m²; khớp bản người dùng sửa tay (CH02 167,55, CH04 83,80) trong 0,01 m². Ranh tại cửa chính **chưa chốt** khi bản vẽ không vẽ cửa: đường bo theo mặt tường trong, script báo Cảnh báo kèm danh sách căn thiếu cửa; hỏi người dùng.
 
 ## Bản vẽ có mặt bằng nằm trong block/xref
 Nhiều file (ví dụ `CT1-CH06-CTCH.dwg`, loại "chi tiết căn hộ") chỉ chứa khung bản vẽ, còn mặt bằng nằm trong xref. Script tự đi sâu vào block/xref, bỏ tiền tố layer của xref (`CH06|A-Vua trat`, `$0$A-Vua trat` đều tính là `A-Vua trat`) và **bỏ qua** block có tên chú thích/legend/khung/lưới/trần/lõi thang (đổi bằng `--block-bo-qua`, `''` = lấy hết). Tên phòng chỉ lấy từ text ở Model, không lấy trong block/xref vì thường là chú thích; phòng không có text tên thì khai bằng `--them-phong "Tên:x,y;Tên:x,y"` (tọa độ một điểm trong phòng, xem trên `xem_lai.png`).
