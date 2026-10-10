@@ -30,6 +30,22 @@ Polyline phòng và đường bo căn hộ **chỉ bám các nét đã vẽ** tr
 
 **Lớp trát:** bản vẽ **có vẽ** lớp trát (nét `A-Vua trat` cách nét `A-Wall` 15 mm) thì đường bo tự bám nét vữa đó. **Không vẽ** lớp trát (nét `A-Vua trat` trùng mặt tường, hoặc chỉ có `A-Wall`) thì **không lùi 15 mm**, đường bo theo mặt tường đã vẽ; script ghi một dòng "Gợi ý – Lớp trát" để biết. Chỉ dùng `--lop-trat 15` khi người dùng yêu cầu rõ.
 
+## Chỉnh hình theo bản sửa lỗi 1–7 (08/10/2026; áp cho căn đơn lẻ từ 10/10/2026)
+`tao_polyline_phong.py`, `tao_duong_bo_can_ho.py` và `mat_bang_tang.py` dùng chung `scripts/chinh_hinh.py`. Mặc định bật; tắt bằng `--khong-chinh-hinh` (kết quả trùng bản trước 10/10/2026).
+- Nét nền phân lớp: trát `A-Vua trat`; lõi tường `A-Wall`, `S-Wall`, `A-Column`; bậu/lan can `A_Wall BT`, `A-Line`, `A-Lancan`; kính/khung là các layer cửa (`--layer-cua`, gồm `A-Glaz`, `A-Window`), cộng các layer kính của CT1.
+- Polygon từng phòng, theo thứ tự:
+  1. Nắn cạnh xiên thành bậc vuông góc.
+  2. Bỏ gai, khấc ≤ 60 mm, vát chéo ở góc 90°.
+  3. Cắt phần lồi ra kính/khung nằm ngoài mặt tường: ranh theo đường kéo dài mặt tường.
+  4. Phòng tên WC / vệ sinh / tắm trừ ốp 10 mm (`--op-wc`, `--ten-wc`), trừ khi đã vẽ nét ốp.
+  5. **Mặt đầu tường** (cạnh ≤ 350 mm) nằm trên lõi tường, chưa vẽ trát: lùi 15 mm (`--trat-dau-tuong`).
+  6. Phòng tên lô gia / logia / ban công: kéo ra mặt trong bậu (≤ 80 mm).
+  7. Bỏ đỉnh thừa.
+- Mặt tường dài không vẽ trát vẫn **không** lùi (quy tắc 05/10/2026). Ví dụ Căn hộ mẫu Cần Thơ: trát ACA trùng mặt tường nên chỉ đầu tường bị lùi.
+- Đường bo căn = hợp các phòng đã chỉnh + dải tường giữa hai mặt phòng đối diện (≤ `--day-tuong-max` + ốp). Lỗ < 0,15 m² được lấp; lỗ là cột/HKT của phòng được giữ. Không lấp góc lõm nên không ăn vào tường bao ngoài. Sau đó chỉ nắn vuông và bỏ đỉnh thừa, không cắt kính trên đường bo.
+- Không làm gọn Douglas–Peucker: hai script căn đơn lẻ chưa từng dùng; `mat_bang_tang.py` chỉ dùng 0,5 mm khi bật chỉnh hình.
+- JSON có `chinh_hinh` (tổng và từng phòng); Excel ghi chú "Chỉnh hình: …"; `van_de` có dòng Gợi ý "Chỉnh hình".
+
 ## Quy trình
 
 1. **Xác định đầu vào:** đường dẫn `.dwg` (hoặc `.dxf`), thư mục lưu kết quả (ưu tiên `03-Ban-Sao-Lam-Viec` của dự án, nếu không có thì thư mục người dùng chỉ). Hỏi nếu thiếu.
@@ -45,7 +61,7 @@ Polyline phòng và đường bo căn hộ **chỉ bám các nét đã vẽ** tr
    ```powershell
    & "<python>" "<skill>\scripts\tao_polyline_phong.py" "<file.dxf>" --out-dir "<thư mục kết quả>"
    ```
-   Tùy chọn hay dùng: `--layer-ranh "A-Vua trat,A-Wall,A-Column,A-Line"` (đổi nếu bản vẽ dùng layer khác), `--gap-max 1200`, `--them-ranh=x1,y1,x2,y2;...` (**có dấu `=`**, vì tọa độ âm bắt đầu bằng `-`), `--ve-lai`, `--nhan-tat-ca`, `--label-h 250` (chỉ dùng cho phòng không có text tên).
+   Tùy chọn hay dùng: `--layer-ranh "A-Vua trat,A-Wall,A-Column,A-Line"` (đổi nếu bản vẽ dùng layer khác), `--gap-max 1200`, `--them-ranh=x1,y1,x2,y2;...` (**có dấu `=`**, vì tọa độ âm bắt đầu bằng `-`), `--ve-lai`, `--nhan-tat-ca`, `--label-h 250` (chỉ dùng cho phòng không có text tên), `--khong-chinh-hinh`, `--op-wc 10`, `--trat-dau-tuong 15`, `--ten-wc`.
    Script in JSON (UTF-8) và tạo `ve_polyline_phong.scr`, `DienTichPhong.xlsx`, `xem_lai.png`.
 
 4. **Đọc kết quả JSON và xem `xem_lai.png`** (dùng công cụ Read để xem ảnh). Phân loại:
@@ -71,19 +87,19 @@ Chạy **sau** khi các phòng đã dựng và đã đồng ý (đường bo că
 ```powershell
 & "<python>" "<skill>\scripts\tao_duong_bo_can_ho.py" "<file.dxf>" --out-dir "<thư mục kết quả>" [--layer-ten A-Dimension]
 ```
-Cùng các tùy chọn nhận diện như bước dựng phòng (`--layer-ranh`, `--them-ranh=`, `--them-phong`, `--lop-trat`, `--block-bo-qua`). Sinh `ve_duong_bo_can_ho.scr`, `DienTichCanHo.xlsx`, `xem_duong_bo_can_ho.png`, JSON.
+Cùng các tùy chọn nhận diện và chỉnh hình như bước dựng phòng (`--layer-ranh`, `--them-ranh=`, `--them-phong`, `--lop-trat`, `--block-bo-qua`, `--khong-chinh-hinh`, `--op-wc`, `--trat-dau-tuong`, `--ten-wc`). Sinh `ve_duong_bo_can_ho.scr`, `DienTichCanHo.xlsx`, `xem_duong_bo_can_ho.png`, JSON.
 Rồi vẽ vào bản sao: chạy `ve_polyline_vao_dwg.ps1` với `-Dwg` là **bản sao đã có polyline phòng** (không phải file gốc) và `-Scr` là `ve_duong_bo_can_ho.scr`, `-OutDwg` là tên bản sao mới.
 
 **Nhiều căn trong một bản vẽ và bản vẽ chưa có tên phòng:** script tự tách từng căn (đánh số từ trái sang phải; JSON có mảng `can_ho`, mỗi căn một polyline đường bo + loại trừ + nhãn). Có text tên phòng thì gộp các phòng thành căn; **không có text tên phòng** (căn hộ để thô, chưa chia phòng) thì mỗi vùng kín lớn (≥ `--dt-toi-thieu-can` 15 m²) là một căn, và nhãn DTCH dùng chữ mặc định (style `Standard`, tên phòng giả định cao 200 mm nên nhãn cao 300 mm, layer `A-Text`): **báo người dùng xác nhận** vì chưa có Text tên phòng để lấy style/layer. Lô-gia, ban công, phòng phụ nằm ngoài vùng chính được **gắn vào căn qua cửa đi/cửa sổ** (cụm nét trên layer `A-Window`, `A-Glaz`, `A-Door`, `A-Cửa` rộng ≥ 600 mm chạm cả hai bên, `--tol-cua` 60 mm); vùng có cửa thông sang hai căn coi là khu vực chung và không tính. Nếu có phòng có tên chưa đóng kín, script dừng (xem bên dưới).
 
 **Cách dựng (đúng quy tắc đã chốt):**
 - Đường bo là **một polyline đóng trên layer `Dien tich thong thuy`** (màu 6), đi theo mặt trát trong của tường bao/tường chung/vách, **ôm cả ban công, lô-gia**; tường ngăn trong căn nằm bên trong (được tính).
-- Hợp các vùng phòng, lấp khe tường ngăn và ô cửa (khe ≤ `--day-tuong-max` 300 mm). Không lùi lớp trát (xem mục "Đường bo bám theo nét nào").
+- Hợp các vùng phòng **đã chỉnh hình** và lấp dải tường ngăn, ô cửa giữa hai mặt phòng đối diện (khe ≤ `--day-tuong-max` 300 mm + ốp WC). Không lấp góc lõm của tường bao ngoài. Không lùi lớp trát ở mặt tường dài (xem mục "Chỉnh hình"). Với `--khong-chinh-hinh`: cách cũ, khép hình buffer ±150 mm.
 - **Cột, hộp kỹ thuật (kèm tường bao hộp kỹ thuật) nằm trong căn** là lỗ của vùng → thành polyline **loại trừ** riêng, cùng layer. DT căn = đường bo − loại trừ. Mọi lỗ đều báo Cảnh báo để người dùng xác nhận đó đúng là hộp kỹ thuật/cột, vì một hành lang hay kho kín không tên cũng thành lỗ.
 - Bản kiểm: DT căn − Σ DT phòng phải **dương** (≈ tường ngăn + ô cửa); âm là ranh phòng chồng lấn.
 - **Còn phòng chưa đóng kín** (có tên nhưng không thành vùng kín) hoặc các phòng tạo ra nhiều khối rời: script **dừng và không vẽ** (`trang_thai: khong_dung_duoc`), vì đường bo sẽ thiếu phòng đó. Làm theo `huong_xu_ly` (chỉ ranh, chạy lại); chỉ dùng `--chap-nhan-thieu-phong` khi người dùng đồng ý bỏ qua các phòng đó.
 
-**Lớp trát:** đường bo căn hộ theo cùng quy tắc với phòng: bám nét đã vẽ, không tự lùi 15 mm. Ví dụ Căn hộ mẫu Cần Thơ (tường ACA, lớp trát không vẽ riêng): đường bo 71,39 m² − hộp kỹ thuật 0,52 m² = **70,87 → 70,9 m²**. Polyline `CB4` người dùng bo tay trong bản vẽ đó vẽ theo cách cũ (lùi 15 mm, 70,2745 m²); người dùng đã xác nhận (05/10/2026) **giữ kết quả 70,9 m²**. Polyline cũ lệch theo kiểu này thì báo Lỗi chênh lệch như bình thường, ghi rõ là vẽ theo cách cũ (lùi 15 mm khi lớp trát không vẽ).
+**Lớp trát:** đường bo căn hộ theo cùng quy tắc với phòng: bám nét đã vẽ, không tự lùi 15 mm. Ví dụ Căn hộ mẫu Cần Thơ (tường ACA, lớp trát không vẽ riêng): đường bo 71,39 m² − hộp kỹ thuật 0,52 m² = **70,87 → 70,9 m²** (05/10/2026). Từ 10/10/2026 có chỉnh hình: đường bo 71,3487 − HKT 0,5240 = **70,8247 → 70,8 m²**. Khoản giảm 0,045 m² gồm ốp 10 mm của hai WC ở tường bao (0,032 m²) và trát 15 mm ở đầu tường. Polyline `CB4` người dùng bo tay trong bản vẽ đó vẽ theo cách cũ (lùi 15 mm, 70,2745 m²); người dùng đã xác nhận (05/10/2026) giữ cách không lùi ở mặt tường dài. Polyline cũ lệch theo kiểu này thì báo Lỗi chênh lệch như bình thường, ghi rõ là vẽ theo cách cũ (lùi 15 mm khi lớp trát không vẽ).
 
 **Nhãn `DTCH: xx.x m2`:** đặt **ở giữa phòng khách** (vị trí trống gần chữ tên phòng khách nhất), **không đè tường, cửa, nội thất, chữ tên phòng, nhãn phòng**; cùng **style, layer, màu, kiểu đối tượng** với nhãn diện tích phòng (tức theo Text tên phòng); **chiều cao = 1,5 lần chiều cao chữ tên phòng**. Vị trí tìm trên lưới 50 mm, nhãn cách mọi vật cản ≥ 80 mm (`--le`). Không tìm được chỗ thì báo Cảnh báo, không đặt bừa. Phòng khách nhận qua regex không dấu `kh[a]ch` (`--phong-khach`); đổi tiêu đề bằng `--tieu-de`.
 
@@ -121,7 +137,7 @@ Dấu hiệu: một file chứa cả tầng, mỗi căn là một xref đã bind
    - **Hốc sảnh trước cửa phòng** (thông, không cửa, rộng ≥ 600 mm) gộp vào phòng nó thông ra, ưu tiên sinh hoạt chung.
    - **Góc đặt cục nóng/máy giặt cạnh lô gia** là lô gia, kể cả khi < 2 m².
    - **Khối vách BTCT `S-Wall` không tính vào DTCH** (kể cả giữa phòng và lô gia). Vùng nằm ≥ 60% trong khối S-Wall được xếp loại "vách BTCT"; khối S-Wall giao căn bị trừ khỏi đường bo, khối nằm giữa căn thành polyline loại trừ. Đổi layer bằng `--layer-vach`.
-   - **Chỉnh hình theo bản sửa lỗi 1–7 của người dùng (08/10/2026), `scripts/chinh_hinh.py`, tự chạy trong `xuat`:**
+   - **Chỉnh hình theo bản sửa lỗi 1–7 của người dùng (08/10/2026), `scripts/chinh_hinh.py`, tự chạy trong `xuat`** (cùng quy tắc với căn đơn lẻ, xem mục "Chỉnh hình"):
      - Kính/khung đặt ngoài mặt tường: đo theo đường kéo dài mặt tường. Không đo chéo; không gấp khúc ở góc 90°.
      - WC trừ lớp ốp 10 mm; mặt đầu tường gạch chưa vẽ trát lùi 15 mm.
      - Đường bo căn chỉ lấp dải tường giữa hai phòng đối diện, không ăn vào tường bao ngoài.

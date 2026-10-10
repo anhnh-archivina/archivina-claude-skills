@@ -12,7 +12,11 @@ Quy tac (references/quy-uoc-mat-bang-tang.md, quyet dinh 11-17):
                   -> khong an vao tuong bao ngoai.
  7   bau_lo_gia : lo gia / ban cong do toi mat trong bau BT / lan can (net bau gan nhat phia ngoai, <= 80 mm).
 Chi xu ly canh truc giao (mat bang CT1 vuong goc); canh xien giu nguyen.
+
+Dung chung: mat_bang_tang.py (mat bang tang), tao_polyline_phong.py va tao_duong_bo_can_ho.py (can don le, 10/10/2026)
+qua chinh_phong() (trinh tu chinh hinh polygon phong) va duong_bo() (dai tuong + lap lo nho cho duong bo can).
 """
+import collections
 import math
 
 import shapely
@@ -449,3 +453,44 @@ def lap_lo_nho(g, dt_max=0.15e6):
     if isinstance(g, MultiPolygon):
         return MultiPolygon([lap_lo_nho(q, dt_max) for q in g.geoms])
     return Polygon(g.exterior, [h for h in g.interiors if Polygon(h).area > dt_max])
+
+
+def chinh_phong(g, net, wc=False, lo_gia=False, op=10.0, trat=15.0):
+    """Trinh tu chinh hinh mot polygon phong (giong mat_bang_tang.xuat): vuong_goc -> don_dinh -> cat_kinh -> op_wc (WC)
+    -> dau_tuong -> bau_lo_gia (lo gia / ban cong) -> don_dinh. Tra ve (poly, Counter so canh/dinh da sua theo loai)."""
+    dem = collections.Counter()
+    if net is None or g is None or g.is_empty:
+        return g, dem
+    g, dem["cheo"] = vuong_goc(g, net)
+    g, dem["gai"] = don_dinh(g, net)
+    g, dem["kinh"] = cat_kinh(g, net)
+    if wc:
+        g, dem["op"] = op_wc(g, net, op)
+    g, dem["dau_tuong"] = dau_tuong(g, net, trat)
+    if lo_gia:
+        g, dem["bau"] = bau_lo_gia(g, net)
+    g, n_ = don_dinh(g, net)
+    dem["gai"] += n_
+    return g, dem
+
+
+def mo_ta_chinh(dem):
+    """Chuoi tieng Viet tom tat cac sua doi chinh hinh (bo loai = 0)."""
+    ten = [("cheo", "nắn {} cạnh xiên"), ("gai", "bỏ {} đỉnh thừa/gai/khấc/vát chéo"), ("kinh", "cắt {} phần lồi ra kính ngoài mặt tường"),
+           ("op", "lùi ốp WC {} cạnh"), ("dau_tuong", "lùi trát đầu tường {} cạnh"), ("bau", "kéo lô gia ra bậu {} cạnh")]
+    return "; ".join(t.format(dem[k]) for k, t in ten if dem.get(k))
+
+
+def duong_bo(regs, dmax, lo_max=0.15e6):
+    """Loi 6: hop cac vung phong (da chinh hinh) + dai tuong giua hai mat phong doi dien (<= dmax: tuong ngan, o cua);
+    khong lap goc lom -> khong an vao tuong bao ngoai. Lo < lo_max (khe giao tuong) duoc lap, tru lo von la lo cua phong
+    (cot / hop ky thuat nam rieng trong phong). Tra ve Polygon / MultiPolygon."""
+    u = unary_union(list(regs) + dai_tuong(regs, dmax))
+    u = u.buffer(0.5, join_style=2).buffer(-0.5, join_style=2)
+    lo_phong = unary_union([Polygon(h_) for r_ in regs for h_ in r_.interiors]) if any(r_.interiors for r_ in regs) else Polygon()
+
+    def lap(q):
+        giu = [h_ for h_ in q.interiors
+               if Polygon(h_).area > lo_max or Polygon(h_).intersection(lo_phong).area > 0.5 * Polygon(h_).area]
+        return Polygon(q.exterior, giu)
+    return unary_union([lap(q) for q in getattr(u, "geoms", [u])])

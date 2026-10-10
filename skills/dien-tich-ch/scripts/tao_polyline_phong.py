@@ -6,16 +6,23 @@ Y tuong: gom cac net bien (vua trat, tuong, cot, lan can lo-gia...) thanh mang l
 o cua <= 1,2 m bang doan thang o CA HAI MAT tuong (o cua thanh vung rieng, khong thuoc phong nao),
 roi lay vung kin chua diem dat ten phong (text) lam polyline phong.
 
+Chinh hinh (10/10/2026, dung chung chinh_hinh.py voi mat_bang_tang.py): sau khi lay vung kin, polygon phong duoc
+nan canh xien, bo gai/khac, cat phan loi ra kinh ngoai mat tuong, tru op WC 10 mm, lui trat 15 mm o mat dau tuong
+(<= 350 mm) chua ve trat, keo lo gia ra mat trong bau. Tat bang --khong-chinh-hinh.
+
 Khong sua file DXF dau vao. Xuat: JSON tom tat (stdout), .scr ve polyline, .xlsx, .png xem lai.
 
     python tao_polyline_phong.py <file.dxf> --out-dir <thu muc> [--gap-max 1200] [--debug]
 """
 import argparse
+import importlib.util
 import io
 import json
 import math
+import os
 import re
 import sys
+import unicodedata
 from collections import defaultdict
 from decimal import Decimal, ROUND_HALF_UP
 
@@ -24,6 +31,10 @@ import shapely
 from ezdxf import path as ezpath
 from shapely.geometry import LineString, Point, Polygon
 from shapely.ops import polygonize, unary_union
+
+_spec_ch = importlib.util.spec_from_file_location("chinh_hinh", os.path.join(os.path.dirname(os.path.abspath(__file__)), "chinh_hinh.py"))
+chh = importlib.util.module_from_spec(_spec_ch)
+_spec_ch.loader.exec_module(chh)
 
 LAYER_PHONG = "A- Dien tich phong"
 # Layer lam ranh phong (net hoan thien, tuong, cot, lan can lo-gia). KHONG gom noi that, thiet bi, canh cua.
@@ -39,10 +50,17 @@ SNAP = 6.0           # khe ho nho coi nhu cham nhau, mm
 GAP_GOC = 150.0      # khe ho nho o GOC (hai net vuong goc khong cham nhau), mm
 LOI, CANH_BAO, DAT, GOI_Y = "Lỗi", "Cảnh báo", "Đạt", "Gợi ý"
 RE_NHAN = re.compile(r"\d+(?:[.,]\d+)?\s*(?:m2|m²|㎡)", re.I)
+TEN_WC = r"\bwc\b|ve sinh|\btam\b"                   # regex (khong dau) ten phong ve sinh: tru op 10 mm
+RE_LO_GIA = re.compile(r"lo[\s-]*gia|ban cong", re.I)   # lo gia / ban cong: keo canh ra mat trong bau
 
 
 def r1(x):
     return float(Decimal(str(x)).quantize(Decimal("0.1"), rounding=ROUND_HALF_UP))
+
+
+def bo_dau(s):
+    s = unicodedata.normalize("NFD", (s or "").replace("đ", "d").replace("Đ", "D"))
+    return "".join(c for c in s if unicodedata.category(c) != "Mn").lower()
 
 
 def norm(s):
@@ -111,6 +129,51 @@ def doc_chains(msp, layers):
             if len(pts) >= 2:
                 chains.append((closed, pts))
     return chains
+
+
+def doc_net(msp, them_kinh=()):
+    """Doan thang nen phan lop trat / tuong / bau / kinh cho chinh_hinh (theo chh.LOP; them_kinh: layer cua / cua so cua
+    ban ve, vi du A-Glaz, A-Window cua tuong ACA da no). Ke ca net trong block/xref."""
+    lop = {l: k for k, v in chh.LOP.items() for l in v}
+    for x in them_kinh:
+        lop.setdefault(layer_goc(x), "kinh")
+    out = []
+    for e in walk(msp):
+        if e.dxftype() not in ("LINE", "LWPOLYLINE", "POLYLINE"):
+            continue
+        k = lop.get(layer_goc(e.dxf.layer))
+        if k is None:
+            continue
+        try:
+            pts = [(v.x, v.y) for v in ezpath.make_path(e).flattening(1.0)]
+        except Exception:
+            continue
+        for (x1, y1), (x2, y2) in zip(pts, pts[1:]):
+            if math.dist((x1, y1), (x2, y2)) >= 0.5:
+                out.append((x1, y1, x2, y2, k))
+    return out
+
+
+def tao_chinh(msp, a):
+    """Ham chinh hinh polygon phong theo tham so dong lenh: chinh(g, ten) -> (g, dem). None neu --khong-chinh-hinh."""
+    if a.khong_chinh_hinh:
+        return None
+    net = chh.NetNen(doc_net(msp, [x.strip() for x in a.layer_cua.split(",") if x.strip()]))
+    re_wc = re.compile(a.ten_wc, re.I)
+
+    def chinh(g, ten):
+        k = bo_dau(ten)
+        return chh.chinh_phong(g, net, wc=bool(re_wc.search(k)), lo_gia=bool(RE_LO_GIA.search(k)),
+                               op=a.op_wc, trat=a.trat_dau_tuong)
+    chinh.net = net
+    return chinh
+
+
+def them_tham_so_chinh(ap):
+    ap.add_argument("--khong-chinh-hinh", action="store_true", help="bo cac buoc chinh hinh loi 1-7 (08/10/2026)")
+    ap.add_argument("--op-wc", type=float, default=10.0, help="be day lop op tuong WC tru vao (mm)")
+    ap.add_argument("--trat-dau-tuong", type=float, default=15.0, help="lop trat o mat dau tuong (<= 350 mm) chua ve trat (mm)")
+    ap.add_argument("--ten-wc", default=TEN_WC, help="regex (khong dau) ten phong ve sinh")
 
 
 def unit(a, b):
@@ -688,6 +751,7 @@ def main():
                     help="ghi them nhan m2 cho ca phong da co polyline (mac dinh chi ghi nhan cho phong dung moi)")
     ap.add_argument("--ve-lai", action="store_true",
                     help="dung va ve lai ca phong da co polyline tren layer phong (mac dinh: chi doi chieu, khong ve trung)")
+    them_tham_so_chinh(ap)
     ap.add_argument("--debug", action="store_true")
     a = ap.parse_args()
     sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8")
@@ -741,7 +805,10 @@ def main():
                                      geom=g if g.is_valid else g.buffer(0)))
 
     rooms, failed, da_co, da_co_chua_dc = [], [], [], []
-    seen_face = {}
+    chinh = tao_chinh(msp, a)
+    tong_ch = {}
+    # gom ten theo vung kin truoc (khong gian mo nhieu ten: chinh hinh theo ten day du, vi du "Phong khach + Lo gia")
+    nhom_ten, thu_tu = {}, []
     for name, (x, y), tinfo in seeds:
         hit = [f for f in faces if f.contains(Point(x, y))]
         if not hit:
@@ -759,20 +826,30 @@ def main():
                 failed.append(info)
             continue
         f = min(hit, key=lambda p: p.area)
-        if id(f) in seen_face:
+        if id(f) not in nhom_ten:
+            nhom_ten[id(f)] = dict(face=f, ten=[], xy=(x, y), info=tinfo)
+            thu_tu.append(id(f))
+        nhom_ten[id(f)]["ten"].append(name)
+    for fid in thu_tu:
+        ng = nhom_ten[fid]
+        f_goc, (x, y), tinfo = ng["face"], ng["xy"], ng["info"]
+        name = " + ".join(ng["ten"])
+        warn = []
+        if len(ng["ten"]) > 1:
             # Nhieu ten phong cung nam trong mot vung kin (khong gian mo, vi du phong khach + bep): chi dung MOT polyline.
-            r0 = seen_face[id(f)]
-            r0["ten"] += " + " + name
-            r0["canh_bao"] = [w for w in r0["canh_bao"] if not w.startswith("Không gian mở")] + [
-                f"Không gian mở: {r0['ten']} nằm chung một vùng kín (không có vách ngăn). Muốn tách riêng, "
-                f"vẽ đoạn chia ranh trên layer '{a.layer_dong_ranh}' hoặc dùng --them-ranh rồi chạy lại."]
-            continue
-        f_goc = f
+            warn.append(f"Không gian mở: {name} nằm chung một vùng kín (không có vách ngăn). Muốn tách riêng, "
+                        f"vẽ đoạn chia ranh trên layer '{a.layer_dong_ranh}' hoặc dùng --them-ranh rồi chạy lại.")
         f = inset_face(f_goc, t_in)          # lui vao lop trat (neu nét A-Vua trat trung mat tuong) -> mat hoan thiện
         if f is None:
             continue
+        dem = {}
+        if chinh is not None:
+            g_, dem = chinh(f, name)
+            if isinstance(g_, Polygon) and not g_.is_empty:
+                f = g_
+            for k_, v_ in dem.items():
+                tong_ch[k_] = tong_ch.get(k_, 0) + v_
         ring = list(f.exterior.coords)[:-1]
-        warn = []
         if t_in:
             warn.append(f"Đã lùi {t_in:g} mm vào trong nét ranh theo yêu cầu (--lop-trat {t_in:g}).")
         if len(f.interiors):
@@ -790,8 +867,8 @@ def main():
                 problems.append((LOI, "Nhãn diện tích sai", f"'{name}': nhãn {hd} ghi {v:g} m², polyline {r1(dt_ve):.1f} m²."))
         room = dict(ten=name, dt=dt_ve, dt_lam_tron=r1(dt_ve), dinh=ring, ho=ho,
                     nhan_xy=(c.x, c.y), canh_bao=warn, nhan=tinfo,
-                    nhan_co_san=bool(nhan_trong))
-        seen_face[id(f_goc)] = room
+                    nhan_co_san=bool(nhan_trong), dt_vung_kin=f_goc.area / 1e6,
+                    chinh_hinh={k_: v_ for k_, v_ in dem.items() if v_})
         ex = [q for q in existing if q["geom"].contains(Point(x, y))]
         if ex and not a.ve_lai:
             q = min(ex, key=lambda t: t["geom"].area)
@@ -826,7 +903,9 @@ def main():
         c = f.representative_point()
         chua_ten.append(dict(xy=(round(c.x), round(c.y)), dt=round(f.area / 1e6, 4), dt_lam_tron=r1(f.area / 1e6)))
 
-    import os
+    if chinh is not None and any(tong_ch.values()):
+        problems.append((GOI_Y, "Chỉnh hình", "Đã " + chh.mo_ta_chinh(tong_ch) + " (quy tắc sửa lỗi 1–7, 08/10/2026; "
+                         "tắt bằng --khong-chinh-hinh)."))
     os.makedirs(a.out_dir, exist_ok=True)
     scr_path = os.path.join(a.out_dir, "ve_polyline_phong.scr")
     with open(scr_path, "w", encoding="ascii", newline="\n") as fh:
@@ -854,7 +933,8 @@ def main():
                        + " ".join(r["canh_bao"])])
         else:
             ws.append([n, r["ten"], round(r["dt"], 4), r["dt_lam_tron"], "Dựng mới",
-                       CANH_BAO if r["canh_bao"] else DAT, " ".join(r["canh_bao"])])
+                       CANH_BAO if r["canh_bao"] else DAT, " ".join(r["canh_bao"] + (
+                           ["Chỉnh hình: " + chh.mo_ta_chinh(r["chinh_hinh"]) + "."] if r.get("chinh_hinh") else []))])
     for r in da_co_chua_dc:
         n += 1
         ws.append([n, r["ten"], round(r["dt_co_san"], 4), r1(r["dt_co_san"]), "Đã có polyline, chưa đối chiếu được",
@@ -879,9 +959,12 @@ def main():
 
     result = dict(file=os.path.basename(a.dxf), gap_max=a.gap_max, lop_trat_mm=t_in, khung_cua=tk_cua,
                   so_chain=len(chains), so_cau_noi=len(pairs),
+                  chinh_hinh=None if chinh is None else {k: v for k, v in tong_ch.items() if v},
                   dung_moi=[dict(ten=r["ten"], dt=round(r["dt"], 4), dt_lam_tron=r["dt_lam_tron"],
+                                 dt_vung_kin=round(r["dt_vung_kin"], 4), chinh_hinh=r["chinh_hinh"],
                                  so_dinh=len(r["dinh"]), canh_bao=r["canh_bao"]) for r in rooms],
-                  da_co_doi_chieu=[dict(ten=r["ten"], dt_moi=round(r["dt"], 4), handle=r["da_co"]["handle"],
+                  da_co_doi_chieu=[dict(ten=r["ten"], dt_moi=round(r["dt"], 4), chinh_hinh=r["chinh_hinh"],
+                                        handle=r["da_co"]["handle"],
                                         dt_co_san=round(r["da_co"]["dt"], 4),
                                         chenh_pct=round(r["da_co"]["chenh_pct"], 3), canh_bao=r["canh_bao"])
                                    for r in da_co],

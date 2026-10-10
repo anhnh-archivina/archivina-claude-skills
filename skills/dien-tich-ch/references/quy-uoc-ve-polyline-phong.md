@@ -33,6 +33,7 @@ Nguồn: bản vẽ mẫu `H:\@Archivina 2026\@bản vẽ mẫu căn hộ\Test �
 4. Nối thêm khe ≤ 6 mm.
 5. `polygonize` mạng nét: mỗi vùng kín là một mặt; mặt chứa điểm đặt tên phòng (text `A-Text`) là phòng đó.
 6. Mặt có "đảo" bên trong (cột đứng riêng, hộp kỹ thuật) được trừ khỏi diện tích và báo Cảnh báo.
+6b. Chỉnh hình mặt phòng (từ 10/10/2026, `chinh_hinh.chinh_phong`, chung với mặt bằng tầng): nắn xiên, bỏ gai/khấc, cắt kính ngoài mặt tường, WC trừ ốp 10 mm, đầu tường ≤ 350 mm chưa trát lùi 15 mm, lô gia kéo ra bậu. Tên phòng của không gian mở ghép đủ ("Phòng khách + Lô-gia 1") trước khi chỉnh. Tắt bằng `--khong-chinh-hinh`. Xem mục 9.
 7. Xuất: `ve_polyline_phong.scr` (vẽ polyline + nhãn), `DienTichPhong.xlsx`, `xem_lai.png`, JSON tóm tắt.
 8. Phòng đã có polyline trên layer phòng chứa điểm đặt tên thì **không vẽ trùng**; chỉ đối chiếu diện tích (chênh %) và báo polyline chưa Closed hoặc trùng chồng. Dùng `--ve-lai` để buộc vẽ lại.
 
@@ -101,3 +102,28 @@ Không tự đoán đường đóng ranh; chỉ đưa ra đề xuất kèm hình
 - Core Console không có `vla-`/ActiveX, nên phải dùng AutoCAD GUI qua COM. Mở bản sao thành tab mới, gắn, lưu, đóng; không đụng tab của người dùng.
 - `kiem_tra_nhan.py`: TEXT căn lề lấy `align_point`. Với lô gia hẹp 500 mm, góc trái-dưới của nhãn rơi ra ngoài polyline và trước đây bị báo nhầm.
 
+## 9. Chỉnh hình cho căn đơn lẻ (10/10/2026)
+- `tao_polyline_phong.py` và `tao_duong_bo_can_ho.py` gọi chung `chinh_hinh.py` với `mat_bang_tang.py`:
+  - `doc_net`: nét nền phân lớp trát / tường / bậu / kính. Layer cửa của `--layer-cua` (A-Glaz, A-Window…) tính là kính.
+  - `chinh_phong`: các bước chỉnh từng phòng.
+  - `duong_bo`: dải tường giữa hai mặt phòng đối diện, lấp lỗ < 0,15 m², giữ lỗ là cột/HKT của phòng. Thay cho khép hình buffer ±150 mm.
+- Tham số: `--khong-chinh-hinh`, `--op-wc 10`, `--trat-dau-tuong 15`, `--ten-wc`. Lô gia nhận theo tên `lo gia / lô-gia / logia / ban công`.
+- Mặt tường dài không vẽ trát vẫn không lùi 15 mm. Chỉ mặt đầu tường (cạnh ≤ 350 mm) nằm trên lõi tường, không có nét trát mới lùi.
+- Hồi quy (`03-Cong-Cu\05-Skill-Test\hoi-quy-dien-tich-ch\chinh-hinh-20261010\`: `truoc`, `sau`, `anh-so-sanh`):
+  - Căn hộ mẫu Cần Thơ, phòng:
+    - wc 1: 3,5150 → 3,4404 (ốp 10 mm).
+    - wc 2: 3,8075 → 3,7249 (ốp 10 mm).
+    - Phòng khách + Bếp: 31,0248 → 31,0210 (trát đầu tường).
+    - Phòng ngủ 11,0038 → 11,0015; master 10,9950 → 10,9927 (trát đầu tường).
+    - Lô gia không đổi.
+  - Căn hộ mẫu Cần Thơ, căn: đường bo 71,3900 → 71,3487; HKT 0,5200 → 0,5240; **DTCH 70,8700 → 70,8247 (70,9 → 70,8)**.
+  - Test AI (3 căn thô): chênh ≤ 0,002 m² mỗi căn (nắn lệch dưới 1 mm), làm tròn không đổi.
+  - Test đo dt: Phòng khách + Lô-gia 1 59,4367 → 59,4342; căn 109,8173 không đổi; các phòng khác không đổi.
+  - `--khong-chinh-hinh` sinh `.scr` trùng từng byte với bản trước.
+- `kiem_tra_nhan` trên bản sao đã vẽ:
+  - Cần Thơ đạt 8/8.
+  - Các vùng mới dựng ở Test AI và Test đo dt đều đạt.
+  - Còn lỗi ở polyline có sẵn của bản vẽ gốc, giống hệt bản trước 10/10:
+    - Test AI: 3 đường bo người dùng ở layer phòng, không có nhãn.
+    - Test đo dt: 2 cặp polyline WC trùng nhau (`4FC9`/`14F9E`, `8EF2`/`14F9F`).
+    - Test đo dt: polyline lô gia `86A7` có sẵn nằm trong vùng mở "Phòng khách + Lô-gia 1", nên vùng mới có 2 nhãn.

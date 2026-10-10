@@ -6,7 +6,10 @@ Nguyen tac (quy tac Archivina, xem references/quy-tac-do.md):
 - Duong bo la MOT polyline dong, di theo mat trat hoan thien cua tuong bao / tuong chung / vach, om ca ban cong, lo gia;
   tuong ngan trong can nam BEN TRONG (duoc tinh); cot, hop ky thuat (va tuong bao hop ky thuat) nam trong can: LOAI TRU
   (polyline rieng, cung layer).  DT can ho = DT duong bo - tong DT phan loai tru.
-- Cach dung: (1) neu co text ten phong: hop cac vung phong, dong khe tuong ngan/o cua bang phep "dong hinh" (buffer +, -);
+- Cach dung: (1) neu co text ten phong: hop cac vung phong DA CHINH HINH (chinh_hinh.py, giong tao_polyline_phong.py) +
+  dai tuong giua hai mat phong doi dien (tuong ngan, o cua <= --day-tuong-max + op WC), lap lo < 0,15 m2 (giu lo la cot /
+  hop ky thuat cua phong); khong lap goc lom nen khong an vao tuong bao ngoai (sua loi 6, 10/10/2026). --khong-chinh-hinh:
+  cach cu, dong khe bang phep "dong hinh" (buffer +, - nua --day-tuong-max);
   (2) neu KHONG co ten phong (can hop de tho, chua chia phong): moi vung kin lon (>= --dt-toi-thieu-can) la mot can.
   Bam dung net da ve (tuong, vua trat, cot, khung cua); lop trat khong ve thi khong lui.  Vung kin nho nam trong can (hop ky thuat,
   cot) la lo cua da giac -> thanh polyline loai tru.
@@ -38,6 +41,7 @@ _spec = importlib.util.spec_from_file_location("tpp", os.path.join(HERE, "tao_po
 tpp = importlib.util.module_from_spec(_spec)
 _spec.loader.exec_module(tpp)
 
+chh = tpp.chh
 LAYER_CAN = "Dien tich thong thuy"
 MAU_LAYER_CAN = 6          # theo template ISO - ARCHIVINA
 LOI, CANH_BAO, DAT = tpp.LOI, tpp.CANH_BAO, tpp.DAT
@@ -122,6 +126,7 @@ def main():
                     help="van dung duong bo khi con phong co ten chua dong kin (mac dinh: dung lai va bao)")
     ap.add_argument("--khong-loai-tru-lo", action="store_true",
                     help="khong coi vung kin nho nam trong can la loai tru (mac dinh: loai tru, kem canh bao)")
+    tpp.them_tham_so_chinh(ap)
     a = ap.parse_args()
     sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8")
 
@@ -175,6 +180,20 @@ def main():
     if not rooms:
         raise SystemExit("Không có vùng kín nào để dựng đường bo căn hộ (chưa đóng kín được). Chạy tao_polyline_phong.py để xem khe hở.")
     room_list = list(rooms.values())
+    # ---- chinh hinh tung phong (loi 1-7, chung chinh_hinh.py voi tao_polyline_phong.py / mat_bang_tang.py) -------------
+    chinh = tpp.tao_chinh(msp, a)
+    tong_ch = {}
+
+    def chinh_vung(f, ten):
+        g0 = tpp.inset_face(f, t_in) if t_in else f
+        if g0 is None or chinh is None:
+            return g0
+        g1, dem = chinh(g0, ten)
+        for k_, v_ in dem.items():
+            tong_ch[k_] = tong_ch.get(k_, 0) + v_
+        return g1 if isinstance(g1, Polygon) and not g1.is_empty else g0
+    for r in room_list:
+        r["geom"] = chinh_vung(r["face"], " + ".join(r["ten"]) if che_do == "co_ten_phong" else "")
 
     # ---- gop vung thanh khoi can ho: nhom phong, gan them lo gia/ban cong/phong phu qua cua - cua so, dong khe tuong --
     g = a.day_tuong_max / 2.0
@@ -223,7 +242,12 @@ def main():
             khong_gan.append(f)
     can_parts, can_faces = [], []
     for grp, extra in zip(nhom, gan):
-        gm = dong_hinh(unary_union([r["face"] for r in grp] + extra))
+        if chinh is not None:
+            # vung phu gan qua cua (khong ten): chinh hinh chung, khong op WC / bau lo gia (nhu hanh lang o mat_bang_tang)
+            regs = [r["geom"] for r in grp if r["geom"] is not None] + [g_ for g_ in (chinh_vung(f, "") for f in extra) if g_ is not None]
+            gm = chh.duong_bo(regs, a.day_tuong_max + a.op_wc)
+        else:
+            gm = dong_hinh(unary_union([r["face"] for r in grp] + extra))
         pieces = sorted(getattr(gm, "geoms", [gm]), key=lambda p: p.area, reverse=True)
         main_p = pieces[0]
         if main_p.area / 1e6 >= a.dt_toi_thieu_can:
@@ -308,7 +332,7 @@ def main():
                             ti["cx"] + ti["w"] / 2 + le, ti["cy"] + ti["hb"] / 2 + le))
     for r in room_list:                          # nhan dien tich phong se ghi o duoi ten phong
         ti = r["info"]
-        r["dt"] = (tpp.inset_face(r["face"], t_in) or Polygon()).area / 1e6 if t_in else r["face"].area / 1e6
+        r["dt"] = (r["geom"] or Polygon()).area / 1e6
         if ti:
             wl, hl = tpp.do_text(doc, ti["kind"], ti["style"], ti["h"], f"{tpp.r1(r['dt']):.1f} m2")
             obst.append(box(ti["x"] - wl / 2 - le, ti["y"] - hl / 2 - le, ti["x"] + wl / 2 + le, ti["y"] + hl / 2 + le))
@@ -319,12 +343,17 @@ def main():
     re_pk = re.compile(a.phong_khach, re.I)
     ket_qua = []
     for stt, part in enumerate(can_parts, 1):
-        rin = [r for r in room_list if part.contains(r["face"].representative_point())]
-        holes_raw = [Polygon(h) for h in part.interiors]
+        rin = [r for r in room_list if r["geom"] is not None and part.contains(r["geom"].representative_point())]
         if a.khong_loai_tru_lo:
             part = Polygon(part.exterior)
-            holes_raw = []
-        can = tpp.inset_face(part, t_in) if t_in else part
+        if chinh is not None:
+            # phong da lui trat (neu co) truoc khi hop; chi lam vuong, KHONG cat kinh tren duong bo (giong mat_bang_tang)
+            can, n_ = chh.vuong_goc(part, chinh.net)
+            tong_ch["cheo"] = tong_ch.get("cheo", 0) + n_
+            can, n_ = chh.don_dinh(can, chinh.net)
+            tong_ch["gai"] = tong_ch.get("gai", 0) + n_
+        else:
+            can = tpp.inset_face(part, t_in) if t_in else part
         if can is None:
             problems.append((LOI, f"Căn {stt}", "Đường bo rỗng sau khi lùi lớp trát."))
             continue
@@ -364,7 +393,7 @@ def main():
         pk = [r for r in rin if any(re_pk.search(bo_dau(t)) for t in r["ten"])] if che_do == "co_ten_phong" else []
         info = None
         if pk:
-            vung = tpp.inset_face(pk[0]["face"], t_in) if t_in else pk[0]["face"]
+            vung = pk[0]["geom"]
             info = next((i for t, _, i in seeds if t in pk[0]["ten"] and i), None) or pk[0]["info"]
         else:
             vung = can
@@ -411,6 +440,9 @@ def main():
         shapely.prepare(O)
     if not ket_qua:
         raise SystemExit("Không dựng được căn hộ nào.")
+    if chinh is not None and any(tong_ch.values()):
+        problems.append((tpp.GOI_Y, "Chỉnh hình", "Đã " + chh.mo_ta_chinh(tong_ch) + "; đường bo = hợp phòng đã chỉnh + dải "
+                         "tường giữa hai mặt phòng đối diện (không tính tường bao ngoài). Tắt bằng --khong-chinh-hinh."))
 
     # ---- xuat: scr, excel, anh, json ---------------------------------------------------------------------------------
     os.makedirs(a.out_dir, exist_ok=True)
@@ -503,6 +535,7 @@ def main():
                       khong_de_len_vat_can=k["nhan_ok"])))
     print(json.dumps(dict(
         file=os.path.basename(a.dxf), che_do=che_do, lop_trat_mm=t_in, khung_cua=tk_cua, layer_can=a.layer_can, so_can=len(can_json),
+        chinh_hinh=None if chinh is None else {k: v for k, v in tong_ch.items() if v},
         can_ho=can_json,
         van_de=[dict(muc=m, hang_muc=h, mo_ta=d) for m, h, d in problems], scr=scr, xlsx=xlsx, anh=png),
         ensure_ascii=False, indent=2, default=str))
