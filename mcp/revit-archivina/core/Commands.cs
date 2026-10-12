@@ -103,6 +103,7 @@ namespace ArchivinaRevitMcp.Core
                 case "quantities": return Quantities(ui, p);
                 case "set_params": return SetParams(ui, p);
                 case "save_copy": return Safety.SaveCopy(ui, p);
+                case "open_document": return Safety.OpenDocument(ui, p);
                 case "new_project": return Modeling.NewProject(ui, p);
                 case "build_apartment": return Modeling.BuildApartment(ui, p);
                 case "create_3d": return Modeling.Create3D(ui, p);

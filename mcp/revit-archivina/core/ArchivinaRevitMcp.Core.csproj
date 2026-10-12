@@ -13,7 +13,7 @@
     <GenerateDependencyFile>false</GenerateDependencyFile>
     <CopyLocalLockFileAssemblies>false</CopyLocalLockFileAssemblies>
     <RevitDir Condition="'$(RevitDir)' == ''">D:\Revit\Revit 2026</RevitDir>
-    <Version>1.4.0</Version>
+    <Version>1.4.2</Version>
     <!-- RevitAPI tham chiáº¿u Microsoft.VisualBasic 10.1 (runtime Revit cÃ³ sáºµn) â€“ cáº£nh bÃ¡o vÃ´ háº¡i -->
     <MSBuildWarningsAsMessages>MSB3277</MSBuildWarningsAsMessages>
   </PropertyGroup>

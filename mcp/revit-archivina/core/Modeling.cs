@@ -46,20 +46,23 @@ namespace ArchivinaRevitMcp.Core
             path = Path.GetFullPath(path);
             if (File.Exists(path)) throw new Exception($"File '{path}' đã tồn tại – không ghi đè, chọn tên khác.");
             if (Safety.IsOriginalLocation(path)) throw new Exception("Không tạo dự án trong thư mục 02-Ban-Ve-Goc (bản vẽ gốc).");
-            if (string.IsNullOrEmpty(template)) template = ui.Application.DefaultProjectTemplate;
+            if (string.IsNullOrEmpty(template)) template = MetricTemplate(ui);
             if (!File.Exists(template)) throw new Exception($"Không thấy template '{template}'.");
             Directory.CreateDirectory(Path.GetDirectoryName(path));
 
             Document doc = ui.Application.NewProjectDocument(template);
             string projName = S(p, "project_name");
-            if (!string.IsNullOrEmpty(projName))
+            using (var t = new Transaction(doc, "Claude MCP - thông tin dự án"))
             {
-                using (var t = new Transaction(doc, "Claude MCP - thông tin dự án"))
-                {
-                    t.Start();
-                    try { doc.ProjectInformation.Name = projName; } catch { }
-                    t.Commit();
-                }
+                t.Start();
+                if (!string.IsNullOrEmpty(projName)) try { doc.ProjectInformation.Name = projName; } catch { }
+                // quy chuẩn Archivina: chiều dài mm, diện tích m² (1 số thập phân)
+                Units u = doc.GetUnits();
+                var fl = new FormatOptions(UnitTypeId.Millimeters) { Accuracy = 1 };
+                u.SetFormatOptions(SpecTypeId.Length, fl);
+                u.SetFormatOptions(SpecTypeId.Area, new FormatOptions(UnitTypeId.SquareMeters) { Accuracy = 0.1 });
+                doc.SetUnits(u);
+                t.Commit();
             }
             doc.SaveAs(path, new SaveAsOptions { OverwriteExistingFile = false });
             Safety.Register("new", path);
@@ -69,8 +72,26 @@ namespace ArchivinaRevitMcp.Core
             {
                 ["file"] = path,
                 ["template"] = template,
+                ["don_vi"] = "mm / m² (đặt theo quy chuẩn Archivina)",
                 ["active_document"] = uidoc?.Document?.Title,
             };
+        }
+
+        // template mặc định: biến môi trường REVIT_MCP_TEMPLATE, hoặc DefaultMetric.rte cạnh template mặc định của Revit
+        // (template mặc định của Revit trên máy này là English-Imperial – đơn vị feet, trái quy chuẩn mm)
+        static string MetricTemplate(UIApplication ui)
+        {
+            string env = Environment.GetEnvironmentVariable("REVIT_MCP_TEMPLATE");
+            if (!string.IsNullOrEmpty(env) && File.Exists(env)) return env;
+            string def = ui.Application.DefaultProjectTemplate ?? "";
+            try
+            {
+                string root = Path.GetDirectoryName(Path.GetDirectoryName(def));
+                foreach (string cand in new[] { Path.Combine(root, "English", "DefaultMetric.rte"), Path.Combine(root, "Default_M_ENU.rte") })
+                    if (File.Exists(cand)) return cand;
+            }
+            catch { }
+            return def;
         }
 
         // ------------------------------------------------------------------------------------------ create_3d

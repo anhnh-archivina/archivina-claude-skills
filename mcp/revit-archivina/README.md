@@ -32,9 +32,10 @@ Claude ⇄ (stdio) revit_mcp.py ⇄ (TCP 127.0.0.1:9878, JSON mỗi dòng) ⇄ a
 | `rv_bang_thong_ke` | đọc | nội dung Schedule (đối chiếu bảng thống kê) |
 | `rv_chup_view` | file mới | PNG của view (ExportImage) |
 | `rv_xuat_dwg` | file mới | DWG **mm** vào thư mục mới → dùng tiếp MCP `autocad-archivina` |
+| `rv_mo_file` | mở | mở file `.rvt` và kích hoạt (không sửa / không lưu); từ chối file workshared |
 | `rv_luu_ban_sao` | file mới | SaveAs dự án đang mở ra `.rvt` MỚI (không ghi đè, không vào `02-Ban-Ve-Goc`) → Revit làm việc trên bản sao |
 | `rv_dat_tham_so` | **ghi (khoá, bản sao)** | đặt tham số, 1 Transaction |
-| `rv_tao_du_an` | **ghi (khoá)** | dự án mới từ template → `.rvt` mới, ghi sổ "Claude tạo" |
+| `rv_tao_du_an` | **ghi (khoá)** | dự án mới từ template (mặc định `DefaultMetric.rte` hoặc `REVIT_MCP_TEMPLATE`), đơn vị **mm / m²** → `.rvt` mới, ghi sổ "Claude tạo" |
 | `rv_dung_can_ho` | **ghi (khoá, bản sao)** | dựng level, tường, cột, cửa, vách kính, sàn, phòng theo spec JSON (mm), 1 TransactionGroup |
 | `rv_tao_view_3d` | **ghi (khoá, bản sao)** | view 3D isometric |
 | `rv_ve_2d` | **ghi (khoá, bản sao)** | nét chi tiết 2D + Detail Group |
@@ -54,10 +55,16 @@ Claude ⇄ (stdio) revit_mcp.py ⇄ (TCP 127.0.0.1:9878, JSON mỗi dòng) ⇄ a
 - Cổng chỉ nghe `127.0.0.1`. Tắt: **Archivina MCP > Server**.
 - Lệnh chạy qua ExternalEvent: Revit đang mở hộp thoại / đang trong lệnh thì chờ; quá 60 s chưa nhận → lệnh bị **huỷ** (không chạy muộn).
 
-## Đã kiểm tra (12/10/2026, Revit 2026.0 build 26.0.4.409, file `6.SAPA-A-SDV2.rvt`)
-- `rv_ket_noi`, `rv_thong_tin`, `rv_liet_ke`, `rv_khoi_luong`, nạp nóng core – chạy đúng.
+## Đã kiểm tra (12/10/2026, Revit 2026.0 build 26.0.4.409)
+- File `6.SAPA-A-SDV2.rvt`: `rv_ket_noi`, `rv_thong_tin`, `rv_liet_ke`, `rv_khoi_luong`, nạp nóng core.
+- **Chốt chặn file gốc (core 1.4.1) – 20/20 đạt**, trên file thử `05-Skill-Test\ket-qua-Safety-Revit\` (file gốc giả lập trong
+  `02-Ban-Ve-Goc\`): từ chối `rv_dat_tham_so` / `rv_dung_can_ho` / `rv_tao_view_3d` trên file gốc; `rv_luu_ban_sao` mặc định vào
+  `03-Ban-Sao-Lam-Viec\`, từ chối lưu vào `02-Ban-Ve-Goc` / trùng tên; trên bản sao: từ chối xoá level có sẵn (rollback toàn bộ),
+  giữ nguyên cao độ level có sẵn, xoá được phần tử Claude dựng; file gốc **không đổi SHA-256**.
+- **Tool đọc (core 1.4.2) – 13/13 đạt** trên phòng thử 4000 × 3000: `rv_phong` (Finish 12,0 m², tim tường 12,71 m², biên khớp),
+  `rv_canh_bao`, `rv_danh_sach_view`, `rv_bang_thong_ke` (liệt kê), `rv_chi_tiet`, `rv_chon`, `rv_dang_chon`, `rv_chup_view`,
+  `rv_xuat_dwg` (DWG `INSUNITS=4`, `LUNITS=2` – đúng chuẩn mm; từ chối thư mục đã có file); `rv_tao_du_an` ra Metric, mm / m².
 
 ## Chưa kiểm tra
-- Chốt chặn 1.4.0: mới thử trạng thái bản sao trên dự án trong `05-Skill-Test`; **chưa thử từ chối trên file gốc** và `rv_luu_ban_sao` trên Revit.
-- `rv_phong`, `rv_canh_bao`, `rv_bang_thong_ke`, `rv_danh_sach_view`, `rv_chup_view`, `rv_xuat_dwg`, `rv_dat_tham_so` chưa chạy thử.
+- `rv_bang_thong_ke` đọc nội dung (dự án thử không có Schedule); `rv_luu_ban_sao` trên dự án có thay đổi chưa lưu / workshared (chỉ có nhánh từ chối trong code).
 - `rv_phong`: `Room.Area` theo cài đặt *Area and Volume Computations* của dự án – chưa đối chiếu với quy tắc đo Archivina.

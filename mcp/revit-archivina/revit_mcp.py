@@ -219,6 +219,15 @@ def rv_xuat_dwg(view_ids: list[int] | None = None, thu_muc: str = "", ten: str =
                       setup=setup or None, merged=gop_view))
 
 
+# ---------------------------------------------------------------------------------------------------------------- mo file
+@mcp.tool()
+def rv_mo_file(duong_dan: str) -> str:
+    """MO file .rvt trong Revit va kich hoat (CHI MO, khong sua / khong luu). Du an dang mo khac giu nguyen.
+    File workshared: tu choi (nguoi dung tu mo, Detach from Central neu can). Ket qua co 'ban_sao.la_ban_sao':
+    false = file goc -> moi lenh ghi bi tu choi, muon sua phai rv_luu_ban_sao truoc."""
+    return _json(_goi("open_document", cho_s=120, path=os.path.abspath(duong_dan)))
+
+
 # ---------------------------------------------------------------------------------------------------------------- ban sao
 @mcp.tool()
 def rv_luu_ban_sao(duong_dan: str = "", cho_phep_chua_luu: bool = False) -> str:
@@ -249,8 +258,8 @@ def rv_dat_tham_so(muc: list[dict]) -> str:
 
 @mcp.tool()
 def rv_tao_du_an(duong_dan_rvt: str, template: str = "", ten_du_an: str = "") -> str:
-    """TAO DU AN MOI (GHI – phai HOI nguoi dung truoc, can 'Cho phep ghi'): tu template (.rte, trong = template mac dinh
-    cua Revit), luu ra file .rvt MOI (tu choi neu file da ton tai hoac nam trong 02-Ban-Ve-Goc), mo va kich hoat trong
+    """TAO DU AN MOI (GHI – phai HOI nguoi dung truoc, can 'Cho phep ghi'): tu template (.rte, trong = DefaultMetric.rte
+    hoac bien moi truong REVIT_MCP_TEMPLATE; don vi dat mm / m2 theo quy chuan Archivina), luu ra file .rvt MOI (tu choi neu file da ton tai hoac nam trong 02-Ban-Ve-Goc), mo va kich hoat trong
     Revit. Du an dang mo khac khong bi dong / sua. File tao ra duoc ghi so 'du an Claude tao' (duoc ghi / don template)."""
     return _json(_goi("new_project", path=duong_dan_rvt, template=template, project_name=ten_du_an))
 

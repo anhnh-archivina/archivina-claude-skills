@@ -137,6 +137,26 @@ namespace ArchivinaRevitMcp.Core
             };
         }
 
+        // ---------------------------------------------------------------- open_document (chỉ mở, không sửa)
+        public static JsonNode OpenDocument(UIApplication ui, JsonObject p)
+        {
+            string path = p["path"]?.ToString() ?? throw new Exception("Thiếu path (.rvt).");
+            path = Path.GetFullPath(path);
+            if (!File.Exists(path)) throw new Exception($"Không thấy file '{path}'.");
+            BasicFileInfo bfi = BasicFileInfo.Extract(path);
+            if (bfi.IsWorkshared)
+                throw new Exception("File workshared – không mở từ MCP (tránh tạo local / khoá central). Anh tự mở (Detach from Central nếu cần).");
+            UIDocument uidoc = ui.OpenAndActivateDocument(path);
+            Document doc = uidoc.Document;
+            return new JsonObject
+            {
+                ["dang_mo"] = doc.PathName,
+                ["title"] = doc.Title,
+                ["phien_ban_file"] = bfi.Format,
+                ["ban_sao"] = StatusJson(doc),
+            };
+        }
+
         static string DefaultCopyPath(string src, string title)
         {
             string stamp = DateTime.Now.ToString("yyyyMMdd_HHmm");
