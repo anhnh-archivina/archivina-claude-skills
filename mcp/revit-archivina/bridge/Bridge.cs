@@ -7,7 +7,8 @@
 //   - Mặc định CHỈ ĐỌC. Ghi bị khoá tới khi người dùng bấm tab "Archivina MCP" > "Cho phép ghi".
 //     Mỗi lần mở Revit lại về chế độ chỉ đọc.
 //   - Mọi thao tác ghi nằm trong 1 Transaction "Claude MCP …" -> Ctrl+Z hoàn tác được; lỗi thì RollBack.
-//   - Không lưu, không SaveAs, không ghi đè file: xuất ảnh / DWG từ chối nếu thư mục đích đã có file.
+//   - Không Save / ghi đè file đang mở. Lệnh ghi chỉ chạy trên BẢN SAO (core\Safety.cs) – file gốc bị từ chối.
+//     Xuất ảnh / DWG từ chối nếu thư mục đích đã có file.
 //   - Lệnh chạy trên luồng API của Revit qua ExternalEvent: Revit đang mở hộp thoại / đang chạy lệnh thì chờ.
 // Giao thức: mỗi yêu cầu 1 dòng JSON {"cmd": "...", "params": {...}} kết thúc "\n";
 //            trả 1 dòng JSON {"ok": true, "result": ...} hoặc {"ok": false, "error": "..."}.
@@ -43,10 +44,24 @@ namespace ArchivinaRevitMcp
     // ------------------------------------------------------------------------------------------ ứng dụng / ribbon
     public class App : IExternalApplication
     {
-        public const string Version = "1.0.0";
+        public const string Version = "1.0.2";
         public const string Tab = "Archivina MCP";
         public static int Port = 9878;
-        public static volatile bool WriteEnabled = false;
+        // Revit 2026 có thể nạp lớp nút ribbon (IExternalCommand) vào ngữ cảnh assembly KHÁC với IExternalApplication
+        // -> biến static không dùng chung. Trạng thái để ở AppDomain (chung toàn tiến trình), nút gọi server qua delegate.
+        const string KeyWrite = "ArchivinaMcp.WriteEnabled", KeyStatus = "ArchivinaMcp.Status", KeyToggleServer = "ArchivinaMcp.ToggleServer";
+        public static bool WriteEnabled
+        {
+            get => AppDomain.CurrentDomain.GetData(KeyWrite) is bool b && b;
+            set => AppDomain.CurrentDomain.SetData(KeyWrite, value);
+        }
+        internal static string SharedStatus() =>
+            AppDomain.CurrentDomain.GetData(KeyStatus) is Func<string> f ? f() : StatusText();
+        internal static void SharedToggleServer()
+        {
+            if (AppDomain.CurrentDomain.GetData(KeyToggleServer) is Action a) a();
+            else throw new Exception("Không tìm thấy server của add-in (chưa khởi động?).");
+        }
         internal static Server Server;
         internal static ExternalEvent Event;
         internal static string LastError;
@@ -56,6 +71,17 @@ namespace ArchivinaRevitMcp
             if (int.TryParse(Environment.GetEnvironmentVariable("REVIT_MCP_PORT"), out int p) && p > 0) Port = p;
             Event = ExternalEvent.Create(new RequestHandler());
             Server = new Server(Port);
+            WriteEnabled = false; // mỗi lần mở Revit về chỉ đọc
+            AppDomain.CurrentDomain.SetData(KeyStatus, (Func<string>)StatusText);
+            AppDomain.CurrentDomain.SetData(KeyToggleServer, (Action)(() =>
+            {
+                try
+                {
+                    if (Server.Running) Server.Stop(); else Server.Start();
+                    LastError = null;
+                }
+                catch (Exception ex) { LastError = ex.Message; }
+            }));
             try { Server.Start(); } catch (Exception ex) { LastError = ex.Message; }
 
             try { app.CreateRibbonTab(Tab); } catch { }
@@ -64,7 +90,8 @@ namespace ArchivinaRevitMcp
             panel.AddItem(new PushButtonData("amcp_status", "Trạng thái", asm, typeof(CmdStatus).FullName)
                 { ToolTip = "Trạng thái cầu Claude MCP (cổng, chế độ ghi)" });
             panel.AddItem(new PushButtonData("amcp_write", "Cho phép ghi\n(bật / tắt)", asm, typeof(CmdToggleWrite).FullName)
-                { ToolTip = "Cho phép Claude đặt tham số phần tử (mỗi lần ghi là 1 Transaction, Ctrl+Z hoàn tác)" });
+                { ToolTip = "Cho phép Claude GHI vào dự án đang mở: đặt tham số, dựng tường / cửa / sàn / phòng, vẽ 2D, tạo view 3D, xoá / lật phần tử do Claude dựng. "
+                          + "Chỉ chạy trên BẢN SAO (file gốc bị từ chối – lưu bản sao trước). Mỗi lệnh là 1 Transaction, Ctrl+Z hoàn tác." });
             panel.AddItem(new PushButtonData("amcp_server", "Server\n(bật / tắt)", asm, typeof(CmdToggleServer).FullName)
                 { ToolTip = "Bật / tắt cổng 127.0.0.1 cho Claude" });
             return Result.Succeeded;
@@ -83,7 +110,7 @@ namespace ArchivinaRevitMcp
             sb.AppendLine($"Archivina Revit MCP {Version}");
             sb.AppendLine($"Server: {(Server != null && Server.Running ? $"ĐANG CHẠY – 127.0.0.1:{Port}" : "TẮT")}");
             sb.AppendLine($"Core: {CoreLoader.LoadedVersion ?? "(chưa nạp – nạp ở lệnh đầu tiên)"}");
-            sb.AppendLine($"Chế độ: {(WriteEnabled ? "CHO PHÉP GHI (đặt tham số)" : "CHỈ ĐỌC")}");
+            sb.AppendLine($"Chế độ: {(WriteEnabled ? "CHO PHÉP GHI (chỉ trên bản sao)" : "CHỈ ĐỌC")}");
             if (!string.IsNullOrEmpty(LastError)) sb.AppendLine($"Lỗi gần nhất: {LastError}");
             return sb.ToString();
         }
@@ -94,7 +121,7 @@ namespace ArchivinaRevitMcp
     {
         public Result Execute(ExternalCommandData d, ref string message, ElementSet elements)
         {
-            TaskDialog.Show("Archivina MCP", App.StatusText());
+            TaskDialog.Show("Archivina MCP", App.SharedStatus());
             return Result.Succeeded;
         }
     }
@@ -106,7 +133,8 @@ namespace ArchivinaRevitMcp
         {
             App.WriteEnabled = !App.WriteEnabled;
             TaskDialog.Show("Archivina MCP", App.WriteEnabled
-                ? "Đã CHO PHÉP Claude ghi (đặt tham số). Mỗi lần ghi là 1 Transaction \"Claude MCP\" – Ctrl+Z hoàn tác.\nBấm lại để khoá."
+                ? "Đã CHO PHÉP Claude GHI: đặt tham số, dựng mô hình (tường, cửa, sàn, phòng), vẽ 2D, tạo view 3D, xoá / lật phần tử do Claude dựng.\n"
+                  + "Chỉ chạy trên BẢN SAO – file gốc bị từ chối. Mỗi lệnh là 1 Transaction \"Claude MCP\" – Ctrl+Z hoàn tác.\nBấm lại để khoá."
                 : "Đã KHOÁ ghi – Claude chỉ đọc.");
             return Result.Succeeded;
         }
@@ -117,13 +145,9 @@ namespace ArchivinaRevitMcp
     {
         public Result Execute(ExternalCommandData d, ref string message, ElementSet elements)
         {
-            try
-            {
-                if (App.Server.Running) App.Server.Stop(); else App.Server.Start();
-                App.LastError = null;
-            }
+            try { App.SharedToggleServer(); }
             catch (Exception ex) { App.LastError = ex.Message; }
-            TaskDialog.Show("Archivina MCP", App.StatusText());
+            TaskDialog.Show("Archivina MCP", App.SharedStatus());
             return Result.Succeeded;
         }
     }

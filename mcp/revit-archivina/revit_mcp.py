@@ -4,12 +4,15 @@
 
 Muc dich : cho Claude doc du an Revit dang mo (thong tin, link Revit/CAD, phan tu, tham so, phong / vung dien tich
            kem bien, canh bao, bang thong ke, anh view), xuat DWG (mm) de dua vao pipeline AutoCAD, va - CHI KHI
-           nguoi dung bat trong Revit - dat tham so phan tu.
+           nguoi dung bat trong Revit VA tren BAN SAO - dat tham so / dung mo hinh.
 Kien truc: Claude <-stdio-> revit_mcp.py <-TCP 127.0.0.1:9878, JSON moi dong-> ArchivinaRevitMcp.dll (trong Revit, ExternalEvent)
 Nguyen tac (quy tac Archivina):
-  - Mac dinh CHI DOC. Ghi (rv_dat_tham_so) bi khoa o phia Revit (tab Archivina MCP > Cho phep ghi) - Claude phai HOI
-    nguoi dung truoc khi goi, va nguoi dung phai bat khoa.
-  - Moi lan ghi la 1 Transaction "Claude MCP" => Ctrl+Z hoan tac. Khong luu, khong SaveAs, khong ghi de file.
+  - Mac dinh CHI DOC. Ghi (rv_dat_tham_so, rv_dung_can_ho, rv_ve_2d, rv_tao_view_3d, rv_tao_du_an) bi khoa o phia
+    Revit (tab Archivina MCP > Cho phep ghi) - Claude phai HOI nguoi dung truoc khi goi, va nguoi dung phai bat khoa.
+  - KHONG SUA FILE GOC: lenh ghi chi chay tren BAN SAO (core/Safety.cs) - file do Claude tao / luu ban sao
+    (rv_luu_ban_sao), nam trong 03-Ban-Sao-Lam-Viec / 05-Skill-Test / thu muc tam; file khac bi tu choi.
+    Lenh xoa / lat chi tac dung len phan tu do Claude dung; khong doi ten / cao do / xoa level, family, vat lieu co san.
+  - Moi lan ghi la 1 Transaction "Claude MCP" => Ctrl+Z hoan tac. Khong Save file dang mo, khong ghi de file.
   - Don vi vao/ra: dai mm, dien tich m2, the tich m3 (toa do theo goc noi bo cua Revit).
 Dang ky voi Claude Code (stdio):
     claude mcp add --scope user revit-archivina -- "<python.exe>" "<duong dan>\\revit_mcp.py"
@@ -36,8 +39,10 @@ mcp = MCPServer(
         "Noi voi Revit 2026 DANG MO (add-in ArchivinaRevitMcp, cong 127.0.0.1:9878). Mac dinh CHI DOC: rv_ket_noi -> "
         "rv_thong_tin (don vi, level, link Revit/CAD ~ xref, so canh bao) -> rv_liet_ke / rv_chi_tiet / rv_dang_chon -> "
         "rv_phong (Rooms/Areas, dien tich m2, bien thong thuy) -> rv_canh_bao / rv_bang_thong_ke / rv_chup_view. "
-        "Xuat DWG mm cho pipeline AutoCAD: rv_xuat_dwg (thu muc moi). Ghi (rv_dat_tham_so) phai HOI nguoi dung truoc va "
-        "nguoi dung phai bam 'Cho phep ghi' trong tab Archivina MCP cua Revit; Ctrl+Z hoan tac. Don vi: mm, m2. "
+        "Xuat DWG mm cho pipeline AutoCAD: rv_xuat_dwg (thu muc moi). Ghi (rv_dat_tham_so, rv_dung_can_ho, rv_ve_2d, "
+        "rv_tao_view_3d, rv_tao_du_an) phai HOI nguoi dung truoc va nguoi dung phai bam 'Cho phep ghi' trong tab Archivina MCP; "
+        "KHONG SUA FILE GOC: lenh ghi chi chay tren BAN SAO - xem rv_ket_noi 'du_an_dang_mo.la_ban_sao'; neu false thi "
+        "HOI nguoi dung roi rv_luu_ban_sao truoc. Ctrl+Z hoan tac. Don vi: mm, m2. "
         "Phan tu dinh danh bang id (ElementId)."
     ),
 )
@@ -214,18 +219,72 @@ def rv_xuat_dwg(view_ids: list[int] | None = None, thu_muc: str = "", ten: str =
                       setup=setup or None, merged=gop_view))
 
 
+# ---------------------------------------------------------------------------------------------------------------- ban sao
+@mcp.tool()
+def rv_luu_ban_sao(duong_dan: str = "", cho_phep_chua_luu: bool = False) -> str:
+    """LUU BAN SAO du an dang mo ra file .rvt MOI (SaveAs, khong ghi de, khong luu vao 02-Ban-Ve-Goc). Sau lenh, Revit
+    lam viec tren BAN SAO; file goc tren dia giu nguyen. Bat buoc truoc moi lenh ghi khi du an dang mo la file goc.
+    Phai HOI nguoi dung truoc (doi file dang lam viec cua ho). Khong can 'Cho phep ghi' (khong sua mo hinh).
+    duong_dan: de trong = mac dinh (<du an>/03-Ban-Sao-Lam-Viec/ neu file goc nam trong 02-Ban-Ve-Goc, nguoc lai
+               03-Cong-Cu/05-Skill-Test/ban-sao-revit/), ten <ten goc>_BanSao_YYYYMMDD_HHMM.rvt.
+    cho_phep_chua_luu: du an co thay doi chua luu -> mac dinh tu choi (thay doi se sang ban sao, file goc giu ban luu
+               lan cuoi); chi dat True khi nguoi dung dong y. Du an workshared: tu choi (dung Detach from Central)."""
+    return _json(_goi("save_copy", cho_s=120, path=os.path.abspath(duong_dan) if duong_dan else None,
+                      cho_phep_chua_luu=cho_phep_chua_luu))
+
+
 # ---------------------------------------------------------------------------------------------------------------- tool ghi (khoa o Revit)
 @mcp.tool()
 def rv_dat_tham_so(muc: list[dict]) -> str:
     """DAT THAM SO phan tu trong Revit dang mo (GHI – phai HOI nguoi dung truoc; nguoi dung phai bam 'Cho phep ghi' trong
     tab Archivina MCP, neu khoa se bao loi). Tat ca trong 1 Transaction "Claude MCP - dat tham so" => Ctrl+Z hoan tac;
-    muc nao loi thi bo qua, khong muc nao thanh cong thi RollBack. Khong luu file.
+    muc nao loi thi bo qua, khong muc nao thanh cong thi RollBack. Khong luu file. CHI chay tren BAN SAO: file goc bi add-in tu choi -> goi rv_luu_ban_sao truoc.
 
     muc: [{"id": 12345, "param": "Comments", "value": "..."}, ...]
       param: ten tham so (nhu tren Properties) hoac BuiltInParameter ('ALL_MODEL_INSTANCE_COMMENTS', 'ROOM_NAME'...).
       value: so -> theo mm / m2 / m3 / do voi tham so do luong; chuoi -> dat bang SetValueString (theo don vi du an)
              voi tham so so thuc, hoac gia tri chuoi. Ket qua tra 'truoc' / 'sau' tung muc."""
     return _json(_goi("set_params", items=muc))
+
+
+@mcp.tool()
+def rv_tao_du_an(duong_dan_rvt: str, template: str = "", ten_du_an: str = "") -> str:
+    """TAO DU AN MOI (GHI – phai HOI nguoi dung truoc, can 'Cho phep ghi'): tu template (.rte, trong = template mac dinh
+    cua Revit), luu ra file .rvt MOI (tu choi neu file da ton tai hoac nam trong 02-Ban-Ve-Goc), mo va kich hoat trong
+    Revit. Du an dang mo khac khong bi dong / sua. File tao ra duoc ghi so 'du an Claude tao' (duoc ghi / don template)."""
+    return _json(_goi("new_project", path=duong_dan_rvt, template=template, project_name=ten_du_an))
+
+
+@mcp.tool()
+def rv_dung_can_ho(duong_dan_spec_json: str) -> str:
+    """DUNG MO HINH CAN HO vao du an DANG ACTIVE (GHI – phai HOI nguoi dung truoc, can 'Cho phep ghi'). 1 TransactionGroup
+    "Claude MCP - dung can ho" (Ctrl+Z hoan tac, loi -> RollBack toan bo). Khong luu file. CHI chay tren BAN SAO: file goc bi add-in tu choi -> goi rv_luu_ban_sao truoc.
+    Phan tu tao ra duoc danh dau; 'delete' / 'flip' chi dung cho phan tu Claude da dung. Tren du an khong do Claude tao:
+    khong doi ten / cao do / xoa level co san, khong doi ten family, khong sua kieu / vat lieu co san (bao trong canh_bao).
+    Spec JSON (mm): levels [{name, elev}], wall_types [{name, width, material}], walls [{tag, type, p0, p1, level,
+    top_level | height}], columns [{pt, b, h, rot, level, top_level}], openings [{cat door|window, family_name,
+    type_name, source_family [..], width, height, sill, pt, host (tag tuong), facing, hand, mark}], curtains [{type_name,
+    p0, p1, height}], floors [{type_name, width, material, loop}], separations [{p0, p1}], rooms [{name, pt, top_level}].
+    level / top_level la chi so trong levels. Ten family / type nen bat dau 'Archivina_'."""
+    with open(duong_dan_spec_json, encoding="utf-8") as f:
+        spec = json.load(f)
+    return _json(_goi("build_apartment", **spec))
+
+
+@mcp.tool()
+def rv_tao_view_3d(ten: str = "Archivina_3D", mo: bool = False) -> str:
+    """TAO VIEW 3D isometric (GHI – hoi truoc, can 'Cho phep ghi'). mo=True: chuyen sang view vua tao. CHI chay tren BAN SAO: file goc bi add-in tu choi -> goi rv_luu_ban_sao truoc."""
+    return _json(_goi("create_3d", name=ten, open=mo))
+
+
+@mcp.tool()
+def rv_ve_2d(duong_dan_json: str) -> str:
+    """VE NET CHI TIET 2D (Detail Lines) vao mat bang, moi nhom -> Detail Group (GHI – hoi truoc, can 'Cho phep ghi').
+    JSON (mm): {level | view_id, styles [{name, color [r,g,b], weight}], groups [{name, style, items [{t:'l', p:[x0,y0,x1,y1]}
+    | {t:'a', p:[x0,y0,xm,ym,x1,y1]}]}]}. Dung cho noi that 2D tach tu DWG (tao_noi_that_2d_tu_dxf.py). CHI chay tren BAN SAO: file goc bi add-in tu choi -> goi rv_luu_ban_sao truoc."""
+    with open(duong_dan_json, encoding="utf-8") as f:
+        spec = json.load(f)
+    return _json(_goi("draw_2d", **spec))
 
 
 if __name__ == "__main__":

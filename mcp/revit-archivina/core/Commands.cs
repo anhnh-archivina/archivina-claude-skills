@@ -8,7 +8,8 @@
 //   - Mặc định CHỈ ĐỌC. Ghi bị khoá tới khi người dùng bấm tab "Archivina MCP" > "Cho phép ghi".
 //     Mỗi lần mở Revit lại về chế độ chỉ đọc.
 //   - Mọi thao tác ghi nằm trong 1 Transaction "Claude MCP …" -> Ctrl+Z hoàn tác được; lỗi thì RollBack.
-//   - Không lưu, không SaveAs, không ghi đè file: xuất ảnh / DWG từ chối nếu thư mục đích đã có file.
+//   - Không Save / ghi đè file đang mở. Lệnh GHI chỉ chạy trên BẢN SAO (Safety.cs): file gốc bị từ chối, phải
+//     save_copy (SaveAs ra file .rvt MỚI) trước. Xuất ảnh / DWG từ chối nếu thư mục đích đã có file.
 //   - Lệnh chạy trên luồng API của Revit qua ExternalEvent: Revit đang mở hộp thoại / đang chạy lệnh thì chờ.
 // Giao thức: mỗi yêu cầu 1 dòng JSON {"cmd": "...", "params": {...}} kết thúc "\n";
 //            trả 1 dòng JSON {"ok": true, "result": ...} hoặc {"ok": false, "error": "..."}.
@@ -101,6 +102,11 @@ namespace ArchivinaRevitMcp.Core
                 case "export_dwg": return ExportDwg(ui, p);
                 case "quantities": return Quantities(ui, p);
                 case "set_params": return SetParams(ui, p);
+                case "save_copy": return Safety.SaveCopy(ui, p);
+                case "new_project": return Modeling.NewProject(ui, p);
+                case "build_apartment": return Modeling.BuildApartment(ui, p);
+                case "create_3d": return Modeling.Create3D(ui, p);
+                case "draw_2d": return Modeling.Draw2D(ui, p);
                 default: throw new Exception("Lệnh không hỗ trợ: " + cmd);
             }
         }
@@ -344,6 +350,11 @@ namespace ArchivinaRevitMcp.Core
                 ["language"] = ui.Application.Language.ToString(),
                 ["port"] = Ctx.Port,
                 ["write_enabled"] = Ctx.WriteEnabled,
+                ["du_an_dang_mo"] = d == null ? null : Safety.StatusJson(d),
+                ["chan_doan_co_ghi_appdomain"] = AppDomain.CurrentDomain.GetData("ArchivinaMcp.WriteEnabled")?.ToString() ?? "null",
+                ["chan_doan_assembly"] = new JsonArray(AppDomain.CurrentDomain.GetAssemblies()
+                    .Where(a => a.GetName().Name == "ArchivinaRevitMcp")
+                    .Select(a => (JsonNode)($"{a.GetName().Version} | {System.Runtime.Loader.AssemblyLoadContext.GetLoadContext(a)?.Name} | {(a.IsDynamic ? "" : a.Location)}")).ToArray()),
                 ["active_document"] = d?.Title,
                 ["open_documents"] = new JsonArray(ui.Application.Documents.Cast<Document>()
                     .Select(x => (JsonNode)(x.Title + (x.IsLinked ? " (link)" : ""))).ToArray()),
@@ -361,6 +372,7 @@ namespace ArchivinaRevitMcp.Core
                 ["is_family"] = doc.IsFamilyDocument,
                 ["is_workshared"] = doc.IsWorkshared,
                 ["is_read_only"] = doc.IsReadOnly,
+                ["ban_sao"] = Safety.StatusJson(doc),
             };
             try
             {
@@ -860,9 +872,8 @@ namespace ArchivinaRevitMcp.Core
         // ---------------------------------------------------------------- lệnh ghi (khoá)
         static JsonNode SetParams(UIApplication ui, JsonObject p)
         {
-            if (!Ctx.WriteEnabled)
-                throw new Exception("Ghi đang KHOÁ. Người dùng phải bấm tab 'Archivina MCP' > 'Cho phép ghi' trong Revit.");
             Document doc = Doc(ui);
+            Safety.RequireWritableCopy(doc);
             if (doc.IsReadOnly) throw new Exception("Dự án đang mở chỉ đọc.");
             if (!(p["items"] is JsonArray items) || items.Count == 0) throw new Exception("Thiếu items.");
             var res = new JsonArray();

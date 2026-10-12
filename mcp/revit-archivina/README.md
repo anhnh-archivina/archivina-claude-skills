@@ -5,7 +5,7 @@ Claude ⇄ (stdio) revit_mcp.py ⇄ (TCP 127.0.0.1:9878, JSON mỗi dòng) ⇄ a
                                                                    └─ nạp nóng addin\core\ArchivinaRevitMcp.Core.dll (các lệnh)
 ```
 - `bridge\Bridge.cs` – **loader**: ribbon, server TCP, ExternalEvent. Đổi loader phải đóng Revit: `build.ps1 -Loader`.
-- `core\Commands.cs` – **các lệnh**. Build lại bằng `build.ps1` (không tham số) khi Revit đang mở; lệnh kế tiếp tự nạp bản mới (AssemblyLoadContext riêng, đọc bytes – không khoá file).
+- `core\Commands.cs` (đọc, đặt tham số), `core\Modeling.cs` (dựng mô hình), `core\Safety.cs` (**chốt chặn file gốc**) – **các lệnh**. Build lại bằng `build.ps1` (không tham số) khi Revit đang mở; lệnh kế tiếp tự nạp bản mới (AssemblyLoadContext riêng, đọc bytes – không khoá file).
 - Lưu ý kỹ thuật: Revit 2026 tắt serializer JSON phản chiếu → `JsonSerializerOptions` phải có `TypeInfoResolver = new DefaultJsonTypeInfoResolver()`. `build.ps1` phải lưu UTF-8 **có BOM** (PowerShell 5.1).
 
 ## Cài đặt (đã làm 12/10/2026)
@@ -32,11 +32,25 @@ Claude ⇄ (stdio) revit_mcp.py ⇄ (TCP 127.0.0.1:9878, JSON mỗi dòng) ⇄ a
 | `rv_bang_thong_ke` | đọc | nội dung Schedule (đối chiếu bảng thống kê) |
 | `rv_chup_view` | file mới | PNG của view (ExportImage) |
 | `rv_xuat_dwg` | file mới | DWG **mm** vào thư mục mới → dùng tiếp MCP `autocad-archivina` |
-| `rv_dat_tham_so` | **ghi (khoá)** | đặt tham số, 1 Transaction |
+| `rv_luu_ban_sao` | file mới | SaveAs dự án đang mở ra `.rvt` MỚI (không ghi đè, không vào `02-Ban-Ve-Goc`) → Revit làm việc trên bản sao |
+| `rv_dat_tham_so` | **ghi (khoá, bản sao)** | đặt tham số, 1 Transaction |
+| `rv_tao_du_an` | **ghi (khoá)** | dự án mới từ template → `.rvt` mới, ghi sổ "Claude tạo" |
+| `rv_dung_can_ho` | **ghi (khoá, bản sao)** | dựng level, tường, cột, cửa, vách kính, sàn, phòng theo spec JSON (mm), 1 TransactionGroup |
+| `rv_tao_view_3d` | **ghi (khoá, bản sao)** | view 3D isometric |
+| `rv_ve_2d` | **ghi (khoá, bản sao)** | nét chi tiết 2D + Detail Group |
 
-## An toàn
+## An toàn – không sửa / ghi đè dữ liệu gốc (12/10/2026, core 1.4.0)
 - Mặc định **chỉ đọc**. Ghi chỉ chạy khi người dùng bấm **Archivina MCP > Cho phép ghi** (mỗi lần mở Revit lại về khoá).
-- Mỗi lần ghi là 1 Transaction "Claude MCP – đặt tham số" → `Ctrl+Z`. Không Save / SaveAs; xuất ảnh / DWG từ chối thư mục đã có file.
+- **Chốt chặn file gốc** (`core\Safety.cs`): lệnh ghi chỉ chạy khi dự án đang mở là **bản sao**:
+  file do Claude tạo (`rv_tao_du_an`) hoặc lưu ra (`rv_luu_ban_sao`) – sổ `%LOCALAPPDATA%\ArchivinaRevitMcp\ban_sao.txt`;
+  hoặc nằm trong `…\03-Ban-Sao-Lam-Viec\`, `03-Cong-Cu\05-Skill-Test\`, thư mục tạm; hoặc dự án mới chưa lưu.
+  File trong `02-Ban-Ve-Goc\`, `@Archivina 2026\`… bị **từ chối** → `rv_luu_ban_sao` trước. Trạng thái: `rv_ket_noi` → `du_an_dang_mo`.
+- Không bao giờ `Save` file đang mở; `SaveAs` chỉ ra file **mới** (`OverwriteExistingFile = false`); xuất ảnh / DWG từ chối thư mục đã có file.
+- Phần tử Claude tạo được **đánh dấu** (Extensible Storage trên Project Information) → `delete` / `flip` chỉ tác dụng lên phần tử đã đánh dấu.
+- Trên dự án không do Claude tạo: **không** đổi tên / cao độ / xoá level có sẵn, **không** đổi tên family, **không** sửa kiểu tường / sàn / cửa / vật liệu có sẵn trùng tên – báo trong `canh_bao`.
+  Dự án do Claude tạo: chỉ xoá level template **không còn phần tử**.
+- Cảnh báo Revit trong lệnh dựng được ghi vào kết quả (`canh_bao`), không xoá im lặng.
+- Mỗi lệnh ghi là 1 Transaction / TransactionGroup "Claude MCP …" → `Ctrl+Z`.
 - Cổng chỉ nghe `127.0.0.1`. Tắt: **Archivina MCP > Server**.
 - Lệnh chạy qua ExternalEvent: Revit đang mở hộp thoại / đang trong lệnh thì chờ; quá 60 s chưa nhận → lệnh bị **huỷ** (không chạy muộn).
 
@@ -44,5 +58,6 @@ Claude ⇄ (stdio) revit_mcp.py ⇄ (TCP 127.0.0.1:9878, JSON mỗi dòng) ⇄ a
 - `rv_ket_noi`, `rv_thong_tin`, `rv_liet_ke`, `rv_khoi_luong`, nạp nóng core – chạy đúng.
 
 ## Chưa kiểm tra
+- Chốt chặn 1.4.0: mới thử trạng thái bản sao trên dự án trong `05-Skill-Test`; **chưa thử từ chối trên file gốc** và `rv_luu_ban_sao` trên Revit.
 - `rv_phong`, `rv_canh_bao`, `rv_bang_thong_ke`, `rv_danh_sach_view`, `rv_chup_view`, `rv_xuat_dwg`, `rv_dat_tham_so` chưa chạy thử.
 - `rv_phong`: `Room.Area` theo cài đặt *Area and Volume Computations* của dự án – chưa đối chiếu với quy tắc đo Archivina.
