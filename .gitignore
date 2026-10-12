@@ -6,3 +6,8 @@ __pycache__/
 *.skill
 # thu vien block thiet bi tran (DWG 1:1) can di kem skill
 !skills/*/assets/**/*.dwg
+
+# add-in Revit: ket qua build
+bin/
+obj/
+mcp/revit-archivina/addin/

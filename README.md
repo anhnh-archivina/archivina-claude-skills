@@ -12,6 +12,7 @@ Bộ skill Claude Code dùng nội bộ Archivina để kiểm soát hồ sơ b�
 | Server | Mô tả |
 |---|---|
 | [`autocad-archivina`](mcp/autocad-archivina/README.md) | Nối Claude Code với AutoCAD / AutoCAD Architecture qua AutoCAD Core Console chạy ngầm trên bản sao: đọc thông tin DWG, xuất DXF (nổ đối tượng ACA), dựng polyline phòng/căn hộ, vẽ vào bản sao, kiểm tra nhãn, chạy LISP trên bản sao, soát trần (`soat_tran`). Dùng skill `dien-tich-ch`, `thiet-ke-tran-ch`. |
+| [`revit-archivina`](mcp/revit-archivina/README.md) | Nối Claude Code với **Revit 2026 đang mở** qua add-in C# (.NET 8, cổng 127.0.0.1:9878, core nạp nóng): thông tin dự án, link Revit/CAD, phần tử, tham số, Rooms/Areas kèm biên, khối lượng theo vật liệu, cảnh báo, Schedule, ảnh view, xuất DWG mm. Mặc định chỉ đọc; đặt tham số khi người dùng bật trong Revit. Cài: `mcp/revit-archivina/build.ps1 -Loader`. |
 
 Cài: `python -m pip install --user -r mcp/autocad-archivina/requirements.txt`, rồi
 `claude mcp add autocad-archivina --scope user -e PYTHONUTF8=1 -- "<python.exe>" "<đường dẫn>\autocad_mcp.py"`

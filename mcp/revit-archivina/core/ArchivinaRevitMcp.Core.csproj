@@ -1,0 +1,30 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Core (các lệnh) của add-in Revit 2026 – loader ArchivinaRevitMcp.dll nạp nóng từ addin\core\. Biên dịch: ..\build.ps1 -->
+  <PropertyGroup>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <AssemblyName>ArchivinaRevitMcp.Core</AssemblyName>
+    <RootNamespace>ArchivinaRevitMcp.Core</RootNamespace>
+    <PlatformTarget>x64</PlatformTarget>
+    <Nullable>disable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <LangVersion>latest</LangVersion>
+    <EnableDynamicLoading>true</EnableDynamicLoading>
+    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+    <GenerateDependencyFile>false</GenerateDependencyFile>
+    <CopyLocalLockFileAssemblies>false</CopyLocalLockFileAssemblies>
+    <RevitDir Condition="'$(RevitDir)' == ''">D:\Revit\Revit 2026</RevitDir>
+    <Version>1.1.2</Version>
+    <!-- RevitAPI tham chiáº¿u Microsoft.VisualBasic 10.1 (runtime Revit cÃ³ sáºµn) â€“ cáº£nh bÃ¡o vÃ´ háº¡i -->
+    <MSBuildWarningsAsMessages>MSB3277</MSBuildWarningsAsMessages>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="RevitAPI">
+      <HintPath>$(RevitDir)\RevitAPI.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="RevitAPIUI">
+      <HintPath>$(RevitDir)\RevitAPIUI.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+  </ItemGroup>
+</Project>
