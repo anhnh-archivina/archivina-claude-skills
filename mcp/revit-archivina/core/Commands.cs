@@ -108,6 +108,7 @@ namespace ArchivinaRevitMcp.Core
                 case "build_apartment": return Modeling.BuildApartment(ui, p);
                 case "create_3d": return Modeling.Create3D(ui, p);
                 case "draw_2d": return Modeling.Draw2D(ui, p);
+                case "build_structure": return Modeling.BuildStructure(ui, p);
                 default: throw new Exception("Lệnh không hỗ trợ: " + cmd);
             }
         }

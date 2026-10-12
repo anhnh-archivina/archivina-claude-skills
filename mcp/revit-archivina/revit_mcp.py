@@ -7,7 +7,7 @@ Muc dich : cho Claude doc du an Revit dang mo (thong tin, link Revit/CAD, phan t
            nguoi dung bat trong Revit VA tren BAN SAO - dat tham so / dung mo hinh.
 Kien truc: Claude <-stdio-> revit_mcp.py <-TCP 127.0.0.1:9878, JSON moi dong-> ArchivinaRevitMcp.dll (trong Revit, ExternalEvent)
 Nguyen tac (quy tac Archivina):
-  - Mac dinh CHI DOC. Ghi (rv_dat_tham_so, rv_dung_can_ho, rv_ve_2d, rv_tao_view_3d, rv_tao_du_an) bi khoa o phia
+  - Mac dinh CHI DOC. Ghi (rv_dat_tham_so, rv_dung_can_ho, rv_dung_ket_cau, rv_ve_2d, rv_tao_view_3d, rv_tao_du_an) bi khoa o phia
     Revit (tab Archivina MCP > Cho phep ghi) - Claude phai HOI nguoi dung truoc khi goi, va nguoi dung phai bat khoa.
   - KHONG SUA FILE GOC: lenh ghi chi chay tren BAN SAO (core/Safety.cs) - file do Claude tao / luu ban sao
     (rv_luu_ban_sao), nam trong 03-Ban-Sao-Lam-Viec / 05-Skill-Test / thu muc tam; file khac bi tu choi.
@@ -39,7 +39,7 @@ mcp = MCPServer(
         "Noi voi Revit 2026 DANG MO (add-in ArchivinaRevitMcp, cong 127.0.0.1:9878). Mac dinh CHI DOC: rv_ket_noi -> "
         "rv_thong_tin (don vi, level, link Revit/CAD ~ xref, so canh bao) -> rv_liet_ke / rv_chi_tiet / rv_dang_chon -> "
         "rv_phong (Rooms/Areas, dien tich m2, bien thong thuy) -> rv_canh_bao / rv_bang_thong_ke / rv_chup_view. "
-        "Xuat DWG mm cho pipeline AutoCAD: rv_xuat_dwg (thu muc moi). Ghi (rv_dat_tham_so, rv_dung_can_ho, rv_ve_2d, "
+        "Xuat DWG mm cho pipeline AutoCAD: rv_xuat_dwg (thu muc moi). Ghi (rv_dat_tham_so, rv_dung_can_ho, rv_dung_ket_cau, rv_ve_2d, "
         "rv_tao_view_3d, rv_tao_du_an) phai HOI nguoi dung truoc va nguoi dung phai bam 'Cho phep ghi' trong tab Archivina MCP; "
         "KHONG SUA FILE GOC: lenh ghi chi chay tren BAN SAO - xem rv_ket_noi 'du_an_dang_mo.la_ban_sao'; neu false thi "
         "HOI nguoi dung roi rv_luu_ban_sao truoc. Ctrl+Z hoan tac. Don vi: mm, m2. "
@@ -278,6 +278,23 @@ def rv_dung_can_ho(duong_dan_spec_json: str) -> str:
     with open(duong_dan_spec_json, encoding="utf-8") as f:
         spec = json.load(f)
     return _json(_goi("build_apartment", **spec))
+
+
+@mcp.tool()
+def rv_dung_ket_cau(duong_dan_spec_json: str) -> str:
+    """DUNG MO HINH KET CAU BTCT vao du an DANG ACTIVE (GHI – phai HOI nguoi dung truoc, can 'Cho phep ghi'; skill
+    dung-ket-cau-revit). Nap / tu tao family 'Archivina_Cot BTCT chu nhat' (Structural Column) va 'Archivina_Dam BTCT chu
+    nhat' (Structural Framing) tham so kieu b, h tu template .rft, luu .rfa vao revit-mcp\\families\\ de dung lai; roi 1
+    TransactionGroup "Claude MCP - dung ket cau" (Ctrl+Z, loi -> RollBack). Khong luu file. CHI chay tren BAN SAO.
+    Spec JSON (mm), do doc_mb_ket_cau.py sinh ra: levels [{name, elev}], grids [{name, p0, p1}], materials [{name, color}],
+    columns [{mark, b, h, pt, rot, level, top_level, base_offset, top_offset, material}] (b theo X, h theo Y truoc khi xoay),
+    beams [{mark, b, h, p0, p1 (tim dam), level, offset (dinh dam so voi level), material}], floors [{type_name, thickness,
+    material, level, offset, loops [vong ngoai, lo...]}], view_3d (ten). Moi level tu tao Structural Plan 'KC - <level>'."""
+    with open(duong_dan_spec_json, encoding="utf-8") as f:
+        spec = json.load(f)
+    spec.setdefault("family_dir", os.path.join(os.path.dirname(os.path.abspath(__file__)), "families"))
+    # tao family lan dau (mo template, dung, luu .rfa) lau hon lenh thuong
+    return _json(_goi("build_structure", cho_s=max(TIMEOUT, 180), **spec))
 
 
 @mcp.tool()

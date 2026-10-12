@@ -22,7 +22,7 @@ using Autodesk.Revit.UI;
 
 namespace ArchivinaRevitMcp.Core
 {
-    internal static class Modeling
+    internal static partial class Modeling
     {
         const double FT = 304.8;
 
