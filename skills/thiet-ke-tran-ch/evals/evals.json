@@ -30,6 +30,12 @@
       "prompt": "Lấy cho tôi block đầu báo khói và miệng gió cấp 1200x150 chuẩn để chèn vào bản vẽ dự án mới.",
       "expected_output": "Chỉ ra assets/thu-vien/FA-SMOKE.dwg và HV-SAG-1200x150.dwg (tỷ lệ 1:1, chèn tỷ lệ 1, điểm chèn tâm, layer A-Thiet bi PCCC / A-HVAC), cách chèn -INSERT MÃ=đường dẫn; không tự sửa bản vẽ người dùng.",
       "files": []
+    },
+    {
+      "id": 6,
+      "prompt": "Bố trí mới thiết bị trần cho mặt bằng tầng H:\\@AI Claude Test\\02-Du-An\\mặt bằng trần căn hộ\\CT3 - Mat bang tang 3-21.dwg (bỏ qua thiết bị có sẵn) rồi so với thiết kế thật.",
+      "expected_output": "Hỏi xác nhận trục khách / ngủ / WC trước khi chạy; làm trên bản sao; bo_tri_tran.py --bo-qua-co-san. PN: hình chữ nhật trục 600, không đối xứng trục giường, không đèn trên thân giường, 2/3/4 đèn mỗi cạnh theo 2500/4000; đầu báo phía chân giường giữa 2 đèn; 1–2 sprinkler trên đường giữa. P. khách: 2 hàng đèn, cửa gió trên hàng đèn, đường giữa có đèn thả (bàn ăn + sofa), đầu báo khói, loa 1/căn, HV-EXG-200; đầu báo nhiệt gần bếp (block 86786/567) + sprinkler 93°C cách 300–600; lỗ thăm sát biên tâm cách tường 450 gần WC/kho/sảnh. WC: 2 đèn (trục bồn cầu cách tường sau 850 + trục sen), quạt hút trên tâm bồn cầu, D65 trục chậu cách tường gương 350. Lô gia > 5,5 m: 2 đèn 1/4–3/4. Báo PCCC/HVAC là sơ bộ; so sánh: WC quạt hút ≥ 95 % trùng vị trí, lô gia đúng số ≥ 45/48.",
+      "files": []
     }
   ]
 }

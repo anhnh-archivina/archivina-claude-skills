@@ -230,7 +230,7 @@ def doc_noi_that(msp, doc, cfg, vung):
 
     def ten_loai(name):
         for k, v in nt.items():
-            if khop(name, v.get("ten", [])):
+            if khop(name, v.get("ten", [])) and not khop(name, v.get("loai_tru", [])):    # vd block den tha "den ban an"
                 return k
         return None
 
@@ -379,7 +379,8 @@ def _lo_khep_gan_dung(chains, khung, r):
 
 
 TEN_SUY_RA = {"ngu": "Phòng ngủ", "wc": "Wc", "khach": "Phòng khách", "an": "Phòng ăn", "bep": "Bếp", "logia": "Lôgia",
-              "khac": "Phòng chưa đặt tên"}
+              "khac": "Phòng chưa đặt tên", "kho": "Kho / P. kỹ thuật"}
+KHO_DT_TOI_DA = 3.0e6      # phong khong ten < 3 m2 co quat hut / mieng hut -> kho / P. ky thuat (MB tran CT1/CT3, chot 20/10/2026)
 
 
 def _loai_theo_noi_that(poly, noi_that, thiet_bi):
@@ -398,6 +399,9 @@ def _loai_theo_noi_that(poly, noi_that, thiet_bi):
         loai.append("bep")
     if not loai and any(d["cat"]["nhom"] == "den_ngoai" and poly.contains(Point(d["x"], d["y"])) for d in thiet_bi):
         loai.append("logia")
+    if not loai and poly.area < KHO_DT_TOI_DA and \
+            any(d["cat"]["nhom"] in ("hut_mui", "gio_hut") and poly.contains(Point(d["x"], d["y"])) for d in thiet_bi):
+        loai.append("kho")
     return loai or ["khac"]
 
 
@@ -619,8 +623,10 @@ def kc_tuong(room_poly, x, y):
 
 
 def bo_tri_lai_den(room, dens, cam, ng, giuong):
-    """Luoi den chung moi: cach tuong ~600 (toi thieu 500), tam-tam >= 1200, theo truc giuong neu co, khong vao vung cam.
-    So den <= so den hien co (giam den chu khong ep khoang cach)."""
+    """Luoi den chung moi: cach tuong ~600 (toi thieu 500), tam-tam >= 1200, khong vao vung cam.
+    So den <= so den hien co (giam den chu khong ep khoang cach).
+    Phong ngu (quy luat MB tran CT1/CT3, nguoi dung chot 20/10/2026): luoi theo hinh chu nhat cach tuong 600, KHONG doi
+    xung truc giuong (ng["pn_doi_xung_giuong"] = true de bat lai), khong dat den tren than giuong."""
     N = len(dens)
     if N == 0:
         return []
@@ -651,7 +657,7 @@ def bo_tri_lai_den(room, dens, cam, ng, giuong):
         return [lo + i * (hi - lo) / (n - 1) for i in range(n)]
 
     tam_x = tam_y = None
-    if giuong and giuong.get("truc"):
+    if giuong and giuong.get("truc") and ng.get("pn_doi_xung_giuong", False):
         if giuong["truc"][0] == "x":
             tam_x = giuong["truc"][1]
         else:
@@ -668,6 +674,8 @@ def bo_tri_lai_den(room, dens, cam, ng, giuong):
             pts = [(x, y) for x in xs for y in ys if A.buffer(1).contains(Point(x, y))]
             if giuong and giuong.get("vung_goi") is not None:
                 pts = [q for q in pts if not giuong["vung_goi"].contains(Point(q))]
+            if giuong and giuong.get("than") is not None:
+                pts = [q for q in pts if not giuong["than"].contains(Point(q))]
             sc = (len(pts), -abs(nx - ny))
             if pts and (best is None or sc > best[0]):
                 best = (sc, pts)
@@ -713,8 +721,10 @@ def soat(ds_phong, thiet_bi, noi_that, ng, so):
         n0 = len(so.ds)
         ten = r["ten"]
         truc = "trục hình học phòng"
-        if "ngu" in r["loai"] and giuong and giuong.get("truc"):
+        if "ngu" in r["loai"] and giuong and giuong.get("truc") and ng.get("pn_doi_xung_giuong", False):
             truc = f"trục giường ({giuong['truc'][0].upper()} = {giuong['truc'][1]:.0f})"
+        elif "ngu" in r["loai"]:
+            truc = "hình chữ nhật cách tường 600, tránh thân giường"
         elif "wc" in r["loai"]:
             truc = "trục thiết bị vệ sinh"
         elif set(r["loai"]) & {"an", "khach"} and ban:
@@ -789,6 +799,11 @@ def soat(ds_phong, thiet_bi, noi_that, ng, so):
                 if giuong.get("vung_goi") is not None and d["cat"]["nhom"] == "den_chung" and giuong["vung_goi"].contains(Point(d["x"], d["y"])):
                     so.them(r["can"], ten, d, DESIGN, "Đèn trên vùng gối", f"{d['ma']} nằm trên vùng gối (đầu giường {ng['vung_goi_sau']} mm).")
                     d["tren_goi"] = True
+                elif giuong.get("than") is not None and d["cat"]["nhom"] == "den_chung" and giuong["than"].contains(Point(d["x"], d["y"])):
+                    # quy luat MB tran CT1/CT3 (95/96 PN khong co den tren than giuong), nguoi dung chot 20/10/2026
+                    so.them(r["can"], ten, d, DESIGN, "Đèn trên thân giường",
+                            f"{d['ma']} nằm trên thân giường: đèn PN đặt kẹp hai bên giường / ngoài chân giường.")
+                    d["tren_goi"] = True
                 if d["cat"]["nhom"] == "gio_cap" and giuong.get("vung_goi") is not None and d["fp"].distance(giuong["vung_goi"]) < 600:
                     so.them(r["can"], ten, d, COORD, "Gió cấp gần vùng gối",
                             f"Miệng gió cấp cách vùng gối {d['fp'].distance(giuong['vung_goi']):.0f} mm: có thể thổi thẳng vào đầu giường, cần HVAC xem hướng thổi.")
@@ -817,8 +832,25 @@ def soat(ds_phong, thiet_bi, noi_that, ng, so):
                     if not ok:
                         so.them(r["can"], ten, d, DESIGN, "Đèn WC không theo trục thiết bị",
                                 "Không trùng trục chậu rửa / bồn cầu / sen (sai lệch > 50 mm theo cả X và Y).")
+            # quat hut mui tren tam bon cau (quy luat MB tran CT1/CT3: lech trung vi ~50 mm; nguoi dung chot 20/10/2026)
+            bcs = [f for f in nt if f["loai"] == "bon_cau"]
+            for d in tb:
+                if d["cat"]["nhom"] == "hut_mui" and bcs:
+                    f = min(bcs, key=lambda t: math.dist((t["x"], t["y"]), (d["x"], d["y"])))
+                    lech = math.dist((f["x"], f["y"]), (d["x"], d["y"]))
+                    if lech > ng.get("quat_hut_lech_bon_cau_toi_da", 150):
+                        so.them(r["can"], ten, d, DESIGN, "Quạt hút lệch bồn cầu",
+                                f"Quạt hút cách tâm bồn cầu {lech:.0f} mm: quy tắc Archivina đặt ngay trên tâm bồn cầu.",
+                                round(lech), ng.get("quat_hut_lech_bon_cau_toi_da", 150), (f["x"], f["y"]))
+                        de_xuat.append((d, d["ma"], f["x"], f["y"], d["rot"], "trên tâm bồn cầu"))
             if not fx:
                 so.them(r["can"], ten, "", DESIGN, "Thiếu dữ liệu WC", "Không nhận diện được thiết bị vệ sinh để kiểm tra trục.")
+        # 5b) kho / P. ky thuat chua co den: bo sung 1 downlight tai tam phong (nguoi dung chot 20/10/2026)
+        if "kho" in r["loai"] and not any(d["cat"]["nhom"] == "den_chung" for d in tb):
+            c = P.centroid if P.contains(P.centroid) else P.representative_point()
+            so.them(r["can"], ten, "", DESIGN, "Kho chưa có đèn",
+                    "Kho / P. kỹ thuật chưa có đèn: bổ sung 01 đèn downlight LT-DL-D90 tại tâm phòng.", None, None, (c.x, c.y))
+            de_xuat.append((None, "LT-DL-D90", c.x, c.y, 0.0, "bổ sung đèn downlight tâm kho"))
         # 6) den tha
         for d in tb:
             if d["cat"]["nhom"] != "den_tha":
@@ -829,6 +861,11 @@ def soat(ds_phong, thiet_bi, noi_that, ng, so):
                 continue
             f = min(ref, key=lambda t: math.dist((t["x"], t["y"]), (d["x"], d["y"])))
             lech = math.dist((f["x"], f["y"]), (d["x"], d["y"]))
+            # quy luat MB tran CT1/CT3 (chot 20/10/2026): den tha tren DUONG GIUA hai hang den, tai hinh chieu tam ban -> chap
+            # nhan lech tam neu van nam trong pham vi bo ban an (ban + ghe) / bo sofa
+            vung = f.get("fp_cum", f["fp"]).buffer(150) if f["loai"] == "ban_an" else f["fp"]
+            if ng.get("den_tha_tren_duong_giua") and lech > ng["den_tha_lech_toi_da"] and vung.contains(Point(d["x"], d["y"])):
+                continue
             if lech > ng["den_tha_lech_toi_da"]:
                 so.them(r["can"], ten, d, DESIGN, "Đèn thả lệch tâm", f"Lệch tâm {('bàn ăn' if f['loai'] == 'ban_an' else 'bộ sofa')} {lech:.0f} mm.",
                         round(lech), ng["den_tha_lech_toi_da"], (f["x"], f["y"]))

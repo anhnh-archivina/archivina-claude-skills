@@ -1,5 +1,19 @@
 # Device Rules
 
+> **Archivina update 20/10/2026 (CT1/CT3 ceiling plans, majority pattern; statistics in `quy-luat-tran-ct1-ct3.md`):**
+> - Downlight: spacing ≥ 1200 / wall ≥ 500 stay HARD rules; bedroom lights never over the bed body.
+> - Pendant: 2 in the living space – dining table + coffee table / sofa – on the centre line between the two light rows at
+>   the projection of the table centre (if the table is ≤ 800 from that line; otherwise at the table centre).
+> - Mirror light D65: basin axis, 350 from the mirror wall.
+> - WC exhaust fan HV-EAG-200: directly over the WC-pan centre.
+> - HV-EXG-200 = fresh-air / general apartment exhaust grille: living-room centre line, near the dining area (not over the hob).
+> - Fire-alarm speaker FA-SPK: 1 per apartment, living-room centre line, ~1400 from the smoke detector.
+> - Heat detector: in line with kitchen lights, ~750 from the hob; sprinkler 93 °C 300–600 from the heat detector.
+> - Access panel: living → perimeter, centre 450 from wall, next to WC / store / hall; WC → centre 450 from wall over the
+>   door swing.
+> - Sprinkler layout (preliminary only, for the fire consultant): centre lines of the axis rectangle preferred, R2000
+>   coverage target 85 %.
+
 ## 1. Recessed downlight
 
 CLASS: DESIGN_RULE + HARD_RULE for minimum spacing.
