@@ -1,5 +1,5 @@
 // Archivina Revit MCP – CORE (các lệnh). Loader ArchivinaRevitMcp.dll nạp nóng file này từ addin\core\ mỗi khi file đổi
-// (build lại core KHÔNG cần khởi động lại Revit). Cầu nối giữa Revit 2026 ĐANG MỞ và MCP server "revit-archivina" (Claude).
+// (build lại core KHÔNG cần khởi động lại Revit). Cầu nối giữa Revit 2027 ĐANG MỞ và MCP server "revit2027-archivina" (Claude).
 //
 // Mục đích : mở một cổng TCP CHỈ trên máy này (127.0.0.1) để Claude đọc dự án Revit đang mở (thông tin, link,
 //            phần tử, tham số, phòng / vùng diện tích, cảnh báo, bảng thống kê, ảnh view, xuất DWG mm)

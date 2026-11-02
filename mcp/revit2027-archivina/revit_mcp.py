@@ -1,11 +1,11 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""MCP server "revit-archivina": noi Claude voi REVIT 2026 DANG MO qua add-in ArchivinaRevitMcp (bridge\\Bridge.cs).
+"""MCP server "revit2027-archivina": noi Claude voi REVIT 2027 DANG MO qua add-in ArchivinaRevitMcp (bridge\\Bridge.cs).
 
 Muc dich : cho Claude doc du an Revit dang mo (thong tin, link Revit/CAD, phan tu, tham so, phong / vung dien tich
            kem bien, canh bao, bang thong ke, anh view), xuat DWG (mm) de dua vao pipeline AutoCAD, va - CHI KHI
            nguoi dung bat trong Revit VA tren BAN SAO - dat tham so / dung mo hinh.
-Kien truc: Claude <-stdio-> revit_mcp.py <-TCP 127.0.0.1:9878, JSON moi dong-> ArchivinaRevitMcp.dll (trong Revit, ExternalEvent)
+Kien truc: Claude <-stdio-> revit_mcp.py <-TCP 127.0.0.1:9879, JSON moi dong-> ArchivinaRevitMcp.dll (trong Revit, ExternalEvent)
 Nguyen tac (quy tac Archivina):
   - Mac dinh CHI DOC. Ghi (rv_dat_tham_so, rv_dung_can_ho, rv_dung_ket_cau, rv_ve_2d, rv_tao_view_3d, rv_tao_du_an) bi khoa o phia
     Revit (tab Archivina MCP > Cho phep ghi) - Claude phai HOI nguoi dung truoc khi goi, va nguoi dung phai bat khoa.
@@ -15,8 +15,8 @@ Nguyen tac (quy tac Archivina):
   - Moi lan ghi la 1 Transaction "Claude MCP" => Ctrl+Z hoan tac. Khong Save file dang mo, khong ghi de file.
   - Don vi vao/ra: dai mm, dien tich m2, the tich m3 (toa do theo goc noi bo cua Revit).
 Dang ky voi Claude Code (stdio):
-    claude mcp add --scope user revit-archivina -- "<python.exe>" "<duong dan>\\revit_mcp.py"
-Bien moi truong (tuy chon): REVIT_MCP_PORT (mac dinh 9878), REVIT_MCP_TIMEOUT (giay cho Revit nhan lenh, mac dinh 60).
+    claude mcp add --scope user revit2027-archivina -- "<python.exe>" "<duong dan>\\revit_mcp.py"
+Bien moi truong (tuy chon): REVIT_MCP_PORT (mac dinh 9879), REVIT_MCP_TIMEOUT (giay cho Revit nhan lenh, mac dinh 60).
 """
 import json
 import os
@@ -28,15 +28,16 @@ import uuid
 from mcp.server.mcpserver import Image, MCPServer
 
 HOST = "127.0.0.1"
-PORT = int(os.environ.get("REVIT_MCP_PORT", "9878"))
+YEAR = 2027
+PORT = int(os.environ.get("REVIT_MCP_PORT", "9879"))
 TIMEOUT = float(os.environ.get("REVIT_MCP_TIMEOUT", "60"))
 OUT_ROOT = os.path.join(tempfile.gettempdir(), "revit-mcp")
 BUILD_PS1 = os.path.join(os.path.dirname(os.path.abspath(__file__)), "build.ps1")
 
 mcp = MCPServer(
-    "revit-archivina",
+    "revit2027-archivina",
     instructions=(
-        "Noi voi Revit 2026 DANG MO (add-in ArchivinaRevitMcp, cong 127.0.0.1:9878). Mac dinh CHI DOC: rv_ket_noi -> "
+        f"Noi voi Revit {YEAR} DANG MO (add-in ArchivinaRevitMcp, cong 127.0.0.1:{PORT}). Mac dinh CHI DOC: rv_ket_noi -> "
         "rv_thong_tin (don vi, level, link Revit/CAD ~ xref, so canh bao) -> rv_liet_ke / rv_chi_tiet / rv_dang_chon -> "
         "rv_phong (Rooms/Areas, dien tich m2, bien thong thuy) -> rv_canh_bao / rv_bang_thong_ke / rv_chup_view. "
         "Xuat DWG mm cho pipeline AutoCAD: rv_xuat_dwg (thu muc moi). Ghi (rv_dat_tham_so, rv_dung_can_ho, rv_dung_ket_cau, rv_ve_2d, "
@@ -66,8 +67,8 @@ def _goi(cmd, cho_s=None, **params):
                 buf += chunk
     except (ConnectionRefusedError, socket.timeout, TimeoutError, OSError) as e:
         raise RuntimeError(
-            f"Không kết nối được add-in Revit ({HOST}:{PORT}): {e}. Kiểm tra: (1) Revit 2026 đang mở; (2) add-in đã nạp – "
-            f"có tab 'Archivina MCP' trên ribbon (chưa có: chạy {BUILD_PS1} rồi khởi động lại Revit, chọn 'Always Load' "
+            f"Không kết nối được add-in Revit ({HOST}:{PORT}): {e}. Kiểm tra: (1) Revit {YEAR} đang mở; (2) add-in đã nạp – "
+            f"có tab 'Archivina MCP' trên ribbon (chưa có: chạy {BUILD_PS1} -Loader rồi khởi động lại Revit, chọn 'Always Load' "
             f"khi Revit hỏi); (3) bấm 'Archivina MCP > Trạng thái' xem server có chạy / bị chiếm cổng {PORT} không."
         ) from e
     if not buf.strip():

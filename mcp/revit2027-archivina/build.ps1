@@ -1,12 +1,12 @@
-﻿# build.ps1 – Biên dịch add-in ArchivinaRevitMcp (Revit 2026) và ghi file .addin cho Revit.
+﻿# build.ps1 – Biên dịch add-in ArchivinaRevitMcp (Revit 2027, .NET 10) và ghi file .addin cho Revit.
 # Cách dùng :
 #   powershell -ExecutionPolicy Bypass -File build.ps1            # chỉ CORE (các lệnh) – Revit đang mở vẫn build được, lệnh sau tự nạp bản mới
 #   powershell -ExecutionPolicy Bypass -File build.ps1 -Loader    # cả LOADER (ribbon / server) – ĐÓNG Revit trước (DLL bị khoá)
 # Kết quả   : addin\ArchivinaRevitMcp.dll, addin\core\ArchivinaRevitMcp.Core.dll,
-#             %APPDATA%\Autodesk\Revit\Addins\2026\ArchivinaRevitMcp.addin
+#             %APPDATA%\Autodesk\Revit\Addins\2027\ArchivinaRevitMcp.addin
 param(
     [switch]$Loader,
-    [string]$RevitDir = "D:\Revit\Revit 2026",
+    [string]$RevitDir = "D:\Archivina Revit\Revit 2027",
     [string]$Dotnet = "$env:LOCALAPPDATA\Microsoft\dotnet-sdk\dotnet.exe"
 )
 $ErrorActionPreference = "Stop"
@@ -20,7 +20,7 @@ if ($Loader -or -not (Test-Path $dll)) {
     & $Dotnet build (Join-Path $root "bridge\ArchivinaRevitMcp.csproj") -c Release -o $out "-p:RevitDir=$RevitDir" -nologo
     if ($LASTEXITCODE -ne 0) { throw "Biên dịch loader lỗi (Revit đang mở thì DLL bị khoá – đóng Revit rồi chạy lại)." }
 
-    $addinDir = Join-Path $env:APPDATA "Autodesk\Revit\Addins\2026"
+    $addinDir = Join-Path $env:APPDATA "Autodesk\Revit\Addins\2027"
     New-Item -ItemType Directory -Force $addinDir | Out-Null
     $manifest = @"
 <?xml version="1.0" encoding="utf-8"?>

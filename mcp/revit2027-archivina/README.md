@@ -1,21 +1,22 @@
-# MCP `revit-archivina` – nối Claude với Revit 2026 đang mở
+# MCP `revit2027-archivina` – nối Claude với Revit 2027 đang mở
 
 ```
-Claude ⇄ (stdio) revit_mcp.py ⇄ (TCP 127.0.0.1:9878, JSON mỗi dòng) ⇄ addin\ArchivinaRevitMcp.dll (loader trong Revit, ExternalEvent)
+Claude ⇄ (stdio) revit_mcp.py ⇄ (TCP 127.0.0.1:9879, JSON mỗi dòng) ⇄ addin\ArchivinaRevitMcp.dll (loader trong Revit, ExternalEvent)
                                                                    └─ nạp nóng addin\core\ArchivinaRevitMcp.Core.dll (các lệnh)
 ```
 - `bridge\Bridge.cs` – **loader**: ribbon, server TCP, ExternalEvent. Đổi loader phải đóng Revit: `build.ps1 -Loader`.
-- `core\Commands.cs` (đọc, đặt tham số), `core\Modeling.cs` (dựng mô hình), `core\Safety.cs` (**chốt chặn file gốc**) – **các lệnh**. Build lại bằng `build.ps1` (không tham số) khi Revit đang mở; lệnh kế tiếp tự nạp bản mới (AssemblyLoadContext riêng, đọc bytes – không khoá file).
-- Lưu ý kỹ thuật: Revit 2026 tắt serializer JSON phản chiếu → `JsonSerializerOptions` phải có `TypeInfoResolver = new DefaultJsonTypeInfoResolver()`. `build.ps1` phải lưu UTF-8 **có BOM** (PowerShell 5.1).
+- `core\Commands.cs` (đọc, đặt tham số), `core\Modeling.cs` (dựng mô hình), `core\Structure.cs` (kết cấu), `core\Safety.cs` (**chốt chặn file gốc**) – **các lệnh**. Build lại bằng `build.ps1` (không tham số) khi Revit đang mở; lệnh kế tiếp tự nạp bản mới (AssemblyLoadContext riêng, đọc bytes – không khoá file).
+- Lưu ý kỹ thuật: Revit (từ 2026) tắt serializer JSON phản chiếu → `JsonSerializerOptions` phải có `TypeInfoResolver = new DefaultJsonTypeInfoResolver()`. `build.ps1` phải lưu UTF-8 **có BOM** (PowerShell 5.1).
+- Lịch sử: bản đầu viết cho Revit 2026 (.NET 8, cổng 9878, 12/10/2026); chuyển hẳn sang Revit 2027 ngày 02/11/2026, bỏ bản 2026.
 
-## Cài đặt (đã làm 12/10/2026)
-1. **Add-in** (.NET 8). Lần đầu (đóng Revit): `powershell -ExecutionPolicy Bypass -File build.ps1 -Loader` – biên dịch loader + core, ghi manifest.
-   Dùng .NET SDK 8 cài riêng user tại `%LOCALAPPDATA%\Microsoft\dotnet-sdk\` (máy khác: cài SDK 8, sửa `-Dotnet` / `-RevitDir`).
-   Manifest: `%APPDATA%\Autodesk\Revit\Addins\2026\ArchivinaRevitMcp.addin`.
+## Cài đặt
+1. **Add-in** (.NET 10). Lần đầu (đóng Revit): `powershell -ExecutionPolicy Bypass -File build.ps1 -Loader` – biên dịch loader + core, ghi manifest.
+   Dùng .NET SDK 10 cài riêng user tại `%LOCALAPPDATA%\Microsoft\dotnet-sdk\` (máy khác: cài SDK 10, sửa `-Dotnet` / `-RevitDir`; mặc định `D:\Archivina Revit\Revit 2027`).
+   Manifest: `%APPDATA%\Autodesk\Revit\Addins\2027\ArchivinaRevitMcp.addin`.
 2. **Khởi động lại Revit** → Revit hỏi add-in chưa ký → chọn **Always Load**. Ribbon có tab **Archivina MCP**.
-3. **MCP** (phạm vi user) đã đăng ký:
-   `claude mcp add --scope user revit-archivina -e PYTHONUTF8=1 -- "<python.exe>" "<thư mục>\revit_mcp.py"` → mở phiên Claude mới.
-
+3. **MCP** (phạm vi user):
+   `claude mcp add --scope user revit2027-archivina -e PYTHONUTF8=1 -- "<python.exe>" "<thư mục>\revit_mcp.py"` → mở phiên Claude mới.
+   Đổi cổng: biến `REVIT_MCP_PORT` (đặt giống nhau cho Revit và server Python).
 ## Công cụ
 | Tool | Loại | Việc |
 |---|---|---|
@@ -36,6 +37,7 @@ Claude ⇄ (stdio) revit_mcp.py ⇄ (TCP 127.0.0.1:9878, JSON mỗi dòng) ⇄ a
 | `rv_luu_ban_sao` | file mới | SaveAs dự án đang mở ra `.rvt` MỚI (không ghi đè, không vào `02-Ban-Ve-Goc`) → Revit làm việc trên bản sao |
 | `rv_dat_tham_so` | **ghi (khoá, bản sao)** | đặt tham số, 1 Transaction |
 | `rv_tao_du_an` | **ghi (khoá)** | dự án mới từ template (mặc định `DefaultMetric.rte` hoặc `REVIT_MCP_TEMPLATE`), đơn vị **mm / m²** → `.rvt` mới, ghi sổ "Claude tạo" |
+| `rv_dung_ket_cau` | **ghi (khoá, bản sao)** | dựng kết cấu BTCT: level, trục, cột, dầm, sàn theo spec JSON (skill `dung-ket-cau-revit`) |
 | `rv_dung_can_ho` | **ghi (khoá, bản sao)** | dựng level, tường, cột, cửa, vách kính, sàn, phòng theo spec JSON (mm), 1 TransactionGroup |
 | `rv_tao_view_3d` | **ghi (khoá, bản sao)** | view 3D isometric |
 | `rv_ve_2d` | **ghi (khoá, bản sao)** | nét chi tiết 2D + Detail Group |
@@ -55,7 +57,11 @@ Claude ⇄ (stdio) revit_mcp.py ⇄ (TCP 127.0.0.1:9878, JSON mỗi dòng) ⇄ a
 - Cổng chỉ nghe `127.0.0.1`. Tắt: **Archivina MCP > Server**.
 - Lệnh chạy qua ExternalEvent: Revit đang mở hộp thoại / đang trong lệnh thì chờ; quá 60 s chưa nhận → lệnh bị **huỷ** (không chạy muộn).
 
-## Đã kiểm tra (12/10/2026, Revit 2026.0 build 26.0.4.409)
+## Đã kiểm tra trên Revit 2027 (02/11/2026, Revit 2027.3 build 27.3.0.28)
+- Mẫu Snowdon Towers: ping, info, list, link, rooms (67), warnings (90), views, schedule, quantities, selection, screenshot, element – **đạt**; `rv_dat_tham_so` bị chặn khi chưa bật "Cho phép ghi" – **đúng**.
+- Chưa thử lệnh ghi / dựng (`rv_dung_can_ho`, `rv_dung_ket_cau`, `rv_ve_2d`, `rv_tao_du_an`) trên Revit 2027.
+
+## Đã kiểm tra trên Revit 2026 (12/10/2026, bản cũ – cùng mã nguồn)
 - File `6.SAPA-A-SDV2.rvt`: `rv_ket_noi`, `rv_thong_tin`, `rv_liet_ke`, `rv_khoi_luong`, nạp nóng core.
 - **Chốt chặn file gốc (core 1.4.1) – 20/20 đạt**, trên file thử `05-Skill-Test\ket-qua-Safety-Revit\` (file gốc giả lập trong
   `02-Ban-Ve-Goc\`): từ chối `rv_dat_tham_so` / `rv_dung_can_ho` / `rv_tao_view_3d` trên file gốc; `rv_luu_ban_sao` mặc định vào

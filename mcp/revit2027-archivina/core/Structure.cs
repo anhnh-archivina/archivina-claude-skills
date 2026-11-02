@@ -342,9 +342,10 @@ namespace ArchivinaRevitMcp.Core
             if (S(spec, "family_template_dir") is string d0) dirs.Add(d0);
             try { dirs.Add(app.FamilyTemplatePath); } catch { }
             string pd = Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData);
-            foreach (string sub in new[] { @"Autodesk\RVT 2026\Family Templates\English", @"Autodesk\RVT 2026\Family Templates\English_I",
-                                           @"Autodesk\Revit Steel Connections 2026\en-US\Family Templates\English Metric",
-                                           @"Autodesk\Revit Steel Connections 2026\en-UK\Family Templates" })
+            string v = app.VersionNumber; // năm Revit đang chạy
+            foreach (string sub in new[] { $@"Autodesk\RVT {v}\Family Templates\English", $@"Autodesk\RVT {v}\Family Templates\English_I",
+                                           $@"Autodesk\Revit Steel Connections {v}\en-US\Family Templates\English Metric",
+                                           $@"Autodesk\Revit Steel Connections {v}\en-UK\Family Templates" })
                 dirs.Add(Path.Combine(pd, sub));
             foreach (string d in dirs.Where(x => !string.IsNullOrEmpty(x) && Directory.Exists(x)))
             {

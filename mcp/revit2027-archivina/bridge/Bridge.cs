@@ -1,4 +1,4 @@
-// Archivina Revit MCP Bridge – cầu nối giữa Revit 2026 ĐANG MỞ và MCP server "revit-archivina" (Claude).
+// Archivina Revit MCP Bridge – cầu nối giữa Revit 2027 ĐANG MỞ và MCP server "revit2027-archivina" (Claude).
 //
 // Mục đích : mở một cổng TCP CHỈ trên máy này (127.0.0.1) để Claude đọc dự án Revit đang mở (thông tin, link,
 //            phần tử, tham số, phòng / vùng diện tích, cảnh báo, bảng thống kê, ảnh view, xuất DWG mm)
@@ -46,8 +46,8 @@ namespace ArchivinaRevitMcp
     {
         public const string Version = "1.0.2";
         public const string Tab = "Archivina MCP";
-        public static int Port = 9878;
-        // Revit 2026 có thể nạp lớp nút ribbon (IExternalCommand) vào ngữ cảnh assembly KHÁC với IExternalApplication
+        public static int Port = 9879;
+        // Revit (từ 2026) có thể nạp lớp nút ribbon (IExternalCommand) vào ngữ cảnh assembly KHÁC với IExternalApplication
         // -> biến static không dùng chung. Trạng thái để ở AppDomain (chung toàn tiến trình), nút gọi server qua delegate.
         const string KeyWrite = "ArchivinaMcp.WriteEnabled", KeyStatus = "ArchivinaMcp.Status", KeyToggleServer = "ArchivinaMcp.ToggleServer";
         public static bool WriteEnabled

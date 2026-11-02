@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""doc_mb_ket_cau.py – Đọc MẶT BẰNG KẾT CẤU AutoCAD (DXF, mm) -> spec JSON dựng mô hình kết cấu BTCT trong Revit 2026.
+"""doc_mb_ket_cau.py – Đọc MẶT BẰNG KẾT CẤU AutoCAD (DXF, mm) -> spec JSON dựng mô hình kết cấu BTCT trong Revit 2027.
 
 Mục đích : skill dung-ket-cau-revit. Nhận diện theo từng mặt bằng (tên "MẶT BẰNG ĐỊNH VỊ CỘT TẦNG 1",
            "MẶT BẰNG KẾT CẤU SÀN TẦNG 2 ( CỐT +3.850 )"…): lưới trục (tên trục từ bóng trục), cột (polyline kín layer

@@ -10,4 +10,4 @@ __pycache__/
 # add-in Revit: ket qua build
 bin/
 obj/
-mcp/revit-archivina/addin/
+mcp/*/addin/
